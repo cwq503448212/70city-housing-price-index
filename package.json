@@ -1,0 +1,17 @@
+{
+  "name": "nbs-70city-housing-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "description": "国家统计局 70 个大中城市商品住宅销售价格指数可视化看板",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "data:build": "node -e \"console.log(require('./lib/nbs70').publishDataset())\"",
+    "data:raw": "node -e \"require('./lib/nbs70').backfillRaw({}).then(function(r){console.log(r)})\""
+  },
+  "keywords": ["国家统计局", "70城房价", "房地产", "数据可视化"],
+  "engines": {
+    "node": ">=12"
+  }
+}

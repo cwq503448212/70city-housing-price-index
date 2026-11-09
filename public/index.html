@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>70 城房价指数看板 · 国家统计局</title>
+    <meta name="description" content="基于国家统计局 70 个大中城市商品住宅销售价格变动情况的可视化看板" />
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">70</div>
+        <div class="brand-text">
+          <h1>70 个大中城市房价指数</h1>
+          <p class="brand-sub">
+            国家统计局 · 商品住宅销售价格变动情况月报
+            <a id="srcLink" href="https://www.stats.gov.cn/sj/zxfb/" target="_blank" rel="noreferrer">查看原文 ↗</a>
+          </p>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <label class="field field-top">
+          <span>时间范围</span>
+          <select class="select" id="rangeSelect" title="选好后下方所有与时间相关的图表都会跟着过滤">
+            <option value="12">近 1 年</option>
+            <option value="24">近 2 年</option>
+            <option value="36">近 3 年</option>
+            <option value="60">近 5 年</option>
+            <option value="120">近 10 年</option>
+            <option value="all">全部（2011 年起）</option>
+            <option value="custom">自定义区间…</option>
+          </select>
+        </label>
+        <label class="field field-top" id="rangeFromField" hidden>
+          <span>从</span>
+          <select class="select" id="rangeFrom"></select>
+        </label>
+        <label class="field field-top" id="rangeToField" hidden>
+          <span>到</span>
+          <select class="select" id="rangeTo"></select>
+        </label>
+        <span class="stamp" id="stamp">正在连接数据源…</span>
+        <button class="btn" id="refreshBtn" type="button">刷新数据</button>
+      </div>
+    </header>
+
+    <!-- 加载 / 错误 状态 -->
+    <section class="boot" id="boot">
+      <div class="boot-inner">
+        <div class="boot-title" id="bootTitle">正在读取本地数据集…</div>
+        <div class="boot-desc" id="bootDesc">
+          2011 年以来的 189 个月已固化成 data/periods.json（约 1.5MB），打开即读、不联网；顶部的时间范围只影响展示，也不会触发下载。只有点「刷新数据」时才会去统计局增量拉取最新月份。
+        </div>
+        <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+        <div class="boot-meta" id="bootMeta"></div>
+      </div>
+    </section>
+
+    <main class="page" id="page" hidden>
+      <!-- KPI -->
+      <section class="kpis" id="kpis"></section>
+
+      <!-- 全局控制 -->
+      <section class="toolbar">
+        <div class="control-group">
+          <span class="control-label">房屋类型</span>
+          <div class="seg" id="segType">
+            <button class="seg-item is-active" data-value="new" type="button">新建商品住宅</button>
+            <button class="seg-item" data-value="second" type="button">二手住宅</button>
+          </div>
+        </div>
+        <div class="control-group">
+          <span class="control-label">对比口径</span>
+          <div class="seg" id="segMetric">
+            <button class="seg-item is-active" data-value="mom" type="button">环比</button>
+            <button class="seg-item" data-value="yoy" type="button">同比</button>
+          </div>
+        </div>
+        <div class="control-group toolbar-note" id="metricNote"></div>
+      </section>
+
+      <!-- 走势 -->
+      <section class="card">
+        <div class="card-head">
+          <div>
+            <h2 class="card-title">指数走势</h2>
+            <p class="card-sub" id="trendSub">选择城市查看逐月变化</p>
+          </div>
+        </div>
+        <div class="chips" id="chips"></div>
+        <div class="chart" id="chartTrend"></div>
+      </section>
+
+      <!-- 涨跌城市数 -->
+      <section class="card">
+        <div class="card-head">
+          <div>
+            <h2 class="card-title">涨跌城市数</h2>
+            <p class="card-sub" id="countSub">每月 70 城中上涨 / 持平 / 下跌的数量</p>
+          </div>
+        </div>
+        <div class="chart" id="chartCount"></div>
+      </section>
+
+      <!-- 城市排行 -->
+      <section class="card">
+        <div class="card-head">
+          <div>
+            <h2 class="card-title">城市排行</h2>
+            <p class="card-sub" id="rankSub">最新月份，70 城按涨跌幅排序</p>
+          </div>
+          <div class="legend-inline">
+            <span><i class="dot up"></i>上涨</span>
+            <span><i class="dot flat"></i>持平</span>
+            <span><i class="dot down"></i>下跌</span>
+          </div>
+        </div>
+        <div class="chart" id="chartRank"></div>
+      </section>
+
+      <!-- 热力图 -->
+      <section class="card">
+        <div class="card-head">
+          <div>
+            <h2 class="card-title">城市 × 月份 热力图</h2>
+            <p class="card-sub" id="heatSub">颜色越红涨幅越大，越绿跌幅越大</p>
+          </div>
+        </div>
+        <div class="chart" id="chartHeat"></div>
+      </section>
+
+      <!-- 城市详情 -->
+      <section class="card">
+        <div class="card-head">
+          <div>
+            <h2 class="card-title">单城详情</h2>
+            <p class="card-sub" id="citySub">新房与二手住宅对比</p>
+          </div>
+          <select class="select" id="citySelect"></select>
+        </div>
+        <div class="chart" id="chartCity"></div>
+      </section>
+
+      <!-- 定基指数 -->
+      <section class="card">
+        <div class="card-head">
+          <div>
+            <h2 class="card-title">定基指数走势</h2>
+            <p class="card-sub" id="baseSub">以起点月份为 100，按环比逐月累乘</p>
+          </div>
+          <div class="head-controls">
+            <label class="field"><span>城市</span><select class="select" id="baseCity"></select></label>
+            <label class="field"><span>起点</span><select class="select" id="baseStart"></select></label>
+            <label class="field"><span>终点</span><select class="select" id="baseEnd"></select></label>
+          </div>
+        </div>
+        <div class="chart" id="chartBase"></div>
+      </section>
+
+      <!-- 数据表 -->
+      <section class="card">
+        <div class="card-head">
+          <div>
+            <h2 class="card-title">明细数据</h2>
+            <p class="card-sub" id="tableSub">点击表头可排序</p>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table" id="dataTable">
+            <thead>
+              <tr>
+                <th data-key="city" class="sortable">城市</th>
+                <th data-key="tier" class="sortable">分类</th>
+                <th data-key="newMom" class="sortable num">新房环比</th>
+                <th data-key="newYoy" class="sortable num">新房同比</th>
+                <th data-key="secondMom" class="sortable num">二手环比</th>
+                <th data-key="secondYoy" class="sortable num">二手同比</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <footer class="page-foot">
+        <p>
+          数据来源：国家统计局《70 个大中城市商品住宅销售价格变动情况》。
+          表中指数以上月 / 上年同月 = 100 为基准，页面统一换算为涨跌幅（指数 − 100）。
+        </p>
+        <p class="muted">
+          说明：商品住宅销售价格指数反映的是价格<b>变动</b>的相对幅度，并非房屋成交均价。
+        </p>
+      </footer>
+    </main>
+
+    <script src="vendor/echarts.min.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
