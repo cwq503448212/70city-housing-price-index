@@ -47,7 +47,7 @@ Copy-Item $NodeExe (Join-Path $pkg 'node.exe')
 foreach ($f in @('server.js', 'package.json', 'probe.js', 'README.md')) {
   Copy-Item (Join-Path $root $f) $pkg
 }
-# 四个模块的代码、配置、页面、固化数据集与截图（docs 只被 README 引用）
+# 五个看板的代码、配置、页面、固化数据集与截图（docs 只被 README 引用）
 foreach ($d in @('lib', 'config', 'public', 'data', 'docs')) {
   Copy-Item (Join-Path $root $d) (Join-Path $pkg $d) -Recurse
 }
@@ -101,6 +101,20 @@ if (Test-Path $liveSrc) {
   Write-Host ('      + 民生缓存：' + $liveInd + ' 个指标 / ' + $years.Count + ' 个年度文件，最新 ' + $liveLatest)
 } else {
   Write-Host '      ! 未找到 .cache\livelihood：包里不带民生缓存，对方首次打开会现场拉全（几秒钟）'
+}
+
+# 人均收支年度缓存：23 个指标 × 13 年，同样剔 _meta.json（否则对方首次核对会被冷却时间戳跳掉）
+$incomeSrc = Join-Path $root '.cache\livelihood-income'
+if (Test-Path $incomeSrc) {
+  New-Item -ItemType Directory -Path (Join-Path $pkg '.cache') -Force | Out-Null
+  Copy-Item $incomeSrc (Join-Path $pkg '.cache') -Recurse
+  Get-ChildItem (Join-Path $pkg '.cache\livelihood-income') -Recurse -File -Filter '_meta.json' | Remove-Item -Force
+  $incomeYears = Get-ChildItem (Join-Path $pkg '.cache\livelihood-income') -Recurse -File -Filter '????.json'
+  $incomeInd = (Get-ChildItem (Join-Path $pkg '.cache\livelihood-income') -Directory).Count
+  $incomeLatest = ($incomeYears | ForEach-Object { $_.BaseName } | Sort-Object -Descending | Select-Object -First 1)
+  Write-Host ('      + 收支缓存：' + $incomeInd + ' 个指标 / ' + $incomeYears.Count + ' 个年度文件，最新 ' + $incomeLatest)
+} else {
+  Write-Host '      ! 未找到 .cache\livelihood-income：包里不带收支缓存，对方首次打开会现场拉全（六个请求）'
 }
 Write-Host '[2/4] 已拷贝项目文件'
 

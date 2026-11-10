@@ -1,6 +1,6 @@
 # 中国经济统计数据看板
 
-一个零依赖的本地看板，把国家统计局的四类数据放在同一个服务里：
+一个零依赖的本地看板，把国家统计局的五类数据放在同一个服务里：
 
 | 模块 | 地址 | 内容 |
 | --- | --- | --- |
@@ -8,8 +8,9 @@
 | **宏观经济指标** | `/macro/` | CPI / 核心 CPI / PPI / 八大类 / PMI / 社零 / M1·M2 |
 | **房贷利率 LPR** | `/lpr/` | 贷款市场报价利率 1 年期 / 5 年期以上：走势、调整幅度、期限利差、明细 |
 | **婚育与人口出生** | `/livelihood/` | 结婚登记 / 离婚登记 / 初婚人数、出生率 / 死亡率 / 自然增长率（年度，1978 起） |
+| **人均收入与支出** | `/livelihood/income/` | 人均可支配收入（名义增速、中位数）、四项收入分项、人均消费支出、八项消费分项、城乡对比（年度，2013 起） |
 
-打开根地址 `/` 是模块选择页，点进去分别进入四个子页面；每个子页面右上角都有「← 模块选择」可以切回来。
+打开根地址 `/` 是模块选择页，点进去分别进入五个子页面；每个子页面右上角都有「← 返回模块选择」可以切回来。
 
 ![模块选择入口](docs/screenshot-home.png)
 
@@ -28,16 +29,16 @@ node server.js
 > 必须通过这个本地服务访问，直接双击 `public/**/index.html` 是不行的：`file://` 下 `fetch('/api/...')` 会被浏览器拦下，拿不到数据；而且统计局站点有 WAF，浏览器直连会 403，数据只能由服务端代取。
 
 - 需要 Node >= 20，**不需要 `npm install`**（ECharts 已内置在 `public/vendor/`，所有模块共用一份）。
-- 四个模块共用同一个端口和同一个进程，`/api/health` 会一并返回四边的概况。
+- 五个看板共用同一个端口和同一个进程，`/api/health` 会一并返回各边的概况。
 - 换端口：`PORT=8080 node server.js`（PowerShell 写法 `$env:PORT=8080; node server.js`）。用 `start.bat` 时可以 `set DASH_PORT=5180` 后再双击（旧的 `NBS_PORT` 仍然兼容）。
 
 ## 目录结构
 
 ```
-server.js                    本地 HTTP 服务：静态托管 + 路由分发（/api/nbs70、/api/macro/*、/api/lpr/*、/api/livelihood/*）
+server.js                    本地 HTTP 服务：静态托管 + 路由分发（/api/nbs70、/api/macro/*、/api/lpr/*、/api/livelihood/*、/api/livelihood/income-expenditure）
 start.bat                    Windows 一键启动（双击即可）
 build.bat                    便携包一键打包（双击；转发给 packaging/build.ps1）
-AGENTS.md                    四个模块共用的开发规范
+AGENTS.md                    各看板共用的开发规范
 
 lib/housing/nbs70.js         房价：站内搜索建索引 → 月报正文表格解析 → 数据集/缓存读写
 lib/macro/config.js          宏观：装载并校验 config/indicators.json
@@ -50,9 +51,11 @@ lib/macro/sources/dbnomics.js 宏观兜底：DBnomics 开放 API
 lib/macro/util/              极简 HTTP 客户端 / 串行限流 / 月份工具
 lib/lpr/                     LPR：config（上游与发布日）/ policy（回源判定）/ source（中国货币网）/ store（全量单文件缓存）/ api
 lib/livelihood/              民生：config / policy（回源年度判定）/ source（国家数据年度库）/ store（年度文件缓存）/ service / queue / api
+lib/livelihood/income/       人均收支子模块：config（读 config/income.json）/ store（独立缓存目录）/ service / api，取数复用父目录的 source / queue / policy
 
 config/indicators.json       宏观指标配置（栏目 / 指标 / 分段 / 发布日 / 兜底）
 config/livelihood.json       民生指标配置（栏目 / 指标 / 单位 / 历史起点）
+config/income.json           人均收支指标配置（6 个栏目 / 23 个指标 / 口径说明 / 历史起点 2013）
 probe.js                     宏观指标编码探测 + 官方/镜像交叉校验
 
 public/index.html            模块选择入口（+ home.css）
@@ -60,13 +63,14 @@ public/housing/              房价看板：index.html / styles.css / app.js
 public/macro/                宏观看板：index.html / styles.css / app.js
 public/lpr/                  LPR 看板：index.html / styles.css / app.js
 public/livelihood/           民生看板：index.html / styles.css / app.js
+public/livelihood/income/    人均收入与支出看板：index.html / styles.css / app.js
 public/vendor/               ECharts 5（所有模块共用）
 
 data/periods.json            房价数据集（189 个月，随项目分发）
 docs/                        页面截图
 packaging/                   便携包的 start.bat / 使用说明.txt / build.ps1（打包实现）
 release/                     打包产物，不入库
-.cache/                      抓取中间产物：房价解析结果与月报原文、macro/ 宏观月缓存、lpr/ LPR 全量缓存、livelihood/ 民生年度缓存（可安全删除）
+.cache/                      抓取中间产物：房价解析结果与月报原文、macro/ 宏观月缓存、lpr/ LPR 全量缓存、livelihood/ 民生年度缓存、livelihood-income/ 人均收支年度缓存（可安全删除）
 ```
 
 ---
@@ -464,6 +468,88 @@ POST …/stream/esData    body = { cid, indicatorIds, das:[{全国,000000000000}
 
 ---
 
+# 模块五：人均收入与支出
+
+居民收支的本地看板：**23 个年度指标，2013 年起**（2013 年是国家统计局按城乡一体化住户调查新口径发布「全体居民」收支的起点）。
+
+## 看板上有什么
+
+| 区块 | 内容 | 口径 |
+| --- | --- | --- |
+| KPI 卡片 | 人均可支配收入、收入名义增速、人均消费支出、支出名义增速 | 元 / % |
+| 收入与支出 | 全体居民两条年度线 | 元 |
+| 名义增速 | 收入 / 支出两条增速线 + 0% 线 | %，**名义**增速 |
+| 消费结构 | 最新已入库年度的八项分项环形饼图 + 占比 | 元 / % |
+| 四项收入分项 | 工资性 / 经营净 / 财产净 / 转移净 | 元 |
+| 八项消费分项时序 | 食品烟酒 / 衣着 / 居住 / 生活用品及服务 / 交通通信 / 教育文化娱乐 / 医疗保健 / 其他用品及服务 | 元 |
+| 城乡收支对比 | 城镇 / 农村 × 收入 / 支出（支出为虚线） | 元 |
+| 指标明细 | 23 个指标的最新值 / 上年 / 变化 / 年份 / 来源 / 状态 | — |
+
+时间范围支持 **近 5 年 / 近 10 年 / 全部（2013 起）/ 自定义年份**，默认全部；选择记在 `localStorage`（键 `livelihood.income.range.v1`）。
+
+![人均收入与支出看板](docs/screenshot-income-full.png)
+
+## 指标与编码（探测所得，不靠猜）
+
+23 个指标落在 6 个栏目里，栏目与指标 id 都由 `lib/livelihood/source.js` 逐层探测后写入 `config/income.json`：
+
+| 栏目 | 指标（数量） |
+| --- | --- |
+| 全国居民人均收入 | 可支配收入 / 比上年增长 / 中位数 / 中位数增长 / 工资性 / 经营净 / 财产净 / 转移净（8） |
+| 全国居民人均支出 | 消费支出 / 比上年增长 / 服务性消费 + 八项分项（11） |
+| 城镇居民人均收入 | 可支配收入（1） |
+| 农村居民人均收入 | 可支配收入（1） |
+| 城镇居民人均支出 | 消费支出（1） |
+| 农村居民人均支出 | 消费支出（1） |
+
+> 需求里提到的「A0901 / A0902」是「国家数据」年度数据里人民生活章节的收入 / 支出栏目编号；站点内部接口不认这两个编号，实际取数以**栏目 id + 指标 id** 为准（已写入 `config/income.json`，可逐条核对）。
+
+## 数据源
+
+与婚育模块同一个年度库、同一组内部接口，只是 6 个栏目和 `dts` 区间不同：
+
+```
+GET  …/external/new/queryIndexTreeAsync?pid=&code=3      // code=3 = 年度库
+GET  …/new/queryIndicatorsByCid?cid=<栏目id>&dt=&name=
+POST …/stream/esData    body = { cid, indicatorIds, das:[{全国,000000000000}], dts:['2013YY-2025YY'], rootId }
+```
+
+- 年度期别编码是 `2024YY`；`dts` 写成 `2013YY-2025YY`（写成 `2013-2025` 会直接 HTTP 500）
+- `values[].da` 必须是 `000000000000`（全国口径）；上游未发布的年份是**空串**，跳过不写
+- ⚠️ 同样是**站点内部接口，不是官方开放 API**，没有稳定性承诺
+
+## 缓存与拉取策略
+
+- 缓存键 = **指标 id + 年份**，落盘 `.cache/livelihood-income/<指标id>/<YYYY>.json`，内容 `{ id, year, raw, source, fetchedAt }`；目录可用 `LIVELIHOOD_INCOME_DATA_DIR` 覆盖
+- **远端按栏目批量取**：23 个指标只落在 6 个栏目，首次全量拉全只需 **6 次请求**（不是 23 次）
+- 取数通道复用 `lib/livelihood` 的 `source` / `queue` / `policy`：所有请求串行 + 全局最小间隔 1200 ms + 同一指标 60 秒冷却 + 两次回源至少隔 10 分钟（`lastAttempt` 落盘）
+- 之后每次打开只核对「应发布年度」（当前年 − 1，1、2 月仍按 − 2）；四分类 `cold / empty / behind / warm`、后台 `refreshing`、失败回退 `stale`、未知指标 404 与婚育模块完全一致
+- 与婚育模块**缓存目录分开**：`.cache/livelihood` 的 `stats()` 会把每个子目录当成一个指标，混放会让两边的健康检查数字都失真
+- 判定逻辑在 `lib/livelihood/policy.js`，**前端只消费 `stale` / `refreshing`**，不自己算年份
+
+## 口径规则（不许破）
+
+- **只有名义增速**：年度库发布的是「比上年增长」，按现价计算、未扣除价格因素；该库**没有**居民收支的「实际增速」。页面如实标注「名义增速」，**不用 CPI 自行折算**出一个官方并不发布的数。
+- **分项为官方直接发布值**：四项收入之和 = 人均可支配收入，八项消费之和 = 人均消费支出（2025 年校验：43377 = 24555 + 7252 + 3490 + 8080；29476 = 8631 + 1554 + 6397 + 1667 + 4306 + 3489 + 2573 + 859）。本页不做加权、不做插值。
+- **服务性消费是交叉口径**：它横跨八项中的服务部分，**不计入八项之和**，因此只出现在明细表与说明里，不进饼图。
+- **城乡不可简单平均**：城镇 / 农村是两套住户调查样本，全体居民由城乡按常住人口加权汇总；本页不做「(城镇 + 农村) / 2」。
+- 明细表的「变化」列是本页相邻两年相减，**不是官方发布的增速**，表头和图注已声明。
+- 缺失用 `null`，不插值、不补 0；2013 年前没有「全体居民」口径，故历史起点就是 2013。
+
+## 接口
+
+| 接口 | 说明 |
+| --- | --- |
+| `GET /api/livelihood/income-expenditure` | 看板一次性取全量（含 `refreshing` 后台补齐标记） |
+| `GET /api/livelihood/income-expenditure/indicators` | 指标清单（不含数据，含 stale / latestCached / expectedLatest） |
+| `GET /api/livelihood/income-expenditure/series/:id` | 单指标序列 |
+| `GET /api/livelihood/income-expenditure/refresh/:id` | 手动刷新单指标（等价于 `series?id&force=1`） |
+| `GET /api/livelihood/income-expenditure/health` | 健康检查（含缓存与数据集概况） |
+
+查询参数：`range=5|10|all`、`from=YYYY&to=YYYY`（优先于 range）、`force=1`。
+
+---
+
 ## 打包给别人（对方不装 Node）
 
 `node server.js` 需要 Node 运行时。要发给装不了 Node 的人，用**便携包**：把 `node.exe` 和项目一起打进去，对方解压双击 `start.bat` 就行，**不需要安装任何东西**。
@@ -483,14 +569,15 @@ powershell -ExecutionPolicy Bypass -File packaging\build.ps1
 
 ```
 release/中国经济统计数据看板/                                      解压后双击 start.bat
-release/china-economic-stats-dashboard-v3.1.0-win10-win11.zip     对外发送
+release/china-economic-stats-dashboard-v3.2.0-win10-win11.zip     对外发送
 ```
 
-包内是 `node.exe`（官方签名二进制，v20.12.2）、`server.js`、`lib/`、`config/`、`public/`、`data/periods.json`、`probe.js`、`docs/`、`README.md`、`start.bat`、`使用说明.txt`，以及一份 `.cache/macro/`、`.cache/lpr/` 与 `.cache/livelihood/`；不含 `node_modules/`、`AGENTS.md`。功能与源码版完全一致：四个模块、跨月自动核对、「刷新数据」都照常可用。
+包内是 `node.exe`（官方签名二进制，v20.12.2）、`server.js`、`lib/`、`config/`、`public/`、`data/periods.json`、`probe.js`、`docs/`、`README.md`、`start.bat`、`使用说明.txt`，以及一份 `.cache/macro/`、`.cache/lpr/`、`.cache/livelihood/` 与 `.cache/livelihood-income/`；不含 `node_modules/`、`AGENTS.md`。功能与源码版完全一致：五个看板、跨月 / 跨年自动核对、「刷新数据」都照常可用。
 
 - **分发包默认带宏观历史数据**：`.cache/macro/` 里是 20 个指标、约 1200 个月度文件（0.2 MB，打包时自动剔除本机的 `_meta.json` 回源时间戳），对方首次打开只需补最近几期，几秒钟就全了；删掉它才会全量重拉。
 - **LPR 历史同样随包分发**：`.cache/lpr/` 是一条全量序列（约 90 期 / 几 KB，同样剔 `_meta.json`），对方首次打开秒出图；就算不带，现场拉全也只要几秒。
 - **民生年度数据也随包分发**：`.cache/livelihood/` 是 6 个指标 × 48 年（约 270 个小文件，同样剔 `_meta.json`），对方首次打开直接出图，只补新年份。
+- **人均收支年度数据同样随包**：`.cache/livelihood-income/` 是 23 个指标 × 13 年（约 300 个小文件，同样剔 `_meta.json`），对方首次打开只补最近一期。
 - **包放很久才打开也没问题**：缓存里有多少就用多少，缺的月份按「应发布期别」一次性补齐（缺 3 个月就只拉 3 个月，不会从头重拉）。只有统计局改了栏目/接口时才需要重新发版，否则最多看到「待更新」提示。
 
 - 便携版的 `start.bat` 和 `使用说明.txt` 放在 `packaging/` 里跟代码一起维护，打包时会拷过去。
@@ -506,7 +593,7 @@ release/china-economic-stats-dashboard-v3.1.0-win10-win11.zip     对外发送
 
 - **房价不是成交均价**。价格指数反映的是价格变动的相对幅度，不含绝对价格水平。
 - 宏观接口随时可能变化或限流，页面出现「待更新」属正常现象，请以统计局官网公布为准。
-- 四个模块的数据版权分别归国家统计局（房价 / 宏观 / 民生）与全国银行间同业拆借中心（LPR）所有，本项目只做本地可视化，不保存、不分发原始数据库。
+- 四个模块的数据版权分别归国家统计局（房价 / 宏观 / 民生 / 收支）与全国银行间同业拆借中心（LPR）所有，本项目只做本地可视化，不保存、不分发原始数据库。
 - 仅供数据观察，**不要用于任何投资决策依据**。
 
 ## 反馈与联系

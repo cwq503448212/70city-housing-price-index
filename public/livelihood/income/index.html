@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>中国居民人均收入与支出看板</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-main">
+    <div class="brand">
+      <h1>中国居民人均收入与支出看板</h1>
+      <p class="brand-sub">数据来源：国家统计局 · 国家数据（年度）　历史一次拉全，按年增补</p>
+    </div>
+
+    <div class="controls">
+      <a class="back-link" href="../../">← 返回模块选择</a>
+      <label class="ctrl">
+        <span class="ctrl-label">时间范围</span>
+        <select id="range">
+          <option value="5">近 5 年</option>
+          <option value="10">近 10 年</option>
+          <option value="all" selected>全部（2013 起）</option>
+          <option value="custom">自定义年份</option>
+        </select>
+      </label>
+
+      <div class="ctrl ctrl-custom" id="custom-box" hidden>
+        <label class="ctrl">
+          <span class="ctrl-label">起</span>
+          <input type="number" id="from" min="2013" max="2100" step="1" />
+        </label>
+        <label class="ctrl">
+          <span class="ctrl-label">止</span>
+          <input type="number" id="to" min="2013" max="2100" step="1" />
+        </label>
+      </div>
+
+      <button id="refresh" class="btn" type="button" title="跳过缓存，重新向统计局请求一次">刷新数据</button>
+      <span id="status" class="status">正在加载…</span>
+    </div>
+  </div>
+  <p class="range-hint" id="range-hint"></p>
+</header>
+
+<main>
+  <section class="kpi-row" id="kpi-row" aria-label="关键指标"></section>
+
+  <section class="grid">
+    <article class="card card-wide">
+      <header class="card-head">
+        <h2>人均可支配收入与人均消费支出（元 / 人·年）</h2>
+        <p class="card-sub">全体居民口径，城乡一体化住户调查；收入与支出不是同一本账，不做差额推算</p>
+      </header>
+      <div class="chart chart-lg" id="chart-income-spend"></div>
+    </article>
+
+    <article class="card card-wide">
+      <header class="card-head">
+        <h2>名义增速（%）</h2>
+        <p class="card-sub">官方发布的「比上年增长」，未扣除价格因素；年度库没有实际增速指标</p>
+      </header>
+      <div class="chart" id="chart-yoy"></div>
+    </article>
+
+    <article class="card card-wide">
+      <header class="card-head">
+        <h2>消费结构（最新已入库年度）</h2>
+        <p class="card-sub" id="pie-sub">八项消费分项占比，由官方分项值直接相除得出</p>
+      </header>
+      <div class="chart" id="chart-pie"></div>
+    </article>
+
+    <article class="card card-wide">
+      <header class="card-head">
+        <h2>四项收入分项（元）</h2>
+        <p class="card-sub">工资性 + 经营净 + 财产净 + 转移净 = 人均可支配收入，四项为官方直接发布值</p>
+      </header>
+      <div class="chart" id="chart-income-parts"></div>
+    </article>
+
+    <article class="card card-wide">
+      <header class="card-head">
+        <h2>八项消费分项时序（元）</h2>
+        <p class="card-sub">食品烟酒、衣着、居住、生活用品及服务、交通通信、教育文化娱乐、医疗保健、其他用品及服务</p>
+      </header>
+      <div class="chart chart-lg" id="chart-spend-parts"></div>
+    </article>
+
+    <article class="card card-wide">
+      <header class="card-head">
+        <h2>城乡收支对比（元）</h2>
+        <p class="card-sub">城镇 / 农村是分户口径；全体居民由城乡加权汇总，不是两者算术平均</p>
+      </header>
+      <div class="chart" id="chart-urban-rural"></div>
+    </article>
+  </section>
+
+  <section class="card">
+    <header class="card-head">
+      <h2>指标明细</h2>
+      <p class="card-sub">最新一年与上一年对比；「变化」为本页相邻两年相减，不是官方发布的增速</p>
+    </header>
+    <div class="table-wrap">
+      <table id="detail-table">
+        <thead>
+          <tr>
+            <th>指标</th>
+            <th class="num">最新值</th>
+            <th class="num">上年</th>
+            <th class="num">变化</th>
+            <th>年份</th>
+            <th>来源</th>
+            <th>状态</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <p>
+      <strong>口径：</strong>人均可支配收入 / 人均消费支出均为「全体居民」口径（城乡一体化住户调查），
+      单位「元 / 人·年」。收入四项为工资性收入、经营净收入、财产净收入、转移净收入，四项之和等于人均可支配收入；
+      消费支出为食品烟酒、衣着、居住、生活用品及服务、交通通信、教育文化娱乐、医疗保健、其他用品及服务八项之和。
+      「服务性消费支出」是跨八项的服务类交叉口径（如餐饮服务、教育服务、医疗服务），<em>不计入</em>八项之和，故不参与饼图。
+    </p>
+    <p>
+      <strong>名义增速与实际增速：</strong>本页展示的增速是国家统计局年度库直接发布的「比上年增长」，按现价计算，
+      未扣除价格因素，属于<strong>名义增速</strong>。该年度库没有发布居民收支的「实际增速」，本页也不用 CPI 自行折算——
+      跨口径折算会造出一个官方并不发布的数，宁可如实说明。
+    </p>
+    <p>
+      <strong>城乡不可简单平均：</strong>城镇与农村是两套住户调查样本，全体居民由城乡按常住人口加权汇总。
+      把城镇与农村的收支取算术平均得不到全体居民数值，本页不做这种平均。
+    </p>
+    <p>
+      <strong>数据来源：</strong>国家统计局「国家数据」(data.stats.gov.cn) 年度库「人民生活」栏目（收入 A0901 / 支出 A0902）
+      的站点内部接口，非官方开放 API，没有稳定性承诺；接口不可用时回退本地缓存并标记「数据可能滞后」，不返回空图。
+    </p>
+    <p>
+      <strong>缺失值：</strong>统计局尚未入库的年份显示为空缺，不插值、不补 0。
+    </p>
+    <p id="foot-meta" class="foot-meta"></p>
+  </footer>
+</main>
+
+<script src="../../vendor/echarts.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

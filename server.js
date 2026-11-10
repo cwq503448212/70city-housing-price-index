@@ -3,15 +3,16 @@
 /**
  * 中国经济统计数据看板 —— 本地服务
  *
- * 一个服务、四个模块，共用同一个端口与静态目录：
+ * 一个服务、五个看板，共用同一个端口与静态目录：
  *   房价模块  /housing/    ← 页面    /api/nbs70            ← 数据（国家统计局月报解析）
  *   宏观模块  /macro/      ← 页面    /api/macro/*          ← 数据（国家数据站点，拉全后缓存）
  *   LPR 模块  /lpr/        ← 页面    /api/lpr/*            ← 数据（中国货币网官方 JSON，拉全后缓存）
  *   民生模块  /livelihood/ ← 页面    /api/livelihood/*     ← 数据（国家数据年度库，拉全后缓存）
+ *   人均收支  /livelihood/income/ ← 页面 /api/livelihood/income-expenditure ← 数据（同一年度库，独立缓存）
  *   入口页    /            ← 选择进入哪个模块
  *
  * 职责：
- *   1. 提供四个模块的 API（服务端取数，规避浏览器跨域与站点 WAF）
+ *   1. 提供各看板的 API（服务端取数，规避浏览器跨域与站点 WAF）
  *   2. 托管 public/ 下的静态页面与本地 ECharts
  *
  * 零依赖，只用 Node 内置模块，Node >= 20 即可运行。
@@ -31,6 +32,8 @@ const macroStore = require('./lib/macro/cache/store');
 const lprApi = require('./lib/lpr/api');
 const livelihoodApi = require('./lib/livelihood/api');
 const livelihoodService = require('./lib/livelihood/service');
+const incomeApi = require('./lib/livelihood/income/api');
+const incomeService = require('./lib/livelihood/income/service');
 
 const PORT = Number(process.env.PORT) || 5173;
 const HOST = process.env.HOST || '127.0.0.1';
@@ -116,17 +119,18 @@ function serveStatic(req, res, pathname) {
   });
 }
 
-/** 健康检查：四个模块的概况（start.bat 也靠它确认端口上确实是本服务） */
+/** 健康检查：各看板的概况（start.bat 也靠它确认端口上确实是本服务） */
 function health() {
   return {
     ok: true,
     uptime: process.uptime(),
     now: new Date().toISOString(),
-    modules: ['housing', 'macro', 'lpr', 'livelihood'],
+    modules: ['housing', 'macro', 'lpr', 'livelihood', 'livelihood-income'],
     housing: { dataset: housingDatasetInfo() },
     macro: { cache: macroStore.stats(), dataset: macroSeries.datasetStatus() },
     lpr: lprApi.health(),
     livelihood: livelihoodApi.health(),
+    livelihoodIncome: incomeApi.health(),
   };
 }
 
@@ -175,6 +179,41 @@ const server = http.createServer((req, res) => {
           res,
           200,
           await macroApi.one(decodeURIComponent(r[1]), Object.assign({}, query, { force: '1' }))
+        );
+      }
+      return sendJson(res, 404, { status: 'error', error: '未知接口 ' + pathname });
+    };
+    run().catch((e) => {
+      // 上游失败不会走到这里（服务层已回退缓存）；
+      // 只有「未知指标」这类请求错误（带 status）和配置/代码错误才会落到这里
+      sendJson(res, e.status || 500, { status: 'error', error: e.message || String(e) });
+    });
+    return undefined;
+  }
+
+  // ---------------- 人均收入与支出（民生子模块：同一年度库，独立缓存） ----------------
+  // 必须排在 /api/livelihood/ 前缀分支之前，否则会被婚育模块的分发吃掉
+  if (pathname.indexOf('/api/livelihood/income-expenditure') === 0) {
+    const run = async () => {
+      if (pathname === '/api/livelihood/income-expenditure/health') {
+        return sendJson(res, 200, health());
+      }
+      if (pathname === '/api/livelihood/income-expenditure/indicators') {
+        return sendJson(res, 200, await incomeApi.indicators());
+      }
+      if (pathname === '/api/livelihood/income-expenditure') {
+        return sendJson(res, 200, await incomeApi.overview(query));
+      }
+      const m = /^\/api\/livelihood\/income-expenditure\/series\/([\w-]+)$/.exec(pathname);
+      if (m) {
+        return sendJson(res, 200, await incomeApi.one(decodeURIComponent(m[1]), query));
+      }
+      const r = /^\/api\/livelihood\/income-expenditure\/refresh\/([\w-]+)$/.exec(pathname);
+      if (r) {
+        return sendJson(
+          res,
+          200,
+          await incomeApi.one(decodeURIComponent(r[1]), Object.assign({}, query, { force: '1' }))
         );
       }
       return sendJson(res, 404, { status: 'error', error: '未知接口 ' + pathname });
@@ -255,7 +294,8 @@ server.listen(PORT, HOST, () => {
   console.log('    ├─ 70 城房价指数     http://' + HOST + ':' + PORT + '/housing/');
   console.log('    ├─ 宏观经济指标      http://' + HOST + ':' + PORT + '/macro/');
   console.log('    ├─ 房贷利率 LPR      http://' + HOST + ':' + PORT + '/lpr/');
-  console.log('    └─ 民生 · 婚育       http://' + HOST + ':' + PORT + '/livelihood/');
+  console.log('    ├─ 民生 · 婚育       http://' + HOST + ':' + PORT + '/livelihood/');
+  console.log('    └─ 民生 · 人均收支   http://' + HOST + ':' + PORT + '/livelihood/income/');
   const macroSet = macroSeries.datasetStatus();
   console.log('  [宏观] 缓存目录：' + macroSet.dir);
   if (!macroSet.files) {
@@ -287,6 +327,17 @@ server.listen(PORT, HOST, () => {
     );
   } else {
     console.log('  [民生] 已缓存 ' + liveSet.files + ' 个年度文件，最新 ' + liveSet.latest + '，已对应当年应发布年度');
+  }
+  const incomeSet = incomeService.datasetStatus();
+  if (!incomeSet.files) {
+    console.log('  [民生·收支] 尚无缓存：首次打开会把 ' + incomeSet.historyFrom + ' 起的全部年度数据一次拉全（六个请求，约十秒）');
+  } else if (incomeSet.behind) {
+    console.log(
+      '  [民生·收支] 已缓存 ' + incomeSet.files + ' 个年度文件，最新 ' + incomeSet.latest + '；' +
+        incomeSet.behind + ' 个指标缺应发布年度，打开页面时核对'
+    );
+  } else {
+    console.log('  [民生·收支] 已缓存 ' + incomeSet.files + ' 个年度文件，最新 ' + incomeSet.latest + '，已对应当年应发布年度');
   }
   console.log('');
 
@@ -325,5 +376,12 @@ server.listen(PORT, HOST, () => {
     require('./lib/livelihood/config').load();
   } catch (e) {
     console.error('  [民生] 配置有误：' + e.message);
+  }
+
+  // 人均收支子模块：配置独立（config/income.json），取数通道与民生模块共用
+  try {
+    require('./lib/livelihood/income/config').load();
+  } catch (e) {
+    console.error('  [民生·收支] 配置有误：' + e.message);
   }
 });

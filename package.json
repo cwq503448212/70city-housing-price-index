@@ -1,8 +1,8 @@
 {
   "name": "china-economic-stats-dashboard",
-  "version": "3.1.0",
+  "version": "3.2.0",
   "private": true,
-  "description": "中国经济统计数据看板：70 个大中城市房价指数 + 宏观经济指标（CPI / PPI / PMI / 社零 / M2）+ 房贷利率 LPR + 婚育与人口出生（结婚 / 离婚登记、初婚人数、出生率），数据来自国家统计局与中国货币网",
+  "description": "中国经济统计数据看板：70 个大中城市房价指数 + 宏观经济指标（CPI / PPI / PMI / 社零 / M2）+ 房贷利率 LPR + 婚育与人口出生（结婚 / 离婚登记、初婚人数、出生率）+ 人均收入与支出（可支配收入、四项收入分项、八项消费分项、城乡对比），数据来自国家统计局与中国货币网",
   "author": "cwq503448212 <503448212@qq.com>",
   "repository": {
     "type": "git",
@@ -20,7 +20,7 @@
     "data:build": "node -e \"console.log(require('./lib/housing/nbs70').publishDataset())\"",
     "data:raw": "node -e \"require('./lib/housing/nbs70').backfillRaw({}).then(function(r){console.log(r)})\""
   },
-  "keywords": ["国家统计局", "70城房价", "宏观经济", "CPI", "PPI", "PMI", "LPR", "贷款市场报价利率", "中国货币网", "数据可视化"],
+  "keywords": ["国家统计局", "70城房价", "宏观经济", "CPI", "PPI", "PMI", "LPR", "贷款市场报价利率", "中国货币网", "人均可支配收入", "消费支出", "数据可视化"],
   "engines": {
     "node": ">=20"
   }
