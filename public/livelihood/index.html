@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>中国婚育与人口出生看板</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-main">
+    <div class="brand">
+      <h1>中国婚育与人口出生看板</h1>
+      <p class="brand-sub">数据来源：国家统计局 · 国家数据（年度）　历史一次拉全，按年增补</p>
+    </div>
+
+    <div class="controls">
+      <a class="back-link" href="../">← 返回模块选择</a>
+      <label class="ctrl">
+        <span class="ctrl-label">时间范围</span>
+        <select id="range">
+          <option value="10">近 10 年</option>
+          <option value="20" selected>近 20 年</option>
+          <option value="30">近 30 年</option>
+          <option value="all">全部（1978 起）</option>
+          <option value="custom">自定义年份</option>
+        </select>
+      </label>
+
+      <div class="ctrl ctrl-custom" id="custom-box" hidden>
+        <label class="ctrl">
+          <span class="ctrl-label">起</span>
+          <input type="number" id="from" min="1978" max="2100" step="1" />
+        </label>
+        <label class="ctrl">
+          <span class="ctrl-label">止</span>
+          <input type="number" id="to" min="1978" max="2100" step="1" />
+        </label>
+      </div>
+
+      <button id="refresh" class="btn" type="button" title="跳过缓存，重新向统计局请求一次">刷新数据</button>
+      <span id="status" class="status">正在加载…</span>
+    </div>
+  </div>
+  <p class="range-hint" id="range-hint"></p>
+</header>
+
+<main>
+  <section class="kpi-row" id="kpi-row" aria-label="关键指标"></section>
+
+  <section class="grid">
+    <article class="card card-wide">
+      <header class="card-head">
+        <h2>婚姻登记：结婚 / 离婚（万对）</h2>
+        <p class="card-sub">民政统计年报口径的全年登记对数；2025 年婚姻登记尚未入库，曲线尾部会空缺</p>
+      </header>
+      <div class="chart" id="chart-marriage"></div>
+    </article>
+
+    <article class="card">
+      <header class="card-head">
+        <h2>初婚人数（万人）</h2>
+        <p class="card-sub">人数不是对数：一对初婚夫妻计 2 人，数值约为同年结婚登记对数的两倍</p>
+      </header>
+      <div class="chart" id="chart-first"></div>
+    </article>
+
+    <article class="card">
+      <header class="card-head">
+        <h2>结婚登记年度变化（万对）</h2>
+        <p class="card-sub" id="change-sub">相邻两年相减所得，非官方发布指标；红柱为增加、绿柱为减少</p>
+      </header>
+      <div class="chart" id="chart-change"></div>
+    </article>
+
+    <article class="card card-wide">
+      <header class="card-head">
+        <h2>人口出生率 / 死亡率 / 自然增长率（‰）</h2>
+        <p class="card-sub">千分率，均为官方直接发布值；自然增长率不由本页相减得出，0 线以下为人口负增长</p>
+      </header>
+      <div class="chart" id="chart-rate"></div>
+    </article>
+  </section>
+
+  <section class="card">
+    <header class="card-head">
+      <h2>指标明细</h2>
+      <p class="card-sub">最新一年与上一年对比；「状态」列标出数据是否可能滞后</p>
+    </header>
+    <div class="table-wrap">
+      <table id="detail-table">
+        <thead>
+          <tr>
+            <th>指标</th>
+            <th class="num">最新值</th>
+            <th class="num">上年</th>
+            <th class="num">变化</th>
+            <th>年份</th>
+            <th>来源</th>
+            <th>状态</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <p>
+      <strong>口径：</strong>结婚登记 / 离婚登记的单位是「万对」，初婚人数的单位是「万人」，出生率 / 死亡率 /
+      自然增长率的单位是「‰」（千分率）。人数与对数不是同一量纲，不换算、不相除，也不做任何加权合成。
+      自然增长率直接取官方发布值，不由本页用出生率减死亡率代替。
+    </p>
+    <p>
+      <strong>为什么不用民政部季度公报：</strong>民政部「统计数据 → 季度民政统计数据」确实发布结婚 / 离婚登记，
+      但自 2026 年起该栏目正文改为图片（<code>part/*.jpg</code>），零依赖无法解析；该栏目也完全没有出生数据。
+      因此本模块统一取国家统计局「国家数据」年度库，年度口径完整、可稳定解析。
+    </p>
+    <p>
+      <strong>数据来源：</strong>国家统计局「国家数据」(data.stats.gov.cn) 年度库站点内部接口，非官方开放 API，
+      没有稳定性承诺；接口不可用时回退本地缓存并标记「数据可能滞后」，不返回空图。
+    </p>
+    <p>
+      <strong>缺失值：</strong>统计局未入库的年份显示为空缺，不插值、不补 0。2025 年婚姻登记尚未入库，
+      故结婚 / 离婚 / 初婚三条序列止于 2024 年，页面会照实标「待更新」。
+    </p>
+    <p id="foot-meta" class="foot-meta"></p>
+  </footer>
+</main>
+
+<script src="../vendor/echarts.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

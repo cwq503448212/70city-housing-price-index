@@ -15,13 +15,19 @@
  *                                          实际取数，看口径和量级对不对
  *   node probe.js check                    对配置里的指标做「官方 vs DBnomics」交叉校验
  *
- * 所有请求都走 sources/nbs.js，内部串行 + 1.2 秒间隔，不会打爆站点。
+ * 年度库（民生模块用，期别是 YYYY，年份参数写 1978 2025）：
+ *   node probe.js annual-tree [pid]        列出「年度数据」下的栏目树
+ *   node probe.js annual-indicators <catalogId>
+ *   node probe.js annual-data <catalogId> <indicatorId...> [fromYear] [toYear]
+ *
+ * 所有请求都走 sources/nbs.js 与 livelihood/source.js，内部串行 + 1.2 秒间隔，不会打爆站点。
  */
 
 const config = require('./lib/macro/config');
 const nbs = require('./lib/macro/sources/nbs');
 const dbnomics = require('./lib/macro/sources/dbnomics');
 const month = require('./lib/macro/util/month');
+const annual = require('./lib/livelihood/source');
 
 const ROOT_MONTHLY = 'fc982599aa684be7969d7b90b1bd0e84';
 
@@ -63,6 +69,43 @@ async function showData(catalogId, ids, from, to) {
     console.log(id + '  共 ' + months.length + ' 期');
     months.slice(-12).forEach((m) => {
       console.log('    ' + m + '  ' + map[m]);
+    });
+  });
+}
+
+/** 年度库：栏目树 / 指标清单 / 实际取数（年份而不是月份） */
+async function annualTree(pid) {
+  const nodes = await annual.tree(pid || '');
+  line();
+  console.log('栏目数：' + nodes.length + (pid ? '（父节点 ' + pid + '）' : '（年度数据）'));
+  line();
+  nodes.forEach((n) => {
+    console.log([n._id, n.isLeaf ? '叶子' : '目录', n._name].join('  |  '));
+  });
+}
+
+async function annualIndicators(catalogId) {
+  const list = await annual.indicatorsOf(catalogId);
+  line();
+  console.log('指标数：' + list.length + '（年度栏目 ' + catalogId + '）');
+  line();
+  list.forEach((x) => {
+    const span = (x.sdate || '?').slice(0, 4) + ' ~ ' + (x.edate ? x.edate.slice(0, 4) : '现在');
+    console.log([x.id, span, x.unit || '-', x.shown || x.name].join('  |  '));
+  });
+}
+
+async function annualData(catalogId, ids, from, to) {
+  const data = await annual.fetchRange({ catalogId: catalogId, indicatorIds: ids, from: from, to: to });
+  line();
+  console.log('年度区间：' + from + ' ~ ' + to);
+  line();
+  ids.forEach((id) => {
+    const map = data[id] || {};
+    const years = Object.keys(map).sort();
+    console.log(id + '  共 ' + years.length + ' 年');
+    years.slice(-10).forEach((y) => {
+      console.log('    ' + y + '  ' + map[y]);
     });
   });
 }
@@ -139,6 +182,9 @@ async function main() {
     console.log('  node probe.js indicators <catalogId>');
     console.log('  node probe.js data <catalogId> <indicatorId...> [from] [to]');
     console.log('  node probe.js check');
+    console.log('  node probe.js annual-tree [pid]');
+    console.log('  node probe.js annual-indicators <catalogId>');
+    console.log('  node probe.js annual-data <catalogId> <indicatorId...> [fromYear] [toYear]');
     return;
   }
 
@@ -158,6 +204,23 @@ async function main() {
     const bad = await checkAll();
     if (bad) process.exitCode = 1;
     return;
+  }
+  if (cmd === 'annual-tree') return annualTree(a);
+  if (cmd === 'annual-indicators') {
+    if (!a) throw new Error('缺少 catalogId');
+    return annualIndicators(a);
+  }
+  if (cmd === 'annual-data') {
+    if (!a) throw new Error('缺少 catalogId');
+    const ids = process.argv
+      .slice(2)
+      .filter((x) => /^[0-9a-f]{32}$/i.test(x))
+      .filter((x, i, arr) => arr.indexOf(x) === i && x !== a);
+    if (!ids.length) throw new Error('indicatorId 必须是 32 位编码');
+    const years = process.argv.slice(2).filter((x) => /^\d{4}$/.test(x));
+    const to = years[1] || String(new Date().getFullYear() - 1);
+    const from = years[0] || String(Number(to) - 9);
+    return annualData(a, ids, from, to);
   }
   throw new Error('未知命令：' + cmd);
 }

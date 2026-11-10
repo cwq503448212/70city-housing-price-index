@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>中国经济统计数据看板</title>
-    <meta name="description" content="国家统计局与中国货币网数据的本地可视化看板：70 个大中城市房价指数、月度宏观经济指标、房贷利率 LPR" />
+    <meta name="description" content="国家统计局与中国货币网数据的本地可视化看板：70 个大中城市房价指数、月度宏观经济指标、房贷利率 LPR、婚育与人口出生" />
     <link rel="icon" href="data:," />
     <link rel="stylesheet" href="home.css" />
   </head>
@@ -59,13 +59,26 @@
           </p>
           <span class="module-go">进入 LPR 看板 →</span>
         </a>
+
+        <a class="module" href="livelihood/">
+          <div class="module-top">
+            <span class="module-mark">民</span>
+            <span class="module-tag">年度 · 1978 年起</span>
+          </div>
+          <h3>婚育与人口出生</h3>
+          <p>
+            结婚登记 / 离婚登记 / 初婚人数与人口出生率、死亡率、自然增长率：
+            婚姻与人口的长期趋势、逐年变化、千分率对比。首次打开一次拉全并缓存，之后只在有新年份时补充。
+          </p>
+          <span class="module-go">进入民生看板 →</span>
+        </a>
       </div>
 
       <section class="home-note">
         <h4>说明</h4>
         <p>
           页面上的按钮只在本机运行，不会把数据上传到任何地方。房价数据随项目分发；
-          宏观经济与 LPR 数据首次打开时会拉全历史并存在本地（便携包已带上打包时的历史数据，只需补最新几期），
+          宏观经济、LPR 与民生数据首次打开时会拉全历史并存在本地（便携包已带上打包时的历史数据，只需补最新几期），
           之后每次打开只核对是否已发布新一期：有新的就补进去，没发布就直接读缓存。
         </p>
         <p class="muted">
@@ -76,7 +89,7 @@
     </main>
 
     <footer class="home-foot">
-      <p>中国经济统计数据看板 · 70 城房价 / 宏观经济 / 房贷利率 LPR 三个模块 · 仅供数据观察，不构成任何投资建议</p>
+      <p>中国经济统计数据看板 · 70 城房价 / 宏观经济 / 房贷利率 LPR / 婚育与人口出生 四个模块 · 仅供数据观察，不构成任何投资建议</p>
     </footer>
   </body>
 </html>

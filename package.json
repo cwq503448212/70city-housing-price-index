@@ -1,8 +1,8 @@
 {
   "name": "china-economic-stats-dashboard",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "private": true,
-  "description": "中国经济统计数据看板：70 个大中城市房价指数 + 宏观经济指标（CPI / PPI / PMI / 社零 / M2）+ 房贷利率 LPR，数据来自国家统计局与中国货币网",
+  "description": "中国经济统计数据看板：70 个大中城市房价指数 + 宏观经济指标（CPI / PPI / PMI / 社零 / M2）+ 房贷利率 LPR + 婚育与人口出生（结婚 / 离婚登记、初婚人数、出生率），数据来自国家统计局与中国货币网",
   "author": "cwq503448212 <503448212@qq.com>",
   "repository": {
     "type": "git",

@@ -1,0 +1,107 @@
+{
+  "site": {
+    "baseUrl": "https://data.stats.gov.cn",
+    "ext": "/dg/website/publicrelease/web/external",
+    "page": "/dg/website/page.html",
+    "rootId": "884c062607104a91967b22742537f44f",
+    "rootLabel": "国家数据 · 年度数据"
+  },
+  "history": {
+    "from": "1978",
+    "note": "年度库自 1978 年起；早期年份部分指标为空（如 1979-1981 年婚姻登记），缺失就是缺失，不补数"
+  },
+  "groups": [
+    { "key": "marriage", "label": "婚姻登记", "note": "民政统计年报口径，万对 / 万人" },
+    { "key": "birth", "label": "出生与人口", "note": "千分率，‰" }
+  ],
+  "catalogs": {
+    "marriage_service": {
+      "label": "社会服务 · 婚姻服务（年度）",
+      "id": "903b12570f7b4d73b578945248019f8f"
+    },
+    "population_rate": {
+      "label": "人口 · 人口出生率、死亡率和自然增长率（年度）",
+      "id": "ffed4267bba24830beea5991d4c9bcfc"
+    }
+  },
+  "indicators": [
+    {
+      "id": "marriage_reg",
+      "label": "结婚登记（年度）",
+      "shortLabel": "结婚登记",
+      "unit": "万对",
+      "kind": "count",
+      "group": "marriage",
+      "decimals": 2,
+      "note": "民政统计年报口径：全年结婚登记对数，含初婚与再婚；2025 年尚未入库",
+      "catalog": "marriage_service",
+      "indicatorId": "5e0866382c3b452c9b7b2e86d3095a78",
+      "shown": "结婚登记 (万对)"
+    },
+    {
+      "id": "divorce_reg",
+      "label": "离婚登记（年度）",
+      "shortLabel": "离婚登记",
+      "unit": "万对",
+      "kind": "count",
+      "group": "marriage",
+      "decimals": 2,
+      "note": "民政统计年报口径：全年离婚登记对数，含民政登记离婚；法院判决、调解离婚不计入",
+      "catalog": "marriage_service",
+      "indicatorId": "93cab04607d241158bfc2d9375bc8f55",
+      "shown": "离婚登记 (万对)"
+    },
+    {
+      "id": "first_marriage_persons",
+      "label": "结婚登记初婚人数（年度）",
+      "shortLabel": "初婚人数",
+      "unit": "万人",
+      "kind": "count",
+      "group": "marriage",
+      "decimals": 2,
+      "note": "人数不是对数：一对初婚夫妻计 2 人，故数值约为同年结婚登记对数的两倍",
+      "catalog": "marriage_service",
+      "indicatorId": "c39dfcdb699c423d839d4551ccfa21c8",
+      "shown": "结婚登记初婚人数 (万人)"
+    },
+    {
+      "id": "birth_rate",
+      "label": "人口出生率（年度）",
+      "shortLabel": "出生率",
+      "unit": "‰",
+      "kind": "rate",
+      "group": "birth",
+      "decimals": 2,
+      "note": "年内出生人数 / 年平均人口，千分率；不是出生人口绝对数",
+      "catalog": "population_rate",
+      "indicatorId": "3d4006d356d94bdd9d75700b9788e230",
+      "shown": "人口出生率 (‰)"
+    },
+    {
+      "id": "death_rate",
+      "label": "人口死亡率（年度）",
+      "shortLabel": "死亡率",
+      "unit": "‰",
+      "kind": "rate",
+      "group": "birth",
+      "decimals": 2,
+      "note": "年内死亡人数 / 年平均人口，千分率",
+      "catalog": "population_rate",
+      "indicatorId": "ee4b8be1ad68498e81d9ecddf4d4f2de",
+      "shown": "人口死亡率 (‰)"
+    },
+    {
+      "id": "natural_growth_rate",
+      "label": "人口自然增长率（年度）",
+      "shortLabel": "自然增长率",
+      "unit": "‰",
+      "kind": "rate",
+      "group": "birth",
+      "decimals": 2,
+      "note": "出生率 − 死亡率，官方直接发布，不由本页自行相减",
+      "catalog": "population_rate",
+      "indicatorId": "3969129b26a846968a7dddff5f326f55",
+      "shown": "人口自然增长率 (‰)"
+    }
+  ]
+}
