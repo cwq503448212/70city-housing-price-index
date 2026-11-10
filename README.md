@@ -6,8 +6,9 @@
 | --- | --- | --- |
 | **70 个大中城市房价指数** | `/housing/` | 新房 / 二手住宅环比、同比，城市排行、涨跌城市数、热力图、定基指数 |
 | **宏观经济指标** | `/macro/` | CPI / 核心 CPI / PPI / 八大类 / PMI / 社零 / M1·M2 |
+| **房贷利率 LPR** | `/lpr/` | 贷款市场报价利率 1 年期 / 5 年期以上：走势、调整幅度、期限利差、明细 |
 
-打开根地址 `/` 是模块选择页，点进去分别进入两个子页面；每个子页面右上角都有「← 模块选择」可以切回来。
+打开根地址 `/` 是模块选择页，点进去分别进入三个子页面；每个子页面右上角都有「← 模块选择」可以切回来。
 
 ![模块选择入口](docs/screenshot-home.png)
 
@@ -25,17 +26,17 @@ node server.js
 
 > 必须通过这个本地服务访问，直接双击 `public/**/index.html` 是不行的：`file://` 下 `fetch('/api/...')` 会被浏览器拦下，拿不到数据；而且统计局站点有 WAF，浏览器直连会 403，数据只能由服务端代取。
 
-- 需要 Node >= 20，**不需要 `npm install`**（ECharts 已内置在 `public/vendor/`，两个模块共用一份）。
-- 两个模块共用同一个端口和同一个进程，`/api/health` 会一并返回两边的概况。
+- 需要 Node >= 20，**不需要 `npm install`**（ECharts 已内置在 `public/vendor/`，所有模块共用一份）。
+- 三个模块共用同一个端口和同一个进程，`/api/health` 会一并返回三边的概况。
 - 换端口：`PORT=8080 node server.js`（PowerShell 写法 `$env:PORT=8080; node server.js`）。用 `start.bat` 时可以 `set DASH_PORT=5180` 后再双击（旧的 `NBS_PORT` 仍然兼容）。
 
 ## 目录结构
 
 ```
-server.js                    本地 HTTP 服务：静态托管 + 路由分发（/api/nbs70、/api/macro/*）
+server.js                    本地 HTTP 服务：静态托管 + 路由分发（/api/nbs70、/api/macro/*、/api/lpr/*）
 start.bat                    Windows 一键启动（双击即可）
 build.bat                    便携包一键打包（双击；转发给 packaging/build.ps1）
-AGENTS.md                    两个模块共用的开发规范
+AGENTS.md                    三个模块共用的开发规范
 
 lib/housing/nbs70.js         房价：站内搜索建索引 → 月报正文表格解析 → 数据集/缓存读写
 lib/macro/config.js          宏观：装载并校验 config/indicators.json
@@ -46,6 +47,7 @@ lib/macro/cache/store.js     宏观：JSON 月缓存读写（.cache/macro/<指�
 lib/macro/sources/nbs.js     宏观主源：国家数据新版站点接口
 lib/macro/sources/dbnomics.js 宏观兜底：DBnomics 开放 API
 lib/macro/util/              极简 HTTP 客户端 / 串行限流 / 月份工具
+lib/lpr/                     LPR：config（上游与发布日）/ policy（回源判定）/ source（中国货币网）/ store（全量单文件缓存）/ api
 
 config/indicators.json       宏观指标配置（栏目 / 指标 / 分段 / 发布日 / 兜底）
 probe.js                     宏观指标编码探测 + 官方/镜像交叉校验
@@ -53,13 +55,14 @@ probe.js                     宏观指标编码探测 + 官方/镜像交叉校�
 public/index.html            模块选择入口（+ home.css）
 public/housing/              房价看板：index.html / styles.css / app.js
 public/macro/                宏观看板：index.html / styles.css / app.js
-public/vendor/               ECharts 5（两个模块共用）
+public/lpr/                  LPR 看板：index.html / styles.css / app.js
+public/vendor/               ECharts 5（所有模块共用）
 
 data/periods.json            房价数据集（189 个月，随项目分发）
 docs/                        页面截图
 packaging/                   便携包的 start.bat / 使用说明.txt / build.ps1（打包实现）
 release/                     打包产物，不入库
-.cache/                      抓取中间产物：房价解析结果与月报原文、macro/ 宏观月缓存（可安全删除）
+.cache/                      抓取中间产物：房价解析结果与月报原文、macro/ 宏观月缓存、lpr/ LPR 全量缓存（可安全删除）
 ```
 
 ---
@@ -290,7 +293,7 @@ set MACRO_DATA_DIR=D:\macro-cache
 
 | 接口 | 说明 |
 | --- | --- |
-| `GET /api/health` | 健康检查（两个模块共用，含房价数据集与宏观缓存概况） |
+| `GET /api/health` | 健康检查（三个模块共用，含房价数据集、宏观与 LPR 缓存概况） |
 | `GET /api/macro/health` | 同上，宏观模块内的别名 |
 | `GET /api/macro/indicators` | 指标清单（不含数据，含 stale / latestCached） |
 | `GET /api/macro/overview` | 看板一次性取全量（顶部时间选择就靠它；含 `refreshing` 后台补齐标记） |
@@ -298,6 +301,66 @@ set MACRO_DATA_DIR=D:\macro-cache
 | `GET /api/macro/refresh/:id` | 手动刷新单指标（等价于 `series?id&force=1`） |
 
 查询参数：`range=12|36|60|120|all`、`from=YYYY-MM&to=YYYY-MM`（优先于 range）、`force=1`。
+
+---
+
+# 模块三：房贷利率 LPR
+
+贷款市场报价利率（LPR）的本地看板：**1 年期与 5 年期以上两个品种**，自 2019-08-20 首次发布起的全历史（约 90 期）。
+
+## 看板上有什么
+
+| 区块 | 内容 | 口径 |
+| --- | --- | --- |
+| KPI 卡片 | 两品种最新值、最近一次调整、期限利差（5Y − 1Y） | % / bp |
+| LPR 走势 | 两条阶梯线（报价维持到下一次调整，故不画平滑线） | % |
+| 报价调整幅度 | 每期较上期变动，红升绿降，未调整的期次不画柱 | bp（1bp = 0.01 个百分点） |
+| 期限利差 | 5 年期以上 − 1 年期 | 百分点 |
+| 明细数据 | 发布日期、两品种报价与较上期变化 | % / bp |
+
+时间范围支持 **近 1 年 / 3 年 / 5 年 / 全部**，默认全部（全历史才约 90 期），选择记在 `localStorage`（键 `lpr.range.v1`）。图表单行通栏，不做并排。
+
+![房贷利率 LPR 看板](docs/screenshot-lpr.png)
+
+## 数据源
+
+**中国货币网（chinamoney.com.cn）** —— 全国银行间同业拆借中心官网，即 LPR 的官方发布平台：
+
+```
+POST https://www.chinamoney.com.cn/ags/ms/cm-u-bk-currency/LprHis?lang=CN&strStartDate=YYYY-MM-DD&strEndDate=YYYY-MM-DD
+```
+
+- 站点有 WAF：必须带浏览器 UA 与 Referer；HTTP 200 且 `head.rep_code === '200'` 才算成功
+- 响应 `records[]` 按日期倒序，一行 = `{ '1Y': '3.00', '5Y': '3.50', showDateCN: '2026-10-20' }`，数值是字符串百分数
+- 期限字段名以 `data.baseCurveCfgList` 为准（当前 `['1Y','5Y']`），防站点改列名
+- ⚠️ **上游限制：一次查询跨度超过一年时返回空 records**（`data.message = 「只提供一年历史数据查询及下载」`），所以拉全历史按自然年分段请求（约 8 段）后按日期去重合并，段间留 400ms 间隔；本项目永远整段拉全（约 90 期 / 几 KB），不做增量
+
+> ⚠️ **稳定性声明**：这是该站「LPR · 历史数据」页面自己用的 JSON，**不是官方开放 API**，没有稳定性承诺；LPR 数据版权归全国银行间同业拆借中心所有。页面地址：https://www.chinamoney.com.cn/chinese/bklpr/
+
+## 缓存与拉取策略
+
+与宏观模块同款模型，按单序列简化：
+
+- 缓存 = `.cache/lpr/lpr.json`（全量单文件，含 `updatedAt / source / records`）+ `_meta.json`（回源时间戳）；目录可用环境变量 `LPR_DATA_DIR` 覆盖
+- **首次打开**：本地没有缓存 → 同步分段拉全（按年分约 8 段请求，几秒），失败才把空态交给前端
+- **之后每次打开**：只核对应发布期别——缓存最新一条已到本月应发布日（20 日 09:15 后）就直接用；否则后台核对一次，先展示缓存（`refreshing: true`），前端 3 秒后重取，最多补 5 次
+- 两次回源尝试至少间隔 10 分钟（记在 `_meta.json` 的 `lastAttempt`，落盘，进程重启仍生效）
+- 发布日 = 每月 20 日（遇节假日顺延）；顺延日期本地算不出，仍按 20 日判定，没发布就核对一次拿不到新数据，顺延后的日子再打开会再核对一次（10 分钟冷却内不重复），行为自然正确
+- 上游失败 → 回退缓存并标 `stale: true`，**不抛 500、不返回空数组**
+- 判定逻辑集中在 `lib/lpr/policy.js`，前端只消费 `stale` / `refreshing` 字段，不自己算日期
+
+## 口径规则（不许破）
+
+- 1 年期与 5 年期以上是两个独立品种，各画各的线，不混口径
+- `3.5` 存原始值、展示为 `3.50%`；调整幅度换算成 bp 展示（1bp = 0.01 个百分点）
+- 缺失用 `null`，不插值、不补 0；实际房贷利率 = LPR + 加点，页面只展示 LPR 本身，不代表任何银行实际执行利率
+
+## 接口
+
+| 接口 | 说明 |
+| --- | --- |
+| `GET /api/lpr/overview` | 全部记录 + 状态（`stale` / `refreshing` / `meta`），支持 `force=1` 强制回源 |
+| `GET /api/lpr/health` | 健康检查（与 `/api/health` 的 `lpr` 字段一致） |
 
 ---
 
@@ -320,12 +383,13 @@ powershell -ExecutionPolicy Bypass -File packaging\build.ps1
 
 ```
 release/中国经济统计数据看板/                                      解压后双击 start.bat
-release/china-economic-stats-dashboard-v2.0.0-win10-win11.zip     对外发送
+release/china-economic-stats-dashboard-v3.0.0-win10-win11.zip     对外发送
 ```
 
-包内是 `node.exe`（官方签名二进制，v20.12.2）、`server.js`、`lib/`、`config/`、`public/`、`data/periods.json`、`probe.js`、`docs/`、`README.md`、`start.bat`、`使用说明.txt`，以及一份 `.cache/macro/`；不含 `node_modules/`、`AGENTS.md`。功能与源码版完全一致：两个模块、跨月自动核对、「刷新数据」都照常可用。
+包内是 `node.exe`（官方签名二进制，v20.12.2）、`server.js`、`lib/`、`config/`、`public/`、`data/periods.json`、`probe.js`、`docs/`、`README.md`、`start.bat`、`使用说明.txt`，以及一份 `.cache/macro/` 和 `.cache/lpr/`；不含 `node_modules/`、`AGENTS.md`。功能与源码版完全一致：三个模块、跨月自动核对、「刷新数据」都照常可用。
 
 - **分发包默认带宏观历史数据**：`.cache/macro/` 里是 20 个指标、约 1200 个月度文件（0.2 MB，打包时自动剔除本机的 `_meta.json` 回源时间戳），对方首次打开只需补最近几期，几秒钟就全了；删掉它才会全量重拉。
+- **LPR 历史同样随包分发**：`.cache/lpr/` 是一条全量序列（约 90 期 / 几 KB，同样剔 `_meta.json`），对方首次打开秒出图；就算不带，现场拉全也只要几秒。
 - **包放很久才打开也没问题**：缓存里有多少就用多少，缺的月份按「应发布期别」一次性补齐（缺 3 个月就只拉 3 个月，不会从头重拉）。只有统计局改了栏目/接口时才需要重新发版，否则最多看到「待更新」提示。
 
 - 便携版的 `start.bat` 和 `使用说明.txt` 放在 `packaging/` 里跟代码一起维护，打包时会拷过去。
@@ -341,7 +405,7 @@ release/china-economic-stats-dashboard-v2.0.0-win10-win11.zip     对外发送
 
 - **房价不是成交均价**。价格指数反映的是价格变动的相对幅度，不含绝对价格水平。
 - 宏观接口随时可能变化或限流，页面出现「待更新」属正常现象，请以统计局官网公布为准。
-- 两个模块的数据版权均归国家统计局所有，本项目只做本地可视化，不保存、不分发原始数据库。
+- 三个模块的数据版权分别归国家统计局（房价 / 宏观）与全国银行间同业拆借中心（LPR）所有，本项目只做本地可视化，不保存、不分发原始数据库。
 - 仅供数据观察，**不要用于任何投资决策依据**。
 
 ## 反馈与联系

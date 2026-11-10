@@ -17,7 +17,7 @@ if not exist "%NODE%" set "NODE=node"
 
 echo.
 echo   中国经济统计数据看板
-echo   70 城房价 + 宏观经济两个模块
+echo   70 城房价 + 宏观经济 + 房贷利率 LPR 三个模块
 echo   ==========================================
 echo.
 

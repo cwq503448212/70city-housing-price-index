@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>房贷利率 LPR 看板</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-main">
+    <div class="brand">
+      <h1>房贷利率 LPR 看板</h1>
+      <p class="brand-sub">数据来源：全国银行间同业拆借中心 · 中国货币网　每月 20 日发布（节假日顺延），2019-08 起</p>
+    </div>
+
+    <div class="controls">
+      <a class="back-link" href="../">← 返回模块选择</a>
+      <label class="ctrl">
+        <span class="ctrl-label">时间范围</span>
+        <select id="range">
+          <option value="12">近 1 年</option>
+          <option value="36">近 3 年</option>
+          <option value="60">近 5 年</option>
+          <option value="all" selected>全部（2019-08 起）</option>
+        </select>
+      </label>
+      <button id="refresh" class="btn" type="button" title="跳过缓存，重新向中国货币网请求一次">刷新数据</button>
+      <span id="status" class="status">正在加载…</span>
+    </div>
+  </div>
+  <p class="range-hint" id="range-hint"></p>
+</header>
+
+<main>
+  <section class="kpi-row" id="kpi-row" aria-label="关键指标"></section>
+
+  <section class="grid">
+    <article class="card">
+      <header class="card-head">
+        <h2>LPR 走势：1 年期与 5 年期以上</h2>
+        <p class="card-sub">%　两个品种各自报价、独立公布，各画各的线；报价维持到下一次调整，故用阶梯线</p>
+      </header>
+      <div class="chart" id="chart-lpr"></div>
+    </article>
+
+    <article class="card">
+      <header class="card-head">
+        <h2>报价调整幅度</h2>
+        <p class="card-sub">bp（1bp = 0.01 个百分点）　较上期变动，红升绿降，维持不变的期次不画柱</p>
+      </header>
+      <div class="chart" id="chart-change"></div>
+    </article>
+
+    <article class="card">
+      <header class="card-head">
+        <h2>期限利差：5 年期以上 − 1 年期</h2>
+        <p class="card-sub">百分点　反映中长期（按揭定价基准）与短期资金成本的相对水平</p>
+      </header>
+      <div class="chart" id="chart-spread"></div>
+    </article>
+  </section>
+
+  <section class="card">
+    <header class="card-head">
+      <h2>明细数据</h2>
+      <p class="card-sub">按发布日期倒序；「变化」为较上期变动（bp）</p>
+    </header>
+    <div class="table-wrap">
+      <table id="detail-table">
+        <thead>
+          <tr>
+            <th>发布日期</th>
+            <th class="num">1 年期（%）</th>
+            <th class="num">变化（bp）</th>
+            <th class="num">5 年期以上（%）</th>
+            <th class="num">变化（bp）</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <p>
+      <strong>口径：</strong>LPR 由 20 家报价行按公开市场操作利率加点报价，全国银行间同业拆借中心去掉最高、最低后
+      算术平均并向 0.05% 的整数倍就近取整得出，每月 20 日（遇节假日顺延）公布。
+      1 年期与 5 年期以上是两个独立品种，不混口径；调整幅度以 bp 计（1bp = 0.01 个百分点）。
+      实际房贷利率 = LPR + 加点，本页只展示 LPR 本身，不代表任何银行的实际执行利率。
+    </p>
+    <p>
+      <strong>数据来源：</strong>中国货币网（chinamoney.com.cn，全国银行间同业拆借中心官网）「LPR · 历史数据」
+      页面所用接口。官方发布平台，但非开放 API，无稳定性承诺；接口不可用时回退本地缓存并标记「数据可能滞后」。
+    </p>
+    <p id="foot-meta" class="foot-meta"></p>
+  </footer>
+</main>
+
+<script src="../vendor/echarts.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

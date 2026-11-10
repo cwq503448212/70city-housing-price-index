@@ -47,7 +47,7 @@ Copy-Item $NodeExe (Join-Path $pkg 'node.exe')
 foreach ($f in @('server.js', 'package.json', 'probe.js', 'README.md')) {
   Copy-Item (Join-Path $root $f) $pkg
 }
-# 两个模块的代码、配置、页面、固化数据集与截图（docs 只被 README 引用）
+# 三个模块的代码、配置、页面、固化数据集与截图（docs 只被 README 引用）
 foreach ($d in @('lib', 'config', 'public', 'data', 'docs')) {
   Copy-Item (Join-Path $root $d) (Join-Path $pkg $d) -Recurse
 }
@@ -74,6 +74,18 @@ if (Test-Path $macroSrc) {
   Write-Host ('      + 宏观缓存：' + $indCount + ' 个指标 / ' + $months.Count + ' 个月度文件，最新 ' + $latest)
 } else {
   Write-Host '      ! 未找到 .cache\macro：包里不带宏观历史，对方首次打开会全量拉取'
+}
+
+# 同样带上一份 LPR 全量缓存（约 90 期 / 几 KB，一次请求即可拉全，带包只是让首屏秒出）
+# _meta.json 同理剔掉，别把本机的回源冷却时间戳带进包
+$lprSrc = Join-Path $root '.cache\lpr'
+if (Test-Path $lprSrc) {
+  New-Item -ItemType Directory -Path (Join-Path $pkg '.cache') -Force | Out-Null
+  Copy-Item $lprSrc (Join-Path $pkg '.cache') -Recurse
+  Get-ChildItem (Join-Path $pkg '.cache\lpr') -Recurse -File -Filter '_meta.json' | Remove-Item -Force
+  Write-Host '      + LPR 缓存：lpr.json（全历史一期不落）'
+} else {
+  Write-Host '      ! 未找到 .cache\lpr：包里不带 LPR 缓存，对方首次打开会现场拉全（几秒钟）'
 }
 Write-Host '[2/4] 已拷贝项目文件'
 

@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>中国经济统计数据看板</title>
-    <meta name="description" content="国家统计局数据的本地可视化看板：70 个大中城市房价指数与月度宏观经济指标" />
+    <meta name="description" content="国家统计局与中国货币网数据的本地可视化看板：70 个大中城市房价指数、月度宏观经济指标、房贷利率 LPR" />
     <link rel="icon" href="data:," />
     <link rel="stylesheet" href="home.css" />
   </head>
@@ -46,24 +46,37 @@
           </p>
           <span class="module-go">进入宏观看板 →</span>
         </a>
+
+        <a class="module" href="lpr/">
+          <div class="module-top">
+            <span class="module-mark">LPR</span>
+            <span class="module-tag">月度 · 2019 年起</span>
+          </div>
+          <h3>房贷利率 LPR</h3>
+          <p>
+            贷款市场报价利率（1 年期 / 5 年期以上）：走势阶梯线、每次调整幅度、期限利差与明细。
+            数据来自中国货币网（LPR 官方发布平台），首次打开一次拉全并缓存，之后只核对应发布期别。
+          </p>
+          <span class="module-go">进入 LPR 看板 →</span>
+        </a>
       </div>
 
       <section class="home-note">
         <h4>说明</h4>
         <p>
           页面上的按钮只在本机运行，不会把数据上传到任何地方。房价数据随项目分发；
-          宏观经济数据首次打开时会拉全历史并存在本地（便携包已带上打包时的历史数据，只需补最新几期），
-          之后每次打开只核对当月是否已发布新一期：有新的就补进去，没发布就直接读缓存。
+          宏观经济与 LPR 数据首次打开时会拉全历史并存在本地（便携包已带上打包时的历史数据，只需补最新几期），
+          之后每次打开只核对是否已发布新一期：有新的就补进去，没发布就直接读缓存。
         </p>
         <p class="muted">
-          数据版权归国家统计局所有，本项目只做本地可视化；接口为站点内部接口，无稳定性承诺，
-          出现「待更新」属正常现象。
+          数据版权归国家统计局与全国银行间同业拆借中心所有，本项目只做本地可视化；接口均为站点页面所用接口，
+          非官方开放 API，无稳定性承诺，出现「待更新」属正常现象。
         </p>
       </section>
     </main>
 
     <footer class="home-foot">
-      <p>中国经济统计数据看板 · 70 城房价 / 宏观经济两个模块 · 仅供数据观察，不构成任何投资建议</p>
+      <p>中国经济统计数据看板 · 70 城房价 / 宏观经济 / 房贷利率 LPR 三个模块 · 仅供数据观察，不构成任何投资建议</p>
     </footer>
   </body>
 </html>

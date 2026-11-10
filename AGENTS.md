@@ -1,27 +1,28 @@
 # AGENTS.md
 
 **项目**：china-economic-stats-dashboard — 中国经济统计数据看板
-**模块**：`housing`（70 个大中城市房价指数）/ `macro`（宏观经济：CPI / PPI / PMI / 社零 / M2）
-**一句话定位**：一个网站、两个模块（房价 / 宏观）；宏观经济数据**首次打开一次拉全并缓存，之后按月增量核对**，不是定时爬虫；数据一律由服务端代取。
+**模块**：`housing`（70 个大中城市房价指数）/ `macro`（宏观经济：CPI / PPI / PMI / 社零 / M2）/ `lpr`（房贷利率 LPR）
+**一句话定位**：一个网站、三个模块（房价 / 宏观 / LPR）；宏观经济数据**首次打开一次拉全并缓存，之后按月增量核对**，不是定时爬虫；LPR 同款模型但序列只有一条，全量单文件缓存；数据一律由服务端代取。
 
-> 本文件只放**两个模块共用**的规范。宏观模块专属的规范（指标编码探测、发布日、限流、栏目分段、DBnomics 兜底等）写在 `README.md` 的「宏观经济模块」章节，改动宏观模块前必须一并阅读。
+> 本文件只放**各模块共用**的规范。宏观模块专属的规范（指标编码探测、发布日、限流、栏目分段、DBnomics 兕底等）写在 `README.md` 的「宏观经济模块」章节，改动宏观模块前必须一并阅读；LPR 模块专属的规范（中国货币网接口、发布日顺延）写在 `README.md` 的「房贷利率 LPR」章节。
 
 ## 1. 模块边界
 
 | 位置 | 归属 | 说明 |
 |---|---|---|
-| `server.js` | 共用 | 统一入口：静态托管 + 路由分发（`/api/nbs70`、`/api/macro/*`、`/api/health`） |
+| `server.js` | 共用 | 统一入口：静态托管 + 路由分发（`/api/nbs70`、`/api/macro/*`、`/api/lpr/*`、`/api/health`） |
 | `lib/housing/nbs70.js` | housing | 月报检索、正文表格解析、数据集读写、跨月核对 |
 | `lib/macro/**` | macro | `config.js` 读 `config/indicators.json`；`cache/policy.js` 是唯一回源判定；`services/series.js` 编排；`sources/nbs.js` + `sources/dbnomics.js` |
+| `lib/lpr/**` | lpr | `config.js` 内联上游与发布日常量；`policy.js` 是唯一回源判定；`source.js` 请求中国货币网；`store.js` 全量单文件缓存（`cache/lpr/lpr.json`） |
 | `config/indicators.json` | macro | 宏观栏目 / 指标 / 分段 / 发布日 / 兜底的唯一事实来源 |
 | `public/index.html` + `home.css` | 共用 | 模块选择入口 |
-| `public/housing/`、`public/macro/` | 各自 | 每个模块自带 html / css / app.js，互不引用 |
-| `public/vendor/echarts.min.js` | 共用 | 两个模块共用一份本地 ECharts，**禁止 CDN** |
+| `public/housing/`、`public/macro/`、`public/lpr/` | 各自 | 每个模块自带 html / css / app.js，互不引用 |
+| `public/vendor/echarts.min.js` | 共用 | 所有模块共用一份本地 ECharts，**禁止 CDN** |
 | `data/periods.json` | housing | 固化数据集（189 个月），随仓库提交 |
-| `.cache/` | 运行时 | `housing` 的解析结果与月报原文、`macro/` 的月缓存，可随时删 |
+| `.cache/` | 运行时 | `housing` 的解析结果与月报原文、`macro/` 的月缓存、`lpr/` 的全量缓存，可随时删 |
 
 - 新增模块时同样落在 `lib/<module>/` 与 `public/<module>/`，API 用 `/api/<module>/*` 前缀，并在入口页加入口卡片。
-- 两个模块**不互相 require**。共用能力要么下沉到各自模块内，要么新增 `lib/shared/`，不要跨模块取私有实现。
+- 模块之间**不互相 require**。共用能力要么下沉到各自模块内，要么新增 `lib/shared/`，不要跨模块取私有实现。
 
 ## 2. 技术约束
 
@@ -53,7 +54,7 @@
 
 ## 4. 前端约定
 
-- 配色遵循国内习惯：**红涨绿跌**；两个模块共用同一套视觉变量（`--up`、`--down`、`--accent` 等），新页面沿用。
+- 配色遵循国内习惯：**红涨绿跌**；所有模块共用同一套视觉变量（`--up`、`--down`、`--accent` 等），新页面沿用。
 - 图表单行通栏优先，不做两列并排（数据密度高，并排会压扁坐标轴）。
 - 用户可调的筛选条件存 `localStorage` 时，**改默认值必须同时升级键名**（例如 `nbs70.range.v2` → `v3`），否则老用户浏览器里的旧值会静默覆盖新默认值。
 - 所有请求走相对根路径的 `/api/...`；不要在前端硬编码端口或 `127.0.0.1`。
