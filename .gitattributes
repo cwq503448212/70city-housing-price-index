@@ -5,6 +5,9 @@
 *.bat text eol=crlf
 *.cmd text eol=crlf
 
+# PowerShell 脚本按 CRLF 检出（PS 5.1 主要靠 BOM 识别 UTF-8，换行不强制，但 Windows 上统一 CRLF）
+*.ps1 text eol=crlf
+
 # 二进制，不要做换行转换
 *.png binary
 *.jpg binary

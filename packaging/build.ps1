@@ -1,0 +1,89 @@
+﻿# 生成便携分发包：把项目 + 本机 node.exe 打成「解压双击就能用」的文件夹和 zip
+#
+# 用法（在项目根目录执行，或直接双击根目录的 build.bat）：
+#   powershell -ExecutionPolicy Bypass -File packaging\build.ps1
+#   powershell -ExecutionPolicy Bypass -File packaging\build.ps1 -SysTag 'win7-win11'
+#
+# 想指定别的 node.exe：
+#   powershell -ExecutionPolicy Bypass -File packaging\build.ps1 -NodeExe 'D:\soft\nvm\v20.12.2\node.exe'
+#   （也可以用环境变量：set NODE_EXE=D:\node20\node.exe）
+
+param(
+  [Parameter(Position = 0)][string]$SysTag = 'win10-win11',
+  [string]$NodeExe = ''
+)
+
+$ErrorActionPreference = 'Stop'
+
+$root = Split-Path -Parent $PSScriptRoot
+$name = '中国经济统计数据看板'
+$outDir = Join-Path $root 'release'
+$pkg = Join-Path $outDir $name
+
+# zip 用纯 ASCII 名：GitHub Release 附件不接受中文，会被静默删掉；目录仍用中文名，解压后看着友好
+# 版本号用正则从 package.json 取，避开 PS 5.1 按 GBK 解码 UTF-8 的坑；支持的系统范围用 -SysTag 控制
+$pkgVersion = (Select-String -Path (Join-Path $root 'package.json') -Pattern '"version"\s*:\s*"([^"]+)"').Matches[0].Groups[1].Value
+$zip = Join-Path $outDir ('china-economic-stats-dashboard-v' + $pkgVersion + '-' + $SysTag + '.zip')
+
+# 内置的 Node 运行时：优先 -NodeExe 参数，其次 NODE_EXE 环境变量，最后用系统 PATH 里的 node
+if (-not $NodeExe) { $NodeExe = $env:NODE_EXE }
+if (-not $NodeExe) { $NodeExe = (Get-Command node -ErrorAction Stop).Source }
+if (-not (Test-Path $NodeExe)) { throw ('找不到 node.exe：' + $NodeExe) }
+
+$nodeVer = (@(& $NodeExe -v) -join '').Trim()
+if ($nodeVer -match '^v([0-9]+)\.' -and [int]$matches[1] -lt 20) { throw ('内置运行时要 Node 20+，当前是 ' + $nodeVer + '；Win7/8 已不支持') }
+Write-Host ('[1/4] Node 运行时：' + $NodeExe + '  ' + $nodeVer)
+
+# 旧产物可能正被占用（包里的看板还在跑），删不掉时给一句人话，而不是抛原始异常
+if (Test-Path $zip) {
+  try { Remove-Item $zip -Force } catch { throw ('旧的 zip 删不掉：' + $zip + '，关掉正在解压或预览它的窗口后重试') }
+}
+if (Test-Path $pkg) {
+  try { Remove-Item $pkg -Recurse -Force } catch { throw ('旧的 ' + $pkg + ' 删不掉，里面的看板可能还在运行：关掉它启动的黑窗口后重试') }
+}
+New-Item -ItemType Directory -Path $pkg -Force | Out-Null
+
+Copy-Item $NodeExe (Join-Path $pkg 'node.exe')
+foreach ($f in @('server.js', 'package.json', 'probe.js', 'README.md')) {
+  Copy-Item (Join-Path $root $f) $pkg
+}
+# 两个模块的代码、配置、页面、固化数据集与截图（docs 只被 README 引用）
+foreach ($d in @('lib', 'config', 'public', 'data', 'docs')) {
+  Copy-Item (Join-Path $root $d) (Join-Path $pkg $d) -Recurse
+}
+# 便携版专用的启动脚本和使用说明，放在 packaging 里跟代码一起维护
+Copy-Item (Join-Path $PSScriptRoot 'start.bat') $pkg
+Copy-Item (Join-Path $PSScriptRoot '使用说明.txt') $pkg
+
+# 运行期产物和开发用的东西不该进分发包
+foreach ($junk in @('.cache', 'node_modules', 'release', 'AGENTS.md')) {
+  $p = Join-Path $pkg $junk
+  if (Test-Path $p) { Remove-Item $p -Recurse -Force }
+}
+
+# 带上一份宏观历史缓存：对方首次打开只需补最近几期，不用全量回源（约 0.2 MB）
+# _meta.json 只是本机的回源尝试时间戳（10 分钟冷却），进包会让对方首次核对被跳过，必须剔掉
+$macroSrc = Join-Path $root '.cache\macro'
+if (Test-Path $macroSrc) {
+  New-Item -ItemType Directory -Path (Join-Path $pkg '.cache') -Force | Out-Null
+  Copy-Item $macroSrc (Join-Path $pkg '.cache') -Recurse
+  Get-ChildItem (Join-Path $pkg '.cache\macro') -Recurse -File -Filter '_meta.json' | Remove-Item -Force
+  $months = Get-ChildItem (Join-Path $pkg '.cache\macro') -Recurse -File -Filter '20??-??.json'
+  $latest = ($months | ForEach-Object { $_.BaseName } | Sort-Object -Descending | Select-Object -First 1)
+  $indCount = (Get-ChildItem (Join-Path $pkg '.cache\macro') -Directory).Count
+  Write-Host ('      + 宏观缓存：' + $indCount + ' 个指标 / ' + $months.Count + ' 个月度文件，最新 ' + $latest)
+} else {
+  Write-Host '      ! 未找到 .cache\macro：包里不带宏观历史，对方首次打开会全量拉取'
+}
+Write-Host '[2/4] 已拷贝项目文件'
+
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+[System.IO.Compression.ZipFile]::CreateFromDirectory(
+  $pkg, $zip, [System.IO.Compression.CompressionLevel]::Optimal, $true)
+Write-Host '[3/4] 已压缩'
+
+$files = Get-ChildItem $pkg -Recurse -File
+Write-Host ('[4/4] 完成：' + $files.Count + ' 个文件，' + ('{0:N1}' -f (($files | Measure-Object Length -Sum).Sum / 1MB)) + ' MB，压缩后 ' + ('{0:N1}' -f ((Get-Item $zip).Length / 1MB)) + ' MB')
+Write-Host ('      文件夹：' + $pkg)
+Write-Host ('      压缩包：' + $zip)
+Write-Host '      上传 GitHub Release 时附件用这个纯英文 zip 名，中文名会被静默丢掉。'

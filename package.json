@@ -1,17 +1,18 @@
 {
-  "name": "nbs-70city-housing-dashboard",
-  "version": "1.1.0",
+  "name": "china-economic-stats-dashboard",
+  "version": "2.0.0",
   "private": true,
-  "description": "国家统计局 70 个大中城市商品住宅销售价格指数可视化看板",
+  "description": "中国经济统计数据看板：70 个大中城市房价指数 + 宏观经济指标（CPI / PPI / PMI / 社零 / M2），数据来自国家统计局",
   "author": "cwq503448212 <503448212@qq.com>",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "data:build": "node -e \"console.log(require('./lib/nbs70').publishDataset())\"",
-    "data:raw": "node -e \"require('./lib/nbs70').backfillRaw({}).then(function(r){console.log(r)})\""
+    "probe": "node probe.js",
+    "data:build": "node -e \"console.log(require('./lib/housing/nbs70').publishDataset())\"",
+    "data:raw": "node -e \"require('./lib/housing/nbs70').backfillRaw({}).then(function(r){console.log(r)})\""
   },
-  "keywords": ["国家统计局", "70城房价", "房地产", "数据可视化"],
+  "keywords": ["国家统计局", "70城房价", "宏观经济", "CPI", "PPI", "PMI", "数据可视化"],
   "engines": {
     "node": ">=20"
   }

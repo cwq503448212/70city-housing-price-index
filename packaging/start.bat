@@ -2,12 +2,13 @@
 chcp 65001 >nul
 setlocal
 
-title 70 城房价看板
+title 中国经济统计数据看板
 
 rem 切到脚本所在目录，双击运行时也能找到 server.js（目录名含中文也没问题）
 cd /d "%~dp0"
 
 set "PORT=5173"
+if not "%DASH_PORT%"=="" set "PORT=%DASH_PORT%"
 if not "%NBS_PORT%"=="" set "PORT=%NBS_PORT%"
 
 rem 优先用本包自带的 node.exe；万一被删了，再退回系统里的 node
@@ -15,7 +16,8 @@ set "NODE=%~dp0node.exe"
 if not exist "%NODE%" set "NODE=node"
 
 echo.
-echo   70 城房价看板
+echo   中国经济统计数据看板
+echo   70 城房价 + 宏观经济两个模块
 echo   ==========================================
 echo.
 
@@ -35,7 +37,7 @@ if not errorlevel 1 (
 )
 
 echo   [x] 端口 %PORT% 被其它程序占用了
-echo       换个端口再试： set NBS_PORT=5180 之后再双击 start.bat
+echo       换个端口再试： set DASH_PORT=5180 之后再双击 start.bat
 echo.
 pause
 exit /b 1
@@ -43,7 +45,7 @@ exit /b 1
 :start
 if not exist "data\periods.json" (
   echo   [!] 没找到 data\periods.json
-  echo       首次运行需要从统计局抓取 2011 年至今的月报，约 2-4 分钟
+  echo       房价模块首次运行需要从统计局抓取 2011 年至今的月报，约 2-4 分钟
   echo.
 )
 

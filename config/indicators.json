@@ -1,0 +1,359 @@
+{
+  "site": {
+    "baseUrl": "https://data.stats.gov.cn",
+    "ext": "/dg/website/publicrelease/web/external",
+    "page": "/dg/website/page.html"
+  },
+  "rootId": "fc982599aa684be7969d7b90b1bd0e84",
+  "history": {
+    "from": "2021-01",
+    "note": "统计局把 CPI/PPI 分类指数按年份拆成多个栏目（2026-、2021-2025、2016-2020、-2015），2021 年起才是现行的八大类口径，所以历史起点定在 2021-01"
+  },
+  "groups": [
+    { "key": "price", "label": "价格与通胀", "note": "指数口径，100 = 持平" },
+    { "key": "cpi_class", "label": "CPI 八大类", "note": "上年同月 = 100" },
+    { "key": "activity", "label": "景气与消费", "note": "" },
+    { "key": "money", "label": "货币供应", "note": "" }
+  ],
+  "catalogs": {
+    "cpi_yoy_2021": {
+      "id": "809d2522b0fe4be89142650341b19083",
+      "label": "全国居民消费价格分类指数（上年同月=100）2021-2025",
+      "from": "2021-01",
+      "to": "2025-12"
+    },
+    "cpi_yoy_2026": {
+      "id": "5c7452825c7c4dcba391db5ca7f335c5",
+      "label": "全国居民消费价格分类指数（上年同月=100）2026-",
+      "from": "2026-01"
+    },
+    "cpi_mom_2021": {
+      "id": "e6664817f0cd427783cd397770695634",
+      "label": "全国居民消费价格分类指数（上月=100）2021-2025",
+      "from": "2021-01",
+      "to": "2025-12"
+    },
+    "cpi_mom_2026": {
+      "id": "b4fad2cf9e0e4af7815b7e9e2e95c5c7",
+      "label": "全国居民消费价格分类指数（上月=100）2026-",
+      "from": "2026-01"
+    },
+    "ppi_yoy": {
+      "id": "60e8b361f11c4a878c652a6487a25561",
+      "label": "工业生产者出厂价格指数（上年同月=100）"
+    },
+    "pmi": {
+      "id": "93ffbb1aa85740d3aa2618371508b606",
+      "label": "制造业采购经理指数"
+    },
+    "retail": {
+      "id": "d0cb882c7f27443ab6b3ef9421901961",
+      "label": "社会消费品零售总额"
+    },
+    "money": {
+      "id": "82130c6621a745cda3d64b090e733383",
+      "label": "货币供应量"
+    }
+  },
+  "indicators": [
+    {
+      "id": "cpi_yoy",
+      "label": "居民消费价格指数（同比）",
+      "shortLabel": "CPI 同比",
+      "unit": "%",
+      "kind": "index_yoy",
+      "group": "price",
+      "decimals": 1,
+      "note": "上年同月 = 100，展示为涨跌幅（100 = 持平）",
+      "release": { "day": 9 },
+      "segments": [
+        { "catalog": "cpi_yoy_2021", "indicatorId": "4ae9047687934a6390984c21d6ddab96", "shown": "居民消费价格指数(上年同月=100)", "from": "2021-01", "to": "2025-12" },
+        { "catalog": "cpi_yoy_2026", "indicatorId": "53180dfb9c14411ba4b762307c85920c", "shown": "居民消费价格指数(上年同月=100)", "from": "2026-01" }
+      ],
+      "fallback": [
+        { "dataset": "M_A01010G", "series": "A01010G01" },
+        { "dataset": "M_A01010J", "series": "A01010J01" }
+      ]
+    },
+    {
+      "id": "cpi_core_yoy",
+      "label": "核心 CPI（同比）",
+      "shortLabel": "核心 CPI",
+      "unit": "%",
+      "kind": "index_yoy",
+      "group": "price",
+      "decimals": 1,
+      "note": "不包括食品和能源，上年同月 = 100",
+      "release": { "day": 9 },
+      "segments": [
+        { "catalog": "cpi_yoy_2021", "indicatorId": "c2050e97c49a4763a6d0f0f38bf0b4ed", "shown": "不包括食品和能源居民消费价格指数(上年同月=100)", "from": "2021-01", "to": "2025-12" },
+        { "catalog": "cpi_yoy_2026", "indicatorId": "71be3d43d2fb44188199840272463ae0", "shown": "不包括食品和能源居民消费价格指数(上年同月=100)", "from": "2026-01" }
+      ],
+      "fallback": [
+        { "dataset": "M_A01010G", "series": "A01010G0D" },
+        { "dataset": "M_A01010J", "series": "A01010J0D" }
+      ]
+    },
+    {
+      "id": "cpi_mom",
+      "label": "居民消费价格指数（环比）",
+      "shortLabel": "CPI 环比",
+      "unit": "%",
+      "kind": "index_mom",
+      "group": "price",
+      "decimals": 1,
+      "note": "上月 = 100，展示为涨跌幅；环比与同比不是一回事，不能画在同一条线上",
+      "release": { "day": 9 },
+      "segments": [
+        { "catalog": "cpi_mom_2021", "indicatorId": "e437d965279d41ceb9ace591b62f6ffc", "shown": "居民消费价格指数(上月=100)", "from": "2021-01", "to": "2025-12" },
+        { "catalog": "cpi_mom_2026", "indicatorId": "f3904a1f5a384d54a3944ec6e2df3d1c", "shown": "居民消费价格指数(上月=100)", "from": "2026-01" }
+      ],
+      "fallback": [
+        { "dataset": "M_A01030G", "series": "A01030G01" },
+        { "dataset": "M_A01030J", "series": "A01030J01" }
+      ]
+    },
+    {
+      "id": "ppi_yoy",
+      "label": "工业生产者出厂价格（同比）",
+      "shortLabel": "PPI 同比",
+      "unit": "%",
+      "kind": "index_yoy",
+      "group": "price",
+      "decimals": 1,
+      "note": "上年同月 = 100",
+      "release": { "day": 9 },
+      "segments": [
+        { "catalog": "ppi_yoy", "indicatorId": "150633e52b9a470a9a9fd1b296dd6c5b", "shown": "工业生产者出厂价格指数(上年同月=100)", "from": "2021-01" }
+      ],
+      "fallback": [{ "dataset": "M_A010801", "series": "A01080101" }]
+    },
+    {
+      "id": "ppi_prod_yoy",
+      "label": "生产资料 PPI（同比）",
+      "shortLabel": "生产资料 PPI",
+      "unit": "%",
+      "kind": "index_yoy",
+      "group": "price",
+      "decimals": 1,
+      "note": "上年同月 = 100",
+      "release": { "day": 9 },
+      "segments": [
+        { "catalog": "ppi_yoy", "indicatorId": "47f8464961184392bc4f6a4b8e5b1cb5", "shown": "生产资料工业生产者出厂价格指数(上年同月=100)", "from": "2021-01" }
+      ]
+    },
+    {
+      "id": "ppi_life_yoy",
+      "label": "生活资料 PPI（同比）",
+      "shortLabel": "生活资料 PPI",
+      "unit": "%",
+      "kind": "index_yoy",
+      "group": "price",
+      "decimals": 1,
+      "note": "上年同月 = 100",
+      "release": { "day": 9 },
+      "segments": [
+        { "catalog": "ppi_yoy", "indicatorId": "649b27dbffb14466a3f204e16f3c74ed", "shown": "生活资料工业生产者出厂价格指数(上年同月=100)", "from": "2021-01" }
+      ]
+    },
+    {
+      "id": "cpi_food_yoy",
+      "label": "CPI 食品烟酒（同比）",
+      "shortLabel": "食品烟酒",
+      "unit": "%",
+      "kind": "index_yoy",
+      "group": "cpi_class",
+      "decimals": 1,
+      "note": "2026 年起统计局口径改为「食品烟酒及在外餐饮类」",
+      "release": { "day": 9 },
+      "segments": [
+        { "catalog": "cpi_yoy_2021", "indicatorId": "fce9ac527a74442ea0031eb6b37f52ad", "shown": "食品烟酒类居民消费价格指数(上年同月=100)", "from": "2021-01", "to": "2025-12" },
+        { "catalog": "cpi_yoy_2026", "indicatorId": "42c2d9b5d1b749c4b68c2cbd2e3d4a42", "shown": "食品烟酒及在外餐饮类居民消费价格指数(上年同月=100)", "from": "2026-01" }
+      ]
+    },
+    {
+      "id": "cpi_clothing_yoy",
+      "label": "CPI 衣着（同比）",
+      "shortLabel": "衣着",
+      "unit": "%",
+      "kind": "index_yoy",
+      "group": "cpi_class",
+      "decimals": 1,
+      "release": { "day": 9 },
+      "segments": [
+        { "catalog": "cpi_yoy_2021", "indicatorId": "b2830210c9bc427ba3549fea592b2c90", "shown": "衣着类居民消费价格指数(上年同月=100)", "from": "2021-01", "to": "2025-12" },
+        { "catalog": "cpi_yoy_2026", "indicatorId": "23db96d6f25c4acbb8801616fc2e509d", "shown": "衣着类居民消费价格指数(上年同月=100)", "from": "2026-01" }
+      ]
+    },
+    {
+      "id": "cpi_housing_yoy",
+      "label": "CPI 居住（同比）",
+      "shortLabel": "居住",
+      "unit": "%",
+      "kind": "index_yoy",
+      "group": "cpi_class",
+      "decimals": 1,
+      "release": { "day": 9 },
+      "segments": [
+        { "catalog": "cpi_yoy_2021", "indicatorId": "e492fe37645349f0a1c84d96174bf606", "shown": "居住类居民消费价格指数(上年同月=100)", "from": "2021-01", "to": "2025-12" },
+        { "catalog": "cpi_yoy_2026", "indicatorId": "4fb7ea343fc7403bb412cf48fb2f3f0e", "shown": "居住类居民消费价格指数(上年同月=100)", "from": "2026-01" }
+      ]
+    },
+    {
+      "id": "cpi_household_yoy",
+      "label": "CPI 生活用品及服务（同比）",
+      "shortLabel": "生活用品",
+      "unit": "%",
+      "kind": "index_yoy",
+      "group": "cpi_class",
+      "decimals": 1,
+      "release": { "day": 9 },
+      "segments": [
+        { "catalog": "cpi_yoy_2021", "indicatorId": "a8437c1e6cfc41d3b08f10e63df7a9c3", "shown": "生活用品及服务类居民消费价格指数(上年同月=100)", "from": "2021-01", "to": "2025-12" },
+        { "catalog": "cpi_yoy_2026", "indicatorId": "e4a6cd580cfe43c3a92140d2edb5e7df", "shown": "生活用品及服务类居民消费价格指数(上年同月=100)", "from": "2026-01" }
+      ]
+    },
+    {
+      "id": "cpi_transport_yoy",
+      "label": "CPI 交通通信（同比）",
+      "shortLabel": "交通通信",
+      "unit": "%",
+      "kind": "index_yoy",
+      "group": "cpi_class",
+      "decimals": 1,
+      "release": { "day": 9 },
+      "segments": [
+        { "catalog": "cpi_yoy_2021", "indicatorId": "5fdc380a7f65401f9df852e9fb805d50", "shown": "交通通信类居民消费价格指数(上年同月=100)", "from": "2021-01", "to": "2025-12" },
+        { "catalog": "cpi_yoy_2026", "indicatorId": "e6e42078f30e483b899b2701a766909a", "shown": "交通通信类居民消费价格指数(上年同月=100)", "from": "2026-01" }
+      ]
+    },
+    {
+      "id": "cpi_education_yoy",
+      "label": "CPI 教育文化娱乐（同比）",
+      "shortLabel": "教育文娱",
+      "unit": "%",
+      "kind": "index_yoy",
+      "group": "cpi_class",
+      "decimals": 1,
+      "release": { "day": 9 },
+      "segments": [
+        { "catalog": "cpi_yoy_2021", "indicatorId": "77d9645f8acf4f28b397213b14bc8088", "shown": "教育文化娱乐类居民消费价格指数(上年同月=100)", "from": "2021-01", "to": "2025-12" },
+        { "catalog": "cpi_yoy_2026", "indicatorId": "e2636c6c7549458ca90057f9b7eff442", "shown": "教育文化娱乐类居民消费价格指数(上年同月=100)", "from": "2026-01" }
+      ]
+    },
+    {
+      "id": "cpi_medical_yoy",
+      "label": "CPI 医疗保健（同比）",
+      "shortLabel": "医疗保健",
+      "unit": "%",
+      "kind": "index_yoy",
+      "group": "cpi_class",
+      "decimals": 1,
+      "release": { "day": 9 },
+      "segments": [
+        { "catalog": "cpi_yoy_2021", "indicatorId": "0405e430a16c49eba5a83f9341ff7615", "shown": "医疗保健类居民消费价格指数(上年同月=100)", "from": "2021-01", "to": "2025-12" },
+        { "catalog": "cpi_yoy_2026", "indicatorId": "27cc82bede504fbc896c02a412bc7671", "shown": "医疗保健类居民消费价格指数(上年同月=100)", "from": "2026-01" }
+      ]
+    },
+    {
+      "id": "cpi_misc_yoy",
+      "label": "CPI 其他用品及服务（同比）",
+      "shortLabel": "其他用品",
+      "unit": "%",
+      "kind": "index_yoy",
+      "group": "cpi_class",
+      "decimals": 1,
+      "release": { "day": 9 },
+      "segments": [
+        { "catalog": "cpi_yoy_2021", "indicatorId": "71b1221d90734165b7d1c8ce03f116aa", "shown": "其他用品及服务类居民消费价格指数(上年同月=100)", "from": "2021-01", "to": "2025-12" },
+        { "catalog": "cpi_yoy_2026", "indicatorId": "2cf481203dd0404c8b778d435d401c7a", "shown": "其他用品及服务类居民消费价格指数(上年同月=100)", "from": "2026-01" }
+      ]
+    },
+    {
+      "id": "pmi",
+      "label": "制造业采购经理指数（PMI）",
+      "shortLabel": "制造业 PMI",
+      "unit": "%",
+      "kind": "index_pmi",
+      "group": "activity",
+      "decimals": 1,
+      "note": "扩散指数，50 = 荣枯线；不是同比也不是环比",
+      "release": { "day": "eom" },
+      "segments": [
+        { "catalog": "pmi", "indicatorId": "a09aa989bdcf4cffa2021795722eb916", "shown": "制造业采购经理指数 (PMI)", "from": "2021-01" }
+      ],
+      "fallback": [{ "dataset": "M_A0B01", "series": "A0B0101" }]
+    },
+    {
+      "id": "retail_yoy",
+      "label": "社会消费品零售总额（同比）",
+      "shortLabel": "社零同比",
+      "unit": "%",
+      "kind": "pct_yoy",
+      "group": "activity",
+      "decimals": 1,
+      "note": "统计局直接给的同比增速（%），不是指数；1、2 月合并公布，没有单独月度值",
+      "exemptMonths": ["01", "02"],
+      "release": { "day": 15 },
+      "segments": [
+        { "catalog": "retail", "indicatorId": "aaac57d54d2e465d91bc9f3ea1a8618e", "shown": "社会消费品零售总额同比增长 (%)", "from": "2021-01" }
+      ]
+    },
+    {
+      "id": "retail_amount",
+      "label": "社会消费品零售总额（当期值）",
+      "shortLabel": "社零金额",
+      "unit": "亿元",
+      "kind": "amount",
+      "group": "activity",
+      "decimals": 0,
+      "note": "当月绝对值；1、2 月合并公布，没有单独月度值",
+      "exemptMonths": ["01", "02"],
+      "release": { "day": 15 },
+      "segments": [
+        { "catalog": "retail", "indicatorId": "1142a3a03e9045959e606a21822641ac", "shown": "社会消费品零售总额当期值 (亿元)", "from": "2021-01" }
+      ]
+    },
+    {
+      "id": "m2_yoy",
+      "label": "广义货币 M2（同比）",
+      "shortLabel": "M2 同比",
+      "unit": "%",
+      "kind": "pct_yoy",
+      "group": "money",
+      "decimals": 1,
+      "note": "统计局给的同比增速（%），不是指数",
+      "release": { "day": 15 },
+      "segments": [
+        { "catalog": "money", "indicatorId": "e03f2232631f41cd9d754a7d7feb4a81", "shown": "货币和准货币 (M2) 供应量_同比增长 (%)", "from": "2021-01" }
+      ],
+      "fallback": [{ "dataset": "M_A0D01", "series": "A0D0102" }]
+    },
+    {
+      "id": "m1_yoy",
+      "label": "狭义货币 M1（同比）",
+      "shortLabel": "M1 同比",
+      "unit": "%",
+      "kind": "pct_yoy",
+      "group": "money",
+      "decimals": 1,
+      "release": { "day": 15 },
+      "segments": [
+        { "catalog": "money", "indicatorId": "640401d3351b4b868dea28f89f410a54", "shown": "货币 (M1) 供应量_同比增长 (%)", "from": "2021-01" }
+      ]
+    },
+    {
+      "id": "m2_amount",
+      "label": "广义货币 M2 余额",
+      "shortLabel": "M2 余额",
+      "unit": "亿元",
+      "kind": "amount",
+      "group": "money",
+      "decimals": 0,
+      "release": { "day": 15 },
+      "segments": [
+        { "catalog": "money", "indicatorId": "f3c0ae453a54424489af41de315ec592", "shown": "货币和准货币 (M2) 供应量_期末值 (亿元)", "from": "2021-01" }
+      ]
+    }
+  ]
+}
