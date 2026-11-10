@@ -1,6 +1,6 @@
 {
   "name": "nbs-70city-housing-dashboard",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "description": "国家统计局 70 个大中城市商品住宅销售价格指数可视化看板",
   "author": "cwq503448212 <503448212@qq.com>",

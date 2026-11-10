@@ -95,17 +95,18 @@ powershell -ExecutionPolicy Bypass -File packaging\build.ps1
 产物：
 
 ```
-release/70城房价看板/        可直接双击运行（69.8 MB）
-release/70城房价看板.zip     对外发送（27.3 MB）
+release/70城房价看板/                                    解压后双击 start.bat（69.8 MB）
+release/70city-housing-price-index-v1.1.0-win10-win11.zip  对外发送（27.3 MB）
 ```
 
 包内是 `node.exe`（v20.12.2，官方签名二进制）、`server.js`、`lib/`、`public/`、`data/periods.json`、`docs/`、`start.bat`、`使用说明.txt`；不含 `.cache/`、`node_modules/`。功能与源码版完全一致：跨月自动核对、「刷新数据」都照常可用。
 
 - 便携版的 `start.bat` 和 `使用说明.txt` 放在 `packaging/` 里跟代码一起维护，`build.ps1` 打包时会拷过去。
 - 想换 node.exe：`packaging\build.ps1 -NodeExe 'D:\soft\nvm\v20.12.2\node.exe'`。
-- 内置的是 Node 20，因此**只支持 Windows 10 / 11**；Windows 7 / 8 不再支持（Node 18 起已放弃这些系统）。
+- 内置的是 Node 20，因此**只支持 Windows 10 / 11**；Windows 7 / 8 不再支持（Node 18 起已放弃这些系统，最后能跑 Win7 的是 Node 16）。
 - `release/` 已加进 `.gitignore`，几十 MB 的 `node.exe` 不进仓库。
-- Release 附件名不能含中文（会被静默删除），上传前复制一份英文名，如 `70city-housing-price-index-v1.0.0.zip`。
+- zip 直接用纯 ASCII 名（`70city-housing-price-index-v<版本>-<系统>.zip`），因为 GitHub Release 附件名不接受中文、会被静默删掉；zip 内部顶层目录仍是中文的 `70城房价看板`。
+- 换支持的 Windows 范围时改 `-SysTag`（默认 `win10-win11`）：`build.ps1 -SysTag 'win7-win11'`。
 
 > 为什么不用 pkg 打成单个 exe：体积差不多（~45 MB），但自解压 exe 常被杀软误报；更麻烦的是包内 `data/` 会变成只读的虚拟文件系统，「刷新数据」写不进去，得额外改路径。便携 `node.exe` 是官方签名的，零误报、行为完全一致。
 
