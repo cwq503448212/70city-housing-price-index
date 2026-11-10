@@ -4,6 +4,14 @@
   "private": true,
   "description": "中国经济统计数据看板：70 个大中城市房价指数 + 宏观经济指标（CPI / PPI / PMI / 社零 / M2），数据来自国家统计局",
   "author": "cwq503448212 <503448212@qq.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cwq503448212/china-economic-stats-dashboard.git"
+  },
+  "homepage": "https://github.com/cwq503448212/china-economic-stats-dashboard#readme",
+  "bugs": {
+    "url": "https://github.com/cwq503448212/china-economic-stats-dashboard/issues"
+  },
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
