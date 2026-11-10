@@ -4,7 +4,7 @@
 **模块**：`housing`（70 个大中城市房价指数）/ `macro`（宏观经济：CPI / PPI / PMI / 社零 / M2）/ `lpr`（房贷利率 LPR）/ `livelihood`（民生：结婚 / 离婚登记、初婚人数、出生率 / 死亡率 / 自然增长率）/ `livelihood-income`（人均收入与支出）
 **一句话定位**：一个网站、五个看板（房价 / 宏观 / LPR / 婚育 / 收支）；宏观经济数据**首次打开一次拉全并缓存，之后按月增量核对**，不是定时爬虫；LPR 同款模型但序列只有一条，全量单文件缓存；婚育与收支是年度库版同款模型（按年增量），两者共用同一年度库与限流，但配置、缓存目录、路由各自独立。数据一律由服务端代取。
 
-> 本文件只放**各模块共用**的规范。宏观模块专属的规范（指标编码探测、发布日、限流、栏目分段、DBnomics 兕底等）写在 `README.md` 的「宏观经济模块」章节，改动宏观模块前必须一并阅读；LPR 模块专属的规范（中国货币网接口、发布日顺延）写在 `README.md` 的「房贷利率 LPR」章节；民生模块的数据源核实结论（为何不用民政部季度公报）、年度库 rootId 与期别编码写在 `README.md` 的「婚育与人口出生」章节；人均收支的口径铁律（只有名义增速、分项不合成、城乡不平均）与 23 个指标编码写在 `README.md` 的「人均收入与支出」章节。
+> 本文件只放**各模块共用**的规范。宏观模块专属的规范（指标编码探测、发布日、限流、栏目分段、DBnomics 兜底等）写在 `README.md` 的「宏观经济模块」章节，改动宏观模块前必须一并阅读；LPR 模块专属的规范（中国货币网接口、发布日顺延）写在 `README.md` 的「房贷利率 LPR」章节；民生模块的数据源核实结论（为何不用民政部季度公报）、年度库 rootId 与期别编码写在 `README.md` 的「婚育与人口出生」章节；人均收支的口径铁律（只有名义增速、分项不合成、城乡不平均）与 23 个指标编码写在 `README.md` 的「人均收入与支出」章节。
 
 ## 1. 模块边界
 
@@ -14,9 +14,9 @@
 | `lib/housing/nbs70.js` | housing | 月报检索、正文表格解析、数据集读写、跨月核对 |
 | `lib/macro/**` | macro | `config.js` 读 `config/indicators.json`；`cache/policy.js` 是唯一回源判定；`services/series.js` 编排；`sources/nbs.js` + `sources/dbnomics.js` |
 | `lib/lpr/**` | lpr | `config.js` 内联上游与发布日常量；`policy.js` 是唯一回源判定；`source.js` 请求中国货币网；`store.js` 全量单文件缓存（`cache/lpr/lpr.json`） |
-| `lib/livelihood/**` | livelihood | `config.js` 读 `config/livelihood.json`；`policy.js` 是唯一回源判定（按年度）；`source.js` 请求国家数据年度库（`code=3`、期别 `YYYYYY`）；`store.js` 年度文件缓存（`cache/livelihood/<id>/<YYYY>.json`） |
+| `lib/livelihood/**` | livelihood | `config.js` 读 `config/livelihood.json`；`policy.js` 是唯一回源判定（按年度）；`source.js` 请求国家数据年度库（`code=3`、期别如 `2024YY`）；`store.js` 年度文件缓存（`cache/livelihood/<id>/<YYYY>.json`） |
 | `lib/livelihood/income/**` | livelihood-income | `config.js` 读 `config/income.json`；`store.js` 独立缓存目录（`cache/livelihood-income/<id>/<YYYY>.json`）；`service.js` / `api.js` 编排；取数复用父目录的 `source` / `queue` / `policy` |
-| `config/indicators.json` | macro | 宏观栏目 / 指标 / 分段 / 发布日 / 兕底的唯一事实来源 |
+| `config/indicators.json` | macro | 宏观栏目 / 指标 / 分段 / 发布日 / 兜底的唯一事实来源 |
 | `config/livelihood.json` | livelihood | 民生栏目 / 指标 / 单位 / 历史起点的唯一事实来源 |
 | `config/income.json` | livelihood-income | 收支 6 个栏目 / 23 个指标 / 口径说明 / 历史起点（2013）的唯一事实来源 |
 | `public/index.html` + `home.css` | 共用 | 模块选择入口 |

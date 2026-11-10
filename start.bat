@@ -13,7 +13,7 @@ if not "%NBS_PORT%"=="" set "PORT=%NBS_PORT%"
 
 echo.
 echo   中国经济统计数据看板
-echo   70 城房价 + 宏观经济 + 房贷利率 LPR 三个模块
+echo   70 城房价 + 宏观经济 + 房贷利率 LPR + 婚育 + 收支 五个看板
 echo   ==========================================
 echo.
 
@@ -62,7 +62,7 @@ exit /b 0
 
 :no_node
 echo   [x] 没有找到 Node.js
-echo       请先安装 Node.js 12 或更高版本： https://nodejs.org/
+echo       请先安装 Node.js 20 或更高版本： https://nodejs.org/
 echo.
 pause
 exit /b 1

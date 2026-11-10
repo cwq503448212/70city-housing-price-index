@@ -49,7 +49,7 @@ lib\livelihood\income\ 人均收支子页：独立配置与缓存，取数复用
 config\              指标配置（indicators.json 宏观、livelihood.json 民生、income.json 收支）
 public\              页面本体（首页 + housing / macro / lpr / livelihood / livelihood\income 五个看板，含 ECharts）
 data\                房价数据集（189 个月）
-probe.js             宏观指标编码探测工具（一般用不到）
+probe.js             指标编码探测工具（宏观月度库 / 民生年度库，一般用不到）
 docs\                截图
 
 

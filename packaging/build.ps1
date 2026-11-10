@@ -76,7 +76,7 @@ if (Test-Path $macroSrc) {
   Write-Host '      ! 未找到 .cache\macro：包里不带宏观历史，对方首次打开会全量拉取'
 }
 
-# 同样带上一份 LPR 全量缓存（约 90 期 / 几 KB，一次请求即可拉全，带包只是让首屏秒出）
+# 同样带上一份 LPR 全量缓存（约 90 期 / 几 KB，按自然年分段约 8 次请求即可拉全，带包只是让首屏秒出）
 # _meta.json 同理剔掉，别把本机的回源冷却时间戳带进包
 $lprSrc = Join-Path $root '.cache\lpr'
 if (Test-Path $lprSrc) {

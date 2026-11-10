@@ -1,6 +1,6 @@
 # 中国经济统计数据看板
 
-一个零依赖的本地看板，把国家统计局的五类数据放在同一个服务里：
+一个零依赖的本地看板，把房价、宏观、LPR、婚育、收支五类数据放在同一个服务里：
 
 | 模块 | 地址 | 内容 |
 | --- | --- | --- |
@@ -56,7 +56,7 @@ lib/livelihood/income/       人均收支子模块：config（读 config/income.
 config/indicators.json       宏观指标配置（栏目 / 指标 / 分段 / 发布日 / 兜底）
 config/livelihood.json       民生指标配置（栏目 / 指标 / 单位 / 历史起点）
 config/income.json           人均收支指标配置（6 个栏目 / 23 个指标 / 口径说明 / 历史起点 2013）
-probe.js                     宏观指标编码探测 + 官方/镜像交叉校验
+probe.js                     指标编码探测（宏观月度库 / 民生年度库）+ 官方/镜像交叉校验
 
 public/index.html            模块选择入口（+ home.css）
 public/housing/              房价看板：index.html / styles.css / app.js
@@ -104,7 +104,7 @@ release/                     打包产物，不入库
 
 - 启动时直接读它，**零网络请求**，打开即用；
 - 顶部的时间范围只影响展示，同样不触发下载；
-- 需要更新数据时才点右上角「刷新数据」—— 会重新检索引（前两页，几秒）、只抓缺失的月份，完成后自动覆盖 `data/periods.json`。
+- 需要更新数据时才点右上角「刷新数据」—— 会重新检索索引（前两页，几秒）、只抓缺失的月份，完成后自动覆盖 `data/periods.json`。
 
 `.cache/` 是抓取过程中的中间产物（解析结果 + 月报原文），可以随时删；`data/` 是成果，建议一起提交到仓库。
 
@@ -301,7 +301,7 @@ set MACRO_DATA_DIR=D:\macro-cache
 
 | 接口 | 说明 |
 | --- | --- |
-| `GET /api/health` | 健康检查（三个模块共用，含房价数据集、宏观与 LPR 缓存概况） |
+| `GET /api/health` | 健康检查（五个看板共用，含房价数据集与宏观 / LPR / 民生 / 收支缓存概况） |
 | `GET /api/macro/health` | 同上，宏观模块内的别名 |
 | `GET /api/macro/indicators` | 指标清单（不含数据，含 stale / latestCached） |
 | `GET /api/macro/overview` | 看板一次性取全量（顶部时间选择就靠它；含 `refreshing` 后台补齐标记） |
@@ -572,7 +572,7 @@ release/中国经济统计数据看板/                                      解
 release/china-economic-stats-dashboard-v3.2.0-win10-win11.zip     对外发送
 ```
 
-包内是 `node.exe`（官方签名二进制，v20.12.2）、`server.js`、`lib/`、`config/`、`public/`、`data/periods.json`、`probe.js`、`docs/`、`README.md`、`start.bat`、`使用说明.txt`，以及一份 `.cache/macro/`、`.cache/lpr/`、`.cache/livelihood/` 与 `.cache/livelihood-income/`；不含 `node_modules/`、`AGENTS.md`。功能与源码版完全一致：五个看板、跨月 / 跨年自动核对、「刷新数据」都照常可用。
+包内是 `node.exe`（官方签名二进制，v20.12.2）、`server.js`、`package.json`、`lib/`、`config/`、`public/`、`data/periods.json`、`probe.js`、`docs/`、`README.md`、`start.bat`、`使用说明.txt`，以及一份 `.cache/macro/`、`.cache/lpr/`、`.cache/livelihood/` 与 `.cache/livelihood-income/`；不含 `node_modules/`、`AGENTS.md`。功能与源码版完全一致：五个看板、跨月 / 跨年自动核对、「刷新数据」都照常可用。
 
 - **分发包默认带宏观历史数据**：`.cache/macro/` 里是 20 个指标、约 1200 个月度文件（0.2 MB，打包时自动剔除本机的 `_meta.json` 回源时间戳），对方首次打开只需补最近几期，几秒钟就全了；删掉它才会全量重拉。
 - **LPR 历史同样随包分发**：`.cache/lpr/` 是一条全量序列（约 90 期 / 几 KB，同样剔 `_meta.json`），对方首次打开秒出图；就算不带，现场拉全也只要几秒。
@@ -593,7 +593,7 @@ release/china-economic-stats-dashboard-v3.2.0-win10-win11.zip     对外发送
 
 - **房价不是成交均价**。价格指数反映的是价格变动的相对幅度，不含绝对价格水平。
 - 宏观接口随时可能变化或限流，页面出现「待更新」属正常现象，请以统计局官网公布为准。
-- 四个模块的数据版权分别归国家统计局（房价 / 宏观 / 民生 / 收支）与全国银行间同业拆借中心（LPR）所有，本项目只做本地可视化，不保存、不分发原始数据库。
+- 五个看板的数据版权分别归国家统计局（房价 / 宏观 / 民生 / 收支）与全国银行间同业拆借中心（LPR）所有，本项目只做本地可视化，不保存、不分发原始数据库。
 - 仅供数据观察，**不要用于任何投资决策依据**。
 
 ## 反馈与联系
