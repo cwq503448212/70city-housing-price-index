@@ -65,7 +65,7 @@ exit /b 0
 :no_node
 echo   [x] 没有找到 node.exe
 echo       正常情况应该和 start.bat 放在同一个文件夹里，
-echo       如果被误删了，可以重新拷一份 v14 以上的 node.exe 进来。
+echo       如果被误删了，可以重新拷一份 v20 的 node.exe 进来。
 echo.
 pause
 exit /b 1

@@ -11,3 +11,6 @@ desktop.ini
 
 # 分发包：里面塞了 54MB 的 node.exe，只用来对外发送，不进仓库
 release/
+
+# 打包脚本：含本机 Node 路径（nvm 位置等），只在本机出包用，不进仓库
+packaging/build.ps1

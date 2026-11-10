@@ -76,7 +76,7 @@ node server.js
 
 > 必须通过这个本地服务访问，直接双击 `index.html` 是不行的：`file://` 下 `fetch('/api/nbs70')` 会被浏览器拦下，拿不到数据。
 
-- 需要 Node >= 12，**不需要 `npm install`**（ECharts 已内置在 `public/vendor/`）。
+- 需要 Node >= 20，**不需要 `npm install`**（ECharts 已内置在 `public/vendor/`）。
 - 启动即读 `data/periods.json`，**不联网**，秒开；如果月份戳不是本月，会在后台自动核对一次（见上文）。
 - 顶栏右侧的「时间范围」只做本地过滤（近 1 / 2 / 3 / 5 / 10 年、全部、自定义区间），**默认「近 5 年」**，选完后下方所有与时间相关的图表都跟着变；选择记在 `localStorage`（键 `nbs70.range.v2`）里，刷新后保留。
 - 想立即拿最新一期数据，点「刷新数据」：翻搜索前两页 + 重抓最近 3 个月（统计局可能修订），约 5-10 秒。
@@ -86,7 +86,7 @@ node server.js
 
 ## 打包给别人（对方不装 Node）
 
-`node server.js` 需要 Node 运行时。要发给装不了 Node 的人，用**便携包**：把本机的 `node.exe` 和项目一起打进去，对方解压双击 `start.bat` 就行，**不需要安装任何东西**。
+`node server.js` 需要 Node 运行时。要发给装不了 Node 的人，用**便携包**：把 `node.exe` 和项目一起打进去，对方解压双击 `start.bat` 就行，**不需要安装任何东西**。
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File packaging\build.ps1
@@ -95,15 +95,17 @@ powershell -ExecutionPolicy Bypass -File packaging\build.ps1
 产物：
 
 ```
-release/70城房价看板/        可直接双击运行（57.5 MB）
-release/70城房价看板.zip     对外发送（22.9 MB）
+release/70城房价看板/        可直接双击运行（69.8 MB）
+release/70城房价看板.zip     对外发送（27.3 MB）
 ```
 
-包内是 `node.exe`（v14.15.1，官方签名二进制）、`server.js`、`lib/`、`public/`、`data/periods.json`、`docs/`、`start.bat`、`使用说明.txt`；不含 `.cache/`、`node_modules/`。功能与源码版完全一致：跨月自动核对、「刷新数据」都照常可用。
+包内是 `node.exe`（v20.12.2，官方签名二进制）、`server.js`、`lib/`、`public/`、`data/periods.json`、`docs/`、`start.bat`、`使用说明.txt`；不含 `.cache/`、`node_modules/`。功能与源码版完全一致：跨月自动核对、「刷新数据」都照常可用。
 
 - 便携版的 `start.bat` 和 `使用说明.txt` 放在 `packaging/` 里跟代码一起维护，`build.ps1` 打包时会拷过去。
-- 想换 Node 版本：`set NODE_EXE=D:\node20\node.exe` 后再跑一次 `build.ps1`。
-- `release/` 已加进 `.gitignore`，54 MB 的 `node.exe` 不进仓库。
+- 想换 node.exe：`packaging\build.ps1 -NodeExe 'D:\soft\nvm\v20.12.2\node.exe'`。
+- 内置的是 Node 20，因此**只支持 Windows 10 / 11**；Windows 7 / 8 不再支持（Node 18 起已放弃这些系统）。
+- `release/` 已加进 `.gitignore`，几十 MB 的 `node.exe` 不进仓库。
+- Release 附件名不能含中文（会被静默删除），上传前复制一份英文名，如 `70city-housing-price-index-v1.0.0.zip`。
 
 > 为什么不用 pkg 打成单个 exe：体积差不多（~45 MB），但自解压 exe 常被杀软误报；更麻烦的是包内 `data/` 会变成只读的虚拟文件系统，「刷新数据」写不进去，得额外改路径。便携 `node.exe` 是官方签名的，零误报、行为完全一致。
 
@@ -119,7 +121,7 @@ public/app.js          前端逻辑与 ECharts 图表
 public/vendor/         ECharts 5（已内置）
 docs/                  页面截图
 data/periods.json      本地数据集（189 个月，随项目分发）
-packaging/             便携包的 start.bat / 使用说明.txt / build.ps1
+packaging/             便携包的 start.bat / 使用说明.txt（build.ps1 只在本地，不入库）
 release/               打包产物，不入库（见上文「打包给别人」）
 .cache/                抓取中间产物：解析结果 + 月报原文（自动生成，可安全删除）
 ```
