@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>中国居民存款与人均存款看板</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-main">
+    <div class="brand">
+      <h1>中国居民存款与人均存款看板</h1>
+      <p class="brand-sub">数据来源：中国人民银行 · 调查统计司（金融机构人民币信贷收支表）　历史一次拉全，按月核对</p>
+    </div>
+
+    <div class="controls">
+      <a class="back-link" href="../../">← 返回模块选择</a>
+      <label class="ctrl">
+        <span class="ctrl-label">时间范围</span>
+        <select id="range">
+          <option value="2">近 2 年</option>
+          <option value="5" selected>近 5 年</option>
+          <option value="all">全部（2015 起）</option>
+          <option value="custom">自定义月份</option>
+        </select>
+      </label>
+
+      <div class="ctrl ctrl-custom" id="custom-box" hidden>
+        <label class="ctrl">
+          <span class="ctrl-label">起</span>
+          <input type="month" id="from" />
+        </label>
+        <label class="ctrl">
+          <span class="ctrl-label">止</span>
+          <input type="month" id="to" />
+        </label>
+      </div>
+
+      <button id="refresh" class="btn" type="button" title="跳过缓存，重新向央行请求一次">刷新数据</button>
+      <span id="status" class="status">正在加载…</span>
+    </div>
+  </div>
+  <p class="range-hint" id="range-hint"></p>
+</header>
+
+<main>
+  <section class="kpi-row" id="kpi-row" aria-label="关键指标"></section>
+
+  <section class="grid">
+    <article class="card card-wide">
+      <header class="card-head">
+        <h2>住户存款余额（万亿元）</h2>
+        <p class="card-sub">
+          月末时点值，人民币口径（金融机构人民币信贷收支表「住户存款」行）；原始值单位亿元，除以 10000 折算为万亿元
+        </p>
+      </header>
+      <div class="chart chart-lg" id="chart-balance"></div>
+    </article>
+
+    <article class="card card-wide">
+      <header class="card-head">
+        <h2>当月新增存款（亿元）</h2>
+        <p class="card-sub">
+          本月余额 − 上月余额，<strong>本页计算值</strong>；央行只发布「年初至今累计增量」，不单独发布当月新增
+        </p>
+      </header>
+      <div class="chart" id="chart-add"></div>
+    </article>
+
+    <article class="card card-wide">
+      <header class="card-head">
+        <h2>活期 / 定期及其他（万亿元）</h2>
+        <p class="card-sub">官方分项原值，两项之和等于住户存款；颜色由浅到深表示期限拉长</p>
+      </header>
+      <div class="chart" id="chart-structure"></div>
+    </article>
+
+    <article class="card card-wide">
+      <header class="card-head">
+        <h2>余额同比（%）</h2>
+        <p class="card-sub">本月余额 ÷ 上年同月余额 − 1，<strong>本页计算值</strong>；央行报告里的「同比增长」是存款总口径，不是住户口径</p>
+      </header>
+      <div class="chart" id="chart-yoy"></div>
+    </article>
+
+    <article class="card card-wide">
+      <header class="card-head">
+        <h2>人均存款（万元 / 人，年末口径）</h2>
+        <p class="card-sub">
+          每年 12 月余额 ÷ 当年年末总人口（国家统计局），<strong>本页计算值</strong>；只有 12 月有值，所以横轴是年份
+        </p>
+      </header>
+      <div class="chart" id="chart-percapita"></div>
+    </article>
+  </section>
+
+  <section class="card">
+    <header class="card-head">
+      <h2>月度明细</h2>
+      <p class="card-sub">
+        按年分组，月份升序；「当月新增」「累计新增」「同比」「人均」都是本页用余额差分得出，不是央行直接发布值
+      </p>
+    </header>
+    <div class="table-wrap">
+      <table id="detail-table">
+        <thead>
+          <tr>
+            <th>月份</th>
+            <th class="num">余额（万亿元）</th>
+            <th class="num">当月新增（亿元）</th>
+            <th class="num">累计新增（亿元）</th>
+            <th class="num">同比（%）</th>
+            <th class="num">活期（万亿元）</th>
+            <th class="num">定期及其他（万亿元）</th>
+            <th class="num">人均（万元）</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <p>
+      <strong>存量口径：</strong>「住户存款」指住户在金融机构的人民币存款月末余额（时点值，不是日均、不是年累计），
+      来源是央行调查统计司每月随《金融统计数据报告》一起发布的《金融机构人民币信贷收支表》。
+      表中同时给出「活期存款」与「定期及其他存款」两个分项，两者之和等于住户存款。
+    </p>
+    <p>
+      <strong>新增口径：</strong>央行新闻稿只写「前八个月人民币存款增加…其中住户存款增加 6.99 万亿元」这类
+      <em>年初至今累计增量</em>，从不单独发布「当月新增」。因此本页的「当月新增」与「累计新增」都由余额差分得出，
+      属于<strong>计算值</strong>：当月新增 = 本月余额 − 上月余额（跨年首月取上年 12 月），
+      累计新增 = 本月余额 − 上年 12 月余额。差分值与央行口径的累计增量在四舍五入范围内一致。
+    </p>
+    <p>
+      <strong>人均口径：</strong>人均存款 = 当年 12 月住户存款余额 ÷ 当年年末总人口，单位换算为万元 / 人
+      （亿元 ÷ 万人 = 万元 / 人）。分母取国家统计局年度库「年末总人口」，只在每年 12 月成立，
+      所以这条线是一条年度序列，不做月度插值。
+    </p>
+    <p>
+      <strong>统计时点与发布节奏：</strong>每月 10–15 日左右发布上月数据，因此「截至今天最晚应已发布」的月份是：
+      当天 ≥ 15 日取上月，否则取上上月。上个月的表还没挂出来时，本页照常展示已有月份，并在状态栏标「数据可能滞后」，
+      不空图、不补 0。表里未发布的月份是空格子，本页按缺失处理（显示 —）。
+    </p>
+    <p>
+      <strong>数据来源：</strong>中国人民银行官网「调查统计司 → 统计数据 → 金融机构信贷收支统计」下的
+      《金融机构人民币信贷收支表》htm 附件（GBK 网页，2015 年起）；人均分母来自国家统计局「国家数据」年度库。
+      所有请求都由本地服务端代取并写入 JSON 缓存，上游失败时回退缓存并标记 stale。
+    </p>
+    <p>
+      <strong>缺失值：</strong>未发布或上游缺项一律显示为空缺，不插值、不补 0、不自行加权合成。
+    </p>
+    <p id="foot-meta" class="foot-meta"></p>
+  </footer>
+</main>
+
+<script src="../../vendor/echarts.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

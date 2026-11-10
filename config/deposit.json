@@ -1,0 +1,121 @@
+{
+  "source": {
+    "label": "中国人民银行 · 调查统计司（金融机构信贷收支统计）",
+    "url": "https://www.pbc.gov.cn/diaochatongjisi/116219/116319/index.html",
+    "chapter": "统计数据 · 金融机构人民币信贷收支表 / 住户存款（月末余额）",
+    "note": "余额是月末时点值、人民币口径。央行《金融统计数据报告》只按「年初至今累计」发布住户存款增量，从不单独发布余额与当月新增；本页的当月新增、年初至今累计与同比都由余额差分计算，页面已逐处标注"
+  },
+  "history": {
+    "from": "2015"
+  },
+  "site": {
+    "baseUrl": "https://www.pbc.gov.cn",
+    "hub": "/diaochatongjisi/116219/index.html",
+    "yearLinkText": "年统计数据",
+    "creditLinkText": "金融机构信贷收支统计",
+    "tableTitle": "金融机构人民币信贷收支表",
+    "tableExclude": ["存款类", "中资"],
+    "rowBalance": "住户存款",
+    "rowDemand": "活期存款",
+    "rowTime": "定期及其他存款"
+  },
+  "population": {
+    "catalog": "6331ad868e8b4f55b8e9b6e765609ce1",
+    "indicatorId": "806083491dbe46a08995783945a30b9d",
+    "label": "年末总人口（万人）",
+    "source": "国家统计局 · 国家数据（年度库 · 总人口）"
+  },
+  "groups": [
+    { "key": "stock", "label": "存量（月末余额）", "note": "月末最后一天的时点值，人民币口径，不是日均" },
+    { "key": "flow", "label": "新增（按余额差分计算）", "note": "本月余额 − 上月余额；央行报告只发布年初至今累计增量" },
+    { "key": "structure", "label": "结构（活期 / 定期及其他）", "note": "活期 + 定期及其他 = 住户存款，官方分项原值" },
+    { "key": "growth", "label": "增速（同比）", "note": "本月余额 ÷ 上年同月余额 − 1，本页计算值" },
+    { "key": "percapita", "label": "人均（年末）", "note": "年末余额 ÷ 年末总人口，只用每年 12 月" }
+  ],
+  "indicators": [
+    {
+      "id": "balance",
+      "label": "住户存款余额",
+      "shortLabel": "余额",
+      "unit": "万亿元",
+      "kind": "money",
+      "group": "stock",
+      "from": "balance",
+      "scale": 0.0001,
+      "decimals": 2,
+      "note": "月末余额，原始值单位为亿元，展示时折算为万亿元"
+    },
+    {
+      "id": "monthly_add",
+      "label": "当月新增存款",
+      "shortLabel": "当月新增",
+      "unit": "亿元",
+      "kind": "money",
+      "group": "flow",
+      "from": "monthly_add",
+      "scale": 1,
+      "decimals": 0,
+      "note": "本月余额 − 上月余额；跨年首月同样取上年 12 月"
+    },
+    {
+      "id": "ytd_add",
+      "label": "年初至今累计新增",
+      "shortLabel": "累计新增",
+      "unit": "亿元",
+      "kind": "money",
+      "group": "flow",
+      "from": "ytd_add",
+      "scale": 1,
+      "decimals": 0,
+      "note": "本月余额 − 上年 12 月余额"
+    },
+    {
+      "id": "yoy",
+      "label": "余额同比",
+      "shortLabel": "同比",
+      "unit": "%",
+      "kind": "growth",
+      "group": "growth",
+      "from": "yoy",
+      "scale": 1,
+      "decimals": 1,
+      "note": "本月余额 ÷ 上年同月余额 − 1"
+    },
+    {
+      "id": "demand",
+      "label": "活期存款",
+      "shortLabel": "活期",
+      "unit": "万亿元",
+      "kind": "money",
+      "group": "structure",
+      "from": "demand",
+      "scale": 0.0001,
+      "decimals": 2,
+      "note": "官方分项原值"
+    },
+    {
+      "id": "time_deposit",
+      "label": "定期及其他存款",
+      "shortLabel": "定期及其他",
+      "unit": "万亿元",
+      "kind": "money",
+      "group": "structure",
+      "from": "time",
+      "scale": 0.0001,
+      "decimals": 2,
+      "note": "官方分项原值"
+    },
+    {
+      "id": "per_capita",
+      "label": "人均存款（年末）",
+      "shortLabel": "人均存款",
+      "unit": "万元/人",
+      "kind": "money",
+      "group": "percapita",
+      "from": "per_capita",
+      "scale": 1,
+      "decimals": 2,
+      "note": "年末余额 ÷ 年末总人口；只有每年 12 月有值"
+    }
+  ]
+}

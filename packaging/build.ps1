@@ -47,7 +47,7 @@ Copy-Item $NodeExe (Join-Path $pkg 'node.exe')
 foreach ($f in @('server.js', 'package.json', 'probe.js', 'README.md')) {
   Copy-Item (Join-Path $root $f) $pkg
 }
-# 五个看板的代码、配置、页面、固化数据集与截图（docs 只被 README 引用）
+# 六个看板的代码、配置、页面、固化数据集与截图（docs 只被 README 引用）
 foreach ($d in @('lib', 'config', 'public', 'data', 'docs')) {
   Copy-Item (Join-Path $root $d) (Join-Path $pkg $d) -Recurse
 }
@@ -115,6 +115,19 @@ if (Test-Path $incomeSrc) {
   Write-Host ('      + 收支缓存：' + $incomeInd + ' 个指标 / ' + $incomeYears.Count + ' 个年度文件，最新 ' + $incomeLatest)
 } else {
   Write-Host '      ! 未找到 .cache\livelihood-income：包里不带收支缓存，对方首次打开会现场拉全（六个请求）'
+}
+# 居民存款年度缓存：一个年一个文件（12 个月 × 3 行原值）+ 人口分母，几十 KB，带上让首屏直接出图
+# _meta.json 同样剔掉（它带着本机的回源冷却时间戳与上次错误）
+$depositSrc = Join-Path $root '.cache\livelihood-deposit'
+if (Test-Path $depositSrc) {
+  New-Item -ItemType Directory -Path (Join-Path $pkg '.cache') -Force | Out-Null
+  Copy-Item $depositSrc (Join-Path $pkg '.cache') -Recurse
+  Get-ChildItem (Join-Path $pkg '.cache\livelihood-deposit') -Recurse -File -Filter '_meta.json' | Remove-Item -Force
+  $depositYears = Get-ChildItem (Join-Path $pkg '.cache\livelihood-deposit\years') -File -Filter '????.json'
+  $depositLatest = ($depositYears | ForEach-Object { $_.BaseName } | Sort-Object -Descending | Select-Object -First 1)
+  Write-Host ('      + 存款缓存：' + $depositYears.Count + ' 个年度文件，最新 ' + $depositLatest)
+} else {
+  Write-Host '      ! 未找到 .cache\livelihood-deposit：包里不带存款缓存，对方首次打开会现场拉全（约 45 秒）'
 }
 Write-Host '[2/4] 已拷贝项目文件'
 
