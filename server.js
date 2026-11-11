@@ -547,7 +547,8 @@ server.listen(PORT, HOST, () => {
   console.log('    ├─ 民生 · 社零       http://' + HOST + ':' + PORT + '/livelihood/retail/');
   console.log('    ├─ 民生 · 就业       http://' + HOST + ':' + PORT + '/livelihood/employment/');
   console.log('    ├─ 民生 · 养老医保   http://' + HOST + ':' + PORT + '/livelihood/security/');
-  console.log('    └─ 行业运行          http://' + HOST + ':' + PORT + '/industry/');
+  console.log('    ├─ 行业运行          http://' + HOST + ':' + PORT + '/industry/');
+  console.log('    └─ 区域经济          http://' + HOST + ':' + PORT + '/region/');
   const macroSet = macroSeries.datasetStatus();
   console.log('  [宏观] 缓存目录：' + macroSet.dir);
   if (!macroSet.files) {

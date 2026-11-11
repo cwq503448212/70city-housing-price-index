@@ -68,7 +68,7 @@ lib\region\          区域经济：走分省年度库（逐省请求 31 次）�
 config\              指标配置（indicators.json 宏观、livelihood.json 民生、income.json 收支、deposit.json 存款、retail.json 社零、employment.json 就业、security.json 养老医保、industry.json 行业运行、region.json 区域经济）
 public\              页面本体（首页 + housing / macro / lpr / livelihood / livelihood\income / livelihood\deposit / livelihood\retail / livelihood\employment / livelihood\security / industry / region 十一个看板，含 ECharts）
 data\                房价数据集（189 个月）
-probe.js             指标编码探测工具（宏观 / 社零 / 就业 / 行业运行月度库、民生 / 收支 / 农民工 / 养老医保 / 分省 GDP 年度库，一般用不到）
+probe.js             指标编码探测工具（宏观 / 社零 / 就业 / 行业运行月度库、民生 / 收支 / 农民工 / 养老医保年度库，一般用不到；分省 GDP 库请直接用 lib\region\source.js 探测）
 docs\                截图
 
 

@@ -5,11 +5,11 @@
  *
  * 国家统计局的指标编码绝对不能靠猜。任何要写进 config/ 下指标配置
  * （indicators.json 宏观、livelihood.json 民生、income.json 收支、deposit.json 存款、retail.json 社零、
- * employment.json 就业、security.json 养老医保）
+ * employment.json 就业、security.json 养老医保、industry.json 行业运行）
  * 的栏目 id / 指标 id，都必须先用这个工具打印出来看一眼；宏观指标还要再用
  * DBnomics 同期刊交叉校验一次。
  *
- * 月度库（宏观 / 社零 / 就业的调查失业率用，期别如 2026-09）：
+ * 月度库（宏观 / 社零 / 就业的调查失业率 / 行业运行的工业与 PMI 用，期别如 2026-09）：
  *   node probe.js tree                     列出「月度数据」下的栏目树（一层）
  *   node probe.js tree <pid>               展开某个栏目
  *   node probe.js indicators <catalogId>   列出栏目下的指标（含 id / 名称 / 起止）
@@ -21,6 +21,9 @@
  *   node probe.js annual-tree [pid]        列出「年度数据」下的栏目树
  *   node probe.js annual-indicators <catalogId>
  *   node probe.js annual-data <catalogId> <indicatorId...> [fromYear] [toYear]
+ *
+ * 分省年度库（region.json 区域经济用）不在上面两组命令里：它是 code=6，且 das 必须指定
+ * 单个省（12 位行政区划码），直接用 lib/region/source.js 的 tree / indicatorsOf / fetchRange 探测。
  *
  * 所有请求都走 sources/nbs.js 与 livelihood/source.js，内部串行 + 1.2 秒间隔，不会打爆站点。
  */
