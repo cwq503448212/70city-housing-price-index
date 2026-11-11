@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>中国区域经济看板 · 分省 GDP</title>
+<meta name="description" content="基于国家统计局分省年度数据的省级地区生产总值看板" />
+<link rel="icon" href="data:," />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-main">
+    <div class="brand">
+      <h1>中国区域经济看板 · 分省 GDP</h1>
+      <p class="brand-sub">
+        国家统计局 · 国家数据（分省年度库 · 地区生产总值与官方指数）
+        <a id="srcLink" href="https://data.stats.gov.cn" target="_blank" rel="noreferrer">查看数据源 ↗</a>
+      </p>
+    </div>
+
+    <div class="controls">
+      <a class="back-link" href="../">← 返回模块选择</a>
+      <label class="ctrl">
+        <span class="ctrl-label">年份</span>
+        <select id="year" title="横截面图（排行、产业构成、人均对比）用的年份"></select>
+      </label>
+      <label class="ctrl">
+        <span class="ctrl-label">走势区间</span>
+        <select id="range" title="只影响单省走势图与产业构成的历史范围">
+          <option value="10">近 10 年</option>
+          <option value="20">近 20 年</option>
+          <option value="all" selected>全部（1992 起）</option>
+        </select>
+      </label>
+      <button id="refresh" class="btn" type="button" title="跳过缓存，重新向统计局核对一次">刷新数据</button>
+      <span id="status" class="status">正在加载…</span>
+    </div>
+  </div>
+  <p class="range-hint" id="range-hint"></p>
+</header>
+
+<main>
+  <section class="kpi-row" id="kpi-row" aria-label="关键指标"></section>
+
+  <section class="card card-wide">
+    <header class="card-head">
+      <h2>省份排行 <span class="tag" id="rank-tag"></span></h2>
+      <p class="card-sub" id="rank-sub">31 个省级行政区，按选中指标排序</p>
+      <div class="seg" id="rank-metric" role="group" aria-label="排行指标"></div>
+    </header>
+    <div class="chart chart-xl" id="chart-rank"></div>
+  </section>
+
+  <section class="card card-wide">
+    <header class="card-head">
+      <h2>单省走势</h2>
+      <p class="card-sub">
+        地区生产总值（当年价，亿元，左轴）与官方实际增速（%，右轴）。
+        <strong>名义与实际是两种口径</strong>：前者含价格因素，后者取自统计局发布的「地区生产总值指数（上年=100）」
+      </p>
+    </header>
+    <div class="chips" id="chips"></div>
+    <div class="chart chart-lg" id="chart-trend"></div>
+  </section>
+
+  <section class="card card-wide">
+    <header class="card-head">
+      <h2>三次产业构成 <span class="tag" id="industry-tag"></span></h2>
+      <p class="card-sub">
+        选中省在所选区间内逐年的三次产业占比（100% 堆叠柱），<strong>本页计算值</strong>（产业增加值 ÷ GDP），
+        标题右侧给选中年的三项占比。占比之和恒为 100%，缺任一分项的那一年整条不画，不补 0
+      </p>
+    </header>
+    <div class="chart" id="chart-industry"></div>
+  </section>
+
+  <section class="card card-wide">
+    <header class="card-head">
+      <h2>人均 GDP 对比</h2>
+      <p class="card-sub">
+        人均地区生产总值（元/人，官方按年平均常住人口计算，本页不重新推算）。
+        总量大不等于人均高，两张图要分开看
+      </p>
+    </header>
+    <div class="chart chart-xl" id="chart-percapita"></div>
+  </section>
+
+  <section class="card card-wide">
+    <header class="card-head">
+      <h2>口径说明</h2>
+    </header>
+    <ul class="notes">
+      <li><strong>不含港澳台</strong>：分省年度库只收录 31 个省级行政区（22 省 + 5 自治区 + 4 直辖市）。</li>
+      <li><strong>不做全国合计</strong>：各地区 GDP 相加不等于全国 GDP（存在跨地区经济活动重复计算），国家统计局也不发布这样的加总值，因此本页任何位置都<strong>不出现「全国」聚合数</strong>。</li>
+      <li><strong>名义与实际</strong>：GDP 是当年价名义值，跨年比较含价格因素；实际增速只取官方「地区生产总值指数（上年=100）」减 100，<strong>不用 CPI 自行折算</strong>。</li>
+      <li><strong>计算值标注</strong>：三次产业占比、名义增速由本页计算（图注已标明），与官方发布值区分；计算值不落盘，公式改了不用清缓存。</li>
+      <li><strong>发布滞后</strong>：GDP / 人均 GDP / 总指数在次年 1 月陆续公布；<strong>分行业增加值与分产业指数随《中国统计年鉴》入库，通常滞后一年</strong>，所以这些指标最新年比 GDP 少一年是正常的，不是缺数据。</li>
+      <li><strong>历史修订</strong>：地区生产总值按现行统一核算制度修订过，早期数值可能与当年公报不一致；跨年比较请以后一版为准。</li>
+      <li><strong>缺失就是缺失</strong>：某省某年上游没有数值就断开，不插值、不补 0。</li>
+    </ul>
+  </section>
+</main>
+
+<script src="../vendor/echarts.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

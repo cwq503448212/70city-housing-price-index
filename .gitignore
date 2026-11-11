@@ -4,7 +4,8 @@ probe-out/
 server.log
 server.err.log
 
-# 临时文件目录：忽略规则写在 .temp/.gitignore 内（那边保留空目录，clone 下来就有）
+# 临时文件目录：探测脚本、一次性验证脚本、临时截图、中间产物，整目录不进仓库（用的时候自己 mkdir）
+.temp/
 
 # 系统垃圾文件
 Thumbs.db

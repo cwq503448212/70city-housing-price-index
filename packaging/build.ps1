@@ -47,7 +47,7 @@ Copy-Item $NodeExe (Join-Path $pkg 'node.exe')
 foreach ($f in @('server.js', 'package.json', 'probe.js', 'README.md')) {
   Copy-Item (Join-Path $root $f) $pkg
 }
-# 十个看板的代码、配置、页面、固化数据集与截图（docs 只被 README 引用）
+# 十一个看板的代码、配置、页面、固化数据集与截图（docs 只被 README 引用）
 foreach ($d in @('lib', 'config', 'public', 'data', 'docs')) {
   Copy-Item (Join-Path $root $d) (Join-Path $pkg $d) -Recurse
 }
@@ -180,6 +180,19 @@ if (Test-Path $industrySrc) {
   Write-Host ('      + 行业运行缓存：' + $indCats.Count + ' 个栏目文件，' + $indKB + ' KB')
 } else {
   Write-Host '      ! 未找到 .cache\industry：包里不带行业运行缓存，对方首次打开会现场拉全（5 个请求，约 10 秒）'
+}
+# 分省 GDP 缓存：31 个省文件（每省 22 项指标 × 1992 起，约 1.4 万个数据点，
+# 带上后对方首次打开不必逐省拉 31 次；_meta.json 同样剔掉（它按「省 + 栏目」记冷却时间戳）
+$regionSrc = Join-Path $root '.cache\region'
+if (Test-Path $regionSrc) {
+  New-Item -ItemType Directory -Path (Join-Path $pkg '.cache') -Force | Out-Null
+  Copy-Item $regionSrc (Join-Path $pkg '.cache') -Recurse
+  Get-ChildItem (Join-Path $pkg '.cache\region') -Recurse -File -Filter '_meta.json' | Remove-Item -Force
+  $regionFiles = Get-ChildItem (Join-Path $pkg '.cache\region') -File -Filter '????????????.json'
+  $regionKB = '{0:N1}' -f (($regionFiles | Measure-Object Length -Sum).Sum / 1KB)
+  Write-Host ('      + 区域经济缓存：' + $regionFiles.Count + ' 个省文件，' + $regionKB + ' KB')
+} else {
+  Write-Host '      ! 未找到 .cache\region：包里不带分省 GDP 缓存，对方首次打开会逐省拉 31 次（约 40 秒）'
 }
 Write-Host '[2/4] 已拷贝项目文件'
 

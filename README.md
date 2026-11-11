@@ -1,6 +1,6 @@
 # 中国经济统计数据看板
 
-一个零依赖的本地看板：**十个模块、一个进程、一份本地缓存**。数据全部由服务端代取，首次打开一次拉全历史，之后每次打开只核对应发布期别——有新一期就补进去，没发布就直接读缓存。
+一个零依赖的本地看板：**十一个模块、一个进程、一份本地缓存**。数据全部由服务端代取，首次打开一次拉全历史，之后每次打开只核对应发布期别——有新一期就补进去，没发布就直接读缓存。
 
 | 模块 | 地址 | 内容 | 频次 · 起点 |
 | --- | --- | --- | --- |
@@ -14,8 +14,9 @@
 | **就业形势** | `/livelihood/employment/` | 全国与 31 城调查失业率、分户籍 / 分年龄、周平均工时、农民工、城镇登记失业 | 月度 2018-01 + 年度 1978 |
 | **养老医保** | `/livelihood/security/` | 五险基金收支结余、职工 / 城乡居民养老、基本医保、失业工伤生育、人均养老金、可支付月数、参保率 | 年度 · 1990 |
 | **工业行业运行** | `/industry/` | 41 个大类行业增加值热力图与排行、营收 / 利润累计同比四象限、制造业与非制造业 PMI 分项 | 月度 · 2018-01 |
+| **区域经济（分省 GDP）** | `/region/` | 31 个省级行政区 GDP 排行、单省走势（名义值 + 官方实际增速）、三次产业构成、人均 GDP 对比 | 年度 · 1992 |
 
-打开根地址 `/` 是模块选择页，点进去分别进入十个子页面；每个子页面右上角「← 返回模块选择」可以切回来。
+打开根地址 `/` 是模块选择页，点进去分别进入十一个子页面；每个子页面右上角「← 返回模块选择」可以切回来。
 
 ![模块选择入口](docs/screenshot-home.png)
 
@@ -29,7 +30,7 @@ node server.js
 
 然后打开 <http://127.0.0.1:5173>。
 
-- 需要 Node >= 20，**不需要 `npm install`**（ECharts 已内置在 `public/vendor/`，十个看板共用一份）。
+- 需要 Node >= 20，**不需要 `npm install`**（ECharts 已内置在 `public/vendor/`，十一个看板共用一份）。
 - 必须经这个本地服务访问：直接双击 `public/**/index.html` 不行——`file://` 下 `fetch('/api/...')` 会被浏览器拦下；统计局 / 央行站点还有 WAF，浏览器直连会 403，数据只能由服务端代取。
 - 换端口：`$env:PORT=8080; node server.js`；用 `start.bat` 时可以先 `set DASH_PORT=5180`（旧的 `NBS_PORT` 仍兼容）。
 
@@ -51,17 +52,18 @@ lib/livelihood/retail/       社零：独立取数（国家数据月度库），
 lib/livelihood/employment/   就业：独立取数（月度库 + 年度库双频次），限流复用父目录 queue
 lib/livelihood/security/     养老医保：取数复用父目录 source，限流复用父目录 queue
 lib/industry/                行业运行：独立取数（国家数据月度库 · 工业 / PMI），限流在本模块内
+lib/region/                  区域经济：独立取数（国家数据分省年度库 · 逐省串行），限流在本模块内
 
-config/*.json                各模块的唯一事实来源：indicators / livelihood / income / deposit / retail / employment / security / industry
-public/                      index.html + home.css（入口）；housing、macro、lpr、industry、livelihood/{income,deposit,retail,employment,security}；vendor/echarts.min.js
+config/*.json                各模块的唯一事实来源：indicators / livelihood / income / deposit / retail / employment / security / industry / region
+public/                      index.html + home.css（入口）；housing、macro、lpr、industry、region、livelihood/{income,deposit,retail,employment,security}；vendor/echarts.min.js
 data/periods.json            房价数据集（189 个月，随仓库分发）
 docs/                        页面截图
 packaging/                   便携包的 build.ps1 / start.bat / 使用说明.txt
-.cache/                      运行时缓存（macro / lpr / livelihood* / industry / raw），可随时删除
+.cache/                      运行时缓存（macro / lpr / livelihood* / industry / region / raw），可随时删除
 .temp/                       临时脚本与截图（已被 git 忽略，可随时删除）
 ```
 
-## 十个看板共用的机制
+## 十一个看板共用的机制
 
 - **服务端代取**：前端只请求 `/api/...`，不直连任何上游域名。
 - **缓存优先**：有本地数据就用本地数据，只在「缺数据 / 过了发布日 / 用户点刷新」时回源。缓存都是可删的 JSON，删掉只会让下次重新拉全。
@@ -81,7 +83,7 @@ packaging/                   便携包的 build.ps1 / start.bat / 使用说明.t
 
 | 前缀 | 查询参数 |
 | --- | --- |
-| `/api/health` | 健康检查，十个看板共用（含各模块缓存概况） |
+| `/api/health` | 健康检查，十一个看板共用（含各模块缓存概况） |
 | `/api/nbs70` | `months=1..200`（200 = 全部历史）、`force=1` |
 | `/api/macro/` | `range=12\|36\|60\|120\|all`、`from=YYYY-MM&to=YYYY-MM`、`force=1` |
 | `/api/lpr/` | 只有 `overview` 与 `health`，`force=1` |
@@ -92,6 +94,7 @@ packaging/                   便携包的 build.ps1 / start.bat / 使用说明.t
 | `/api/livelihood/employment` | `range=2\|5\|all`（只作用于月度指标）、`from=YYYY-MM&to=YYYY-MM`、`force=1` |
 | `/api/livelihood/security` | `range=10\|20\|all`、`from=YYYY&to=YYYY`、`force=1` |
 | `/api/industry/` | `range=2\|5\|all`、`from=YYYY-MM&to=YYYY-MM`、`force=1`；指标 id 带点（如 `coal.profit`） |
+| `/api/region/` | `range=10\|20\|all`、`from=YYYY&to=YYYY`、`provinces=11,44,广东`、`force=1`；`/rank` 支持 `metric=gdp&year=2025` |
 
 `from` / `to` 优先于 `range`。各模块的指标 id 全部写在对应的 `config/*.json` 里，可直接核对。
 
@@ -284,6 +287,22 @@ POST https://www.chinamoney.com.cn/ags/ms/cm-u-bk-currency/LprHis?lang=CN&strSta
 
 ---
 
+# 模块十一：区域经济（分省 GDP）
+
+**31 个省级行政区（不含港澳台）× 1992 年至今**，走国家数据**分省年度库**（`queryIndexTreeAsync?code=6`，rootId `c4d82af16c3d4f0cb4f09d4af7d5888e`；它与全国年度库 `code=3` 是两个库，栏目不同）。两个栏目：地区生产总值（14 个指标）+ 地区生产总值指数（4 个指标），共 22 项展示指标（其中 4 项是本页计算值）。
+
+- **取数成本与别的模块不同**：分省库的 `das` 参数**一次请求只返回一个地区**（送 8 个省只回 1 行），31 个省就是 31 次请求，实测首轮 36.7 秒。所以**首屏只同步拉 GDP 栏目**（31 次），官方指数在首屏返回后由后台补齐，前端按 `refreshing` 轮询换图。
+- **不做全国合计**：各地区 GDP 相加不等于全国 GDP（跨地区经济活动重复计算），统计局也不发布这样的数，所以页面任何位置都不出现「全国」「合计」聚合值；KPI 只做横截面统计（位次、极差）。
+- **名义与实际分开**：GDP 用当年价名义原值；实际增速**只取官方「地区生产总值指数（上年=100）」**，图上按「指数 − 100」展示，不用 CPI 折算；名义增速是本页计算值，两者不混画。
+- **发布滞后写进配置**：GDP / 人均 GDP / 总指数次年 1 月陆续公布；分行业增加值与分产业指数随《中国统计年鉴》入库，**晚一年**，`config/region.json` 用 `lagYears: 1` 表达，`expectedOfIndicator()` 按各自年度判 `stale`，否则整页会永远显示「数据滞后」。
+- **新鲜度逐指标 × 逐省算**：判「齐没齐」不能拿栏目里最新的一年代表整栏（GDP 到 2025、行业增加值停 2023 会被藏起来），也不能拿 31 省里的最大值代表全部（30 个省到 2025、1 个停 2023 同样是「最新 2025」）。所以 `gapOfCatalog()` 逐个原值指标比，`latestCached` 取各省最新年度的最小值，任一省整条缺该指标也计入 `stale`（此时状态栏说「有省份缺数」而不是编一个年份）；展示区间（近 10 年 / 全部）不影响这套判定，否则按 10 年窗口请求时会被误标过期。
+- **首屏等谁不等谁**：「落后 3 年以上就同步补齐」只针对首屏必需的 GDP 栏目，官方指数始终走后台补齐；后台任务在跑时也不再走同步分支，避免前端 4 秒一次的轮询把 31 次上游重走一遍。
+- **缓存**：`.cache/region/<12 位省码>.json`（每省一个文件，31 个）+ `_meta.json`；冷却按「省 + 栏目」记录，首轮拉 GDP 不会把紧接着的指数回源一起拦掉；目录可用 `REGION_DATA_DIR` 覆盖。全量约 1.4 万个数据点。
+- **计算值不落盘**：三次产业占比（产业增加值 ÷ GDP）、名义增速（(今年 − 去年) ÷ 去年）在 `service.js` 的 `valueAt()` 现算，缺任一项输入即 `null`，不补 0；`config.js` 会拦住计算量自带 `catalog` / `indicatorId` 的写法。
+- **页面**：省份排行条形图（可切 GDP 总量 / 名义增速 / 实际增速 / 三产占比）、单省走势（GDP 柱 + 实际增速线，双轴）、三次产业百分比堆叠构成、人均 GDP 对比，共用年份与省份选择。
+
+---
+
 ## 打包给别人（对方不装 Node）
 
 把 `node.exe` 和项目一起打进去，对方解压双击 `start.bat` 即可，**不需要安装任何东西**。出包有两种方式，产物一致：
@@ -295,11 +314,11 @@ POST https://www.chinamoney.com.cn/ags/ms/cm-u-bk-currency/LprHis?lang=CN&strSta
 
 ```
 release/中国经济统计数据看板/                                    解压后双击 start.bat
-release/china-economic-stats-dashboard-v3.9.0-win10-win11.zip   对外发送
+release/china-economic-stats-dashboard-v3.10.0-win10-win11.zip   对外发送
 ```
 
 - 包内是内置的官方签名 `node.exe`（v20.12.2，故**只支持 Windows 10 / 11**）、`server.js`、`lib/`、`config/`、`public/`、`data/periods.json`、`probe.js`、`docs/`、`README.md`、`start.bat`、`使用说明.txt`，以及各模块的缓存；不含 `node_modules/`、`AGENTS.md`。功能与源码版完全一致。
-- **缓存随包带、但剔除 `_meta.json`**：宏观 / LPR / 民生 / 收支 / 存款 / 社零 / 就业 / 养老医保 / 行业运行的历史缓存都进包（合计不到 2 MB），对方首次打开只补最近几期、几秒出图；而 `_meta.json` 是本机回源时间戳（10 分钟冷却），进包会抑制对方的首次核对。
+- **缓存随包带、但剔除 `_meta.json`**：宏观 / LPR / 民生 / 收支 / 存款 / 社零 / 就业 / 养老医保 / 行业运行 / 区域经济的历史缓存都进包（合计不到 3 MB），对方首次打开只补最近几期、几秒出图；而 `_meta.json` 是本机回源时间戳（10 分钟冷却），进包会抑制对方的首次核对。
 - 包放很久才打开也没问题：缺的期别按「应发布期别」一次性补齐，不会从头重拉；只有统计局改了栏目或接口才需要重新发版。
 - zip 名必须纯 ASCII（中文附件名会被 GitHub 静默丢弃），包内顶层目录仍是中文的 `中国经济统计数据看板`；换支持的 Windows 范围用 `build.bat win7-win11` 或 `build.ps1 -SysTag 'win7-win11'`；想换 node.exe 用 `set NODE_EXE=…` 或 `build.ps1 -NodeExe …`（脚本带版本守卫）。
 - 不用 pkg 打单文件 exe：体积差不多，但自解压 exe 常被杀软误报，且包内 `data/` 会变成只读虚拟文件系统，「刷新数据」写不进去。
@@ -308,7 +327,7 @@ release/china-economic-stats-dashboard-v3.9.0-win10-win11.zip   对外发送
 
 - **房价不是成交均价**，价格指数只反映价格变动的相对幅度，不含绝对价格水平。
 - 上游接口随时可能变化或限流，页面出现「待更新」属正常现象，请以官网公布为准。
-- 数据版权分别归国家统计局（房价 / 宏观 / 人口与婚育 / 收支 / 存款的人口分母 / 社零 / 就业 / 养老医保 / 工业行业运行）、中国人民银行（存款 / 信贷收支表）、全国银行间同业拆借中心（LPR）所有；本项目只做本地可视化，不保存、不分发原始数据库。
+- 数据版权分别归国家统计局（房价 / 宏观 / 人口与婚育 / 收支 / 存款的人口分母 / 社零 / 就业 / 养老医保 / 工业行业运行 / 分省 GDP）、中国人民银行（存款 / 信贷收支表）、全国银行间同业拆借中心（LPR）所有；本项目只做本地可视化，不保存、不分发原始数据库。
 - 仅供数据观察，**不要用于任何投资决策依据**。
 
 ## 反馈与联系

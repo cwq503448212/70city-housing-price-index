@@ -3,7 +3,7 @@
 /**
  * 中国经济统计数据看板 —— 本地服务
  *
- * 一个服务、十个看板，共用同一个端口与静态目录：
+ * 一个服务、十一个看板，共用同一个端口与静态目录：
  *   房价模块  /housing/    ← 页面    /api/nbs70            ← 数据（国家统计局月报解析）
  *   宏观模块  /macro/      ← 页面    /api/macro/*          ← 数据（国家数据站点，拉全后缓存）
  *   LPR 模块  /lpr/        ← 页面    /api/lpr/*            ← 数据（中国货币网官方 JSON，拉全后缓存）
@@ -14,6 +14,7 @@
  *   就业      /livelihood/employment/ ← 页面 /api/livelihood/employment ← 数据（国家数据月度库 + 年度库，拉全后缓存）
  *   养老医保  /livelihood/security/ ← 页面 /api/livelihood/security ← 数据（国家数据年度库，拉全后缓存）
  *   行业运行  /industry/    ← 页面    /api/industry/*        ← 数据（国家数据月度库 · 工业 / PMI，拉全后缓存）
+ *   区域经济  /region/      ← 页面    /api/region/*          ← 数据（国家数据分省年度库，逐省请求后缓存）
  *   入口页    /            ← 选择进入哪个模块
  *
  * 职责：
@@ -49,6 +50,7 @@ const securityApi = require('./lib/livelihood/security/api');
 const securityService = require('./lib/livelihood/security/service');
 const industryApi = require('./lib/industry/api');
 const industryService = require('./lib/industry/service');
+const regionApi = require('./lib/region/api');
 
 const PORT = Number(process.env.PORT) || 5173;
 const HOST = process.env.HOST || '127.0.0.1';
@@ -151,6 +153,7 @@ function health() {
       'livelihood-employment',
       'livelihood-security',
       'industry',
+      'region',
     ],
     housing: { dataset: housingDatasetInfo() },
     macro: { cache: macroStore.stats(), dataset: macroSeries.datasetStatus() },
@@ -162,6 +165,7 @@ function health() {
     livelihoodEmployment: employmentApi.health(),
     livelihoodSecurity: securityApi.health(),
     industry: industryApi.health(),
+    region: regionApi.health(),
   };
 }
 
@@ -186,6 +190,43 @@ const server = http.createServer((req, res) => {
 
   if (pathname === '/api/health') {
     return sendJson(res, 200, health());
+  }
+
+  // ---------------- 区域经济（分省年度库：31 省 GDP，逐省请求后缓存） ----------------
+  if (pathname === '/api/region' || pathname.indexOf('/api/region/') === 0) {
+    const run = async () => {
+      if (pathname === '/api/region/health') {
+        return sendJson(res, 200, health());
+      }
+      if (pathname === '/api/region/indicators') {
+        return sendJson(res, 200, await regionApi.indicators());
+      }
+      if (pathname === '/api/region/rank') {
+        return sendJson(res, 200, await regionApi.ranking(query));
+      }
+      if (pathname === '/api/region') {
+        return sendJson(res, 200, await regionApi.overview(query));
+      }
+      const m = /^\/api\/region\/series\/([\w-]+)$/.exec(pathname);
+      if (m) {
+        return sendJson(res, 200, await regionApi.one(decodeURIComponent(m[1]), query));
+      }
+      const r = /^\/api\/region\/refresh\/([\w-]+)$/.exec(pathname);
+      if (r) {
+        return sendJson(
+          res,
+          200,
+          await regionApi.one(decodeURIComponent(r[1]), Object.assign({}, query, { force: '1' }))
+        );
+      }
+      return sendJson(res, 404, { status: 'error', error: '未知接口 ' + pathname });
+    };
+    run().catch((e) => {
+      // 上游失败不会走到这里（服务层已回退缓存）；
+      // 只有「未知指标 / 未知省份」这类请求错误（带 status）和配置/代码错误才会落到这里
+      sendJson(res, e.status || 500, { status: 'error', error: e.message || String(e) });
+    });
+    return undefined;
   }
 
   // ---------------- 宏观模块（缓存优先：首次拉全，之后只补新一期；接口层是异步的） ----------------
@@ -634,6 +675,24 @@ server.listen(PORT, HOST, () => {
     console.log(
       '  [行业运行] 已缓存 ' + industrySet.catalogs + ' 个栏目（' + industrySet.points +
         ' 个数据点），最新 ' + (industrySet.latest || '—') + '，已对应当前应发布月份'
+    );
+  }
+  const regionSet = regionApi.health().dataset;
+  if (!regionSet.provinces) {
+    console.log(
+      '  [区域经济] 尚无缓存：首次打开会把 ' + regionSet.historyFrom + ' 起的 ' + regionSet.total +
+        ' 个省份地区生产总值逐省拉全（约四十秒），官方指数随后后台补齐'
+    );
+  } else if (regionSet.behind) {
+    console.log(
+      '  [区域经济] 已缓存 ' + regionSet.provinces + ' 个省份（' + regionSet.points +
+        ' 个数据点），最新 ' + (regionSet.latestYear || '—') + '；缺应发布年度 ' +
+        regionSet.expectedYear + '，打开页面时核对'
+    );
+  } else {
+    console.log(
+      '  [区域经济] 已缓存 ' + regionSet.provinces + ' 个省份（' + regionSet.points +
+        ' 个数据点），最新 ' + (regionSet.latestYear || '—') + '，已对应当年应发布年度'
     );
   }
   console.log('');
