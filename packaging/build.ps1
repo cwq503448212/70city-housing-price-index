@@ -47,7 +47,7 @@ Copy-Item $NodeExe (Join-Path $pkg 'node.exe')
 foreach ($f in @('server.js', 'package.json', 'probe.js', 'README.md')) {
   Copy-Item (Join-Path $root $f) $pkg
 }
-# 七个看板的代码、配置、页面、固化数据集与截图（docs 只被 README 引用）
+# 九个看板的代码、配置、页面、固化数据集与截图（docs 只被 README 引用）
 foreach ($d in @('lib', 'config', 'public', 'data', 'docs')) {
   Copy-Item (Join-Path $root $d) (Join-Path $pkg $d) -Recurse
 }
@@ -154,6 +154,19 @@ if (Test-Path $employmentSrc) {
   Write-Host ('      + 就业缓存：' + $empCats.Count + ' 个栏目文件，' + $empKB + ' KB')
 } else {
   Write-Host '      ! 未找到 .cache\livelihood-employment：包里不带就业缓存，对方首次打开会现场拉全（3 个请求，约 5 秒）'
+}
+# 养老医保栏目缓存：9 个栏目文件（45 条原值序列 / 约 1100 个数据点），轻量，带上让首屏直接出图
+# _meta.json 同样剔掉（它带着本机的回源冷却时间戳与上次错误）
+$securitySrc = Join-Path $root '.cache\livelihood-security'
+if (Test-Path $securitySrc) {
+  New-Item -ItemType Directory -Path (Join-Path $pkg '.cache') -Force | Out-Null
+  Copy-Item $securitySrc (Join-Path $pkg '.cache') -Recurse
+  Get-ChildItem (Join-Path $pkg '.cache\livelihood-security') -Recurse -File -Filter '_meta.json' | Remove-Item -Force
+  $secCats = Get-ChildItem (Join-Path $pkg '.cache\livelihood-security\catalogs') -File -Filter '*.json'
+  $secKB = '{0:N1}' -f (($secCats | Measure-Object Length -Sum).Sum / 1KB)
+  Write-Host ('      + 养老医保缓存：' + $secCats.Count + ' 个栏目文件，' + $secKB + ' KB')
+} else {
+  Write-Host '      ! 未找到 .cache\livelihood-security：包里不带养老医保缓存，对方首次打开会现场拉全（9 个请求，约 10 秒）'
 }
 Write-Host '[2/4] 已拷贝项目文件'
 

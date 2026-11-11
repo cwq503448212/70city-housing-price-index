@@ -1,16 +1,16 @@
 # AGENTS.md
 
 **项目**：china-economic-stats-dashboard — 中国经济统计数据看板
-**模块**：`housing`（70 个大中城市房价指数）/ `macro`（宏观经济：CPI / PPI / PMI / 社零 / M2）/ `lpr`（房贷利率 LPR）/ `livelihood`（民生 · 人口与婚育：人口年龄结构与抚养比、老龄化、平均预期寿命、结婚 / 离婚登记、初婚人数、出生率 / 死亡率 / 自然增长率）/ `livelihood-income`（人均收入与支出）/ `livelihood-deposit`（居民存款与人均存款）/ `livelihood-retail`（社会消费品零售）/ `livelihood-employment`（就业：城镇调查失业率、周平均工时、农民工、城镇登记失业）
-**一句话定位**：一个网站、八个看板（房价 / 宏观 / LPR / 人口与婚育 / 收支 / 存款 / 社零 / 就业）；宏观经济数据**首次打开一次拉全并缓存，之后按月增量核对**，不是定时爬虫；LPR 同款模型但序列只有一条，全量单文件缓存；人口与婚育、收支都是年度库版同款模型（按年增量），共用同一年度库与限流，但配置、缓存目录、路由各自独立；人口模块的年龄结构 / 抚养比 / 预期寿命与婚姻 / 人口千分率同属一个页面，带 `until` 的预期寿命归档不回源；存款走央行信贷收支表 htm 附件（按年文件缓存、按月核对）；社零是国家数据月度库版同款模型（按栏目分文件、按月核对，扣掉 1、2 月合并公布）；就业是**月度库 + 年度库双频次**模型（同一个栏目文件里按 `YYYY-MM` 与 `YYYY` 两种期别落盘，月度按月核对、年度按栏目 `releaseMonth` 核对，带 `until` 的停更序列归档不回源）。数据一律由服务端代取。
+**模块**：`housing`（70 个大中城市房价指数）/ `macro`（宏观经济：CPI / PPI / PMI / 社零 / M2）/ `lpr`（房贷利率 LPR）/ `livelihood`（民生 · 人口与婚育：人口年龄结构与抚养比、老龄化、平均预期寿命、结婚 / 离婚登记、初婚人数、出生率 / 死亡率 / 自然增长率）/ `livelihood-income`（人均收入与支出）/ `livelihood-deposit`（居民存款与人均存款）/ `livelihood-retail`（社会消费品零售）/ `livelihood-employment`（就业：城镇调查失业率、周平均工时、农民工、城镇登记失业）/ `livelihood-security`（养老医保：五险基金收支结余、职工与城乡居民养老、基本医保、失业工伤生育、人均养老金支出 / 可支付月数 / 参保率）
+**一句话定位**：一个网站、九个看板（房价 / 宏观 / LPR / 人口与婚育 / 收支 / 存款 / 社零 / 就业 / 养老医保）；宏观经济数据**首次打开一次拉全并缓存，之后按月增量核对**，不是定时爬虫；LPR 同款模型但序列只有一条，全量单文件缓存；人口与婚育、收支都是年度库版同款模型（按年增量），共用同一年度库与限流，但配置、缓存目录、路由各自独立；人口模块的年龄结构 / 抚养比 / 预期寿命与婚姻 / 人口千分率同属一个页面，带 `until` 的预期寿命归档不回源；存款走央行信贷收支表 htm 附件（按年文件缓存、按月核对）；社零是国家数据月度库版同款模型（按栏目分文件、按月核对，扣掉 1、2 月合并公布）；就业是**月度库 + 年度库双频次**模型（同一个栏目文件里按 `YYYY-MM` 与 `YYYY` 两种期别落盘，月度按月核对、年度按栏目 `releaseMonth` 核对，带 `until` 的停更序列归档不回源）。养老医保是年度库同款模型（九个栏目、按栏目分文件、按年核对，基金收支结余 / 参保 / 待遇人数全为原值，当期结余、人均养老金、可支付月数、参保率为现算，生育基金 2018 与生育待遇人数 2021 按 `until` 归档）。数据一律由服务端代取。
 
-> 本文件只放**各模块共用**的规范。宏观模块专属的规范（指标编码探测、发布日、限流、栏目分段、DBnomics 兜底等）写在 `README.md` 的「宏观经济模块」章节，改动宏观模块前必须一并阅读；LPR 模块专属的规范（中国货币网接口、发布日顺延）写在 `README.md` 的「房贷利率 LPR」章节；民生模块的数据源核实结论（为何不用民政部季度公报）、人口结构与预期寿命的口径（年末口径、抚养比取官方值、65 岁以上占比为计算值、`until` 归档）、年度库 rootId 与期别编码写在 `README.md` 的「人口与婚育」章节；人均收支的口径铁律（只有名义增速、分项不合成、城乡不平均）与 23 个指标编码写在 `README.md` 的「人均收入与支出」章节；存款模块的数据源核实结论（为何不用新闻稿 / 国家数据）、htm 表格解析与「新增、同比、人均全是计算值」的口径铁律写在 `README.md` 的「居民存款与人均存款」章节；社零模块的栏目 / 指标编码、1、2 月合并公布、网上零售 2026 换口径、剔除汽车与限额以上品类的计算口径写在 `README.md` 的「社会消费品零售」章节；就业模块的栏目 / 指标编码、为何不展示「城镇新增就业」、调查失业率与登记失业率的区别、16—24 岁口径变更与 `until` 归档规则写在 `README.md` 的「就业」章节。以上五个子模块的章节，改动前必须一并阅读。
+> 本文件只放**各模块共用**的规范。宏观模块专属的规范（指标编码探测、发布日、限流、栏目分段、DBnomics 兜底等）写在 `README.md` 的「宏观经济模块」章节，改动宏观模块前必须一并阅读；LPR 模块专属的规范（中国货币网接口、发布日顺延）写在 `README.md` 的「房贷利率 LPR」章节；民生模块的数据源核实结论（为何不用民政部季度公报）、人口结构与预期寿命的口径（年末口径、抚养比取官方值、65 岁以上占比为计算值、`until` 归档）、年度库 rootId 与期别编码写在 `README.md` 的「人口与婚育」章节；人均收支的口径铁律（只有名义增速、分项不合成、城乡不平均）与 23 个指标编码写在 `README.md` 的「人均收入与支出」章节；存款模块的数据源核实结论（为何不用新闻稿 / 国家数据）、htm 表格解析与「新增、同比、人均全是计算值」的口径铁律写在 `README.md` 的「居民存款与人均存款」章节；社零模块的栏目 / 指标编码、1、2 月合并公布、网上零售 2026 换口径、剔除汽车与限额以上品类的计算口径写在 `README.md` 的「社会消费品零售」章节；就业模块的栏目 / 指标编码、为何不展示「城镇新增就业」、调查失业率与登记失业率的区别、16—24 岁口径变更与 `until` 归档规则写在 `README.md` 的「就业」章节；养老医保模块的栏目 / 指标编码、为何不解析人社部 / 医保局公报、当期收支与累计结余的区别、医保参保 2017 口径断点、参保率分母选择与 `until` 归档规则写在 `README.md` 的「养老医保」章节。以上六个子模块的章节，改动前必须一并阅读。
 
 ## 1. 模块边界
 
 | 位置 | 归属 | 说明 |
 |---|---|---|
-| `server.js` | 共用 | 统一入口：静态托管 + 路由分发（`/api/nbs70`、`/api/macro/*`、`/api/lpr/*`、`/api/livelihood/*`、`/api/livelihood/income-expenditure`、`/api/livelihood/reserve-deposit`、`/api/livelihood/retail`、`/api/livelihood/employment`、`/api/health`） |
+| `server.js` | 共用 | 统一入口：静态托管 + 路由分发（`/api/nbs70`、`/api/macro/*`、`/api/lpr/*`、`/api/livelihood/*`、`/api/livelihood/income-expenditure`、`/api/livelihood/reserve-deposit`、`/api/livelihood/retail`、`/api/livelihood/employment`、`/api/livelihood/security`、`/api/health`） |
 | `lib/housing/nbs70.js` | housing | 月报检索、正文表格解析、数据集读写、跨月核对 |
 | `lib/macro/**` | macro | `config.js` 读 `config/indicators.json`；`cache/policy.js` 是唯一回源判定；`services/series.js` 编排；`sources/nbs.js` + `sources/dbnomics.js` |
 | `lib/lpr/**` | lpr | `config.js` 内联上游与发布日常量；`policy.js` 是唯一回源判定；`source.js` 请求中国货币网；`store.js` 全量单文件缓存（`cache/lpr/lpr.json`） |
@@ -19,21 +19,23 @@
 | `lib/livelihood/deposit/**` | livelihood-deposit | `config.js` 读 `config/deposit.json`；`source.js` 请求央行栏目页 → 年份页 → 信贷收支表 htm 附件并解析；`store.js` 年度文件缓存（`cache/livelihood-deposit/years/<YYYY>.json` + 人口分母）；`policy.js` 发布月份与回源判定；`service.js` / `api.js` 编排；限流复用父目录的 `queue` |
 | `lib/livelihood/retail/**` | livelihood-retail | `config.js` 读 `config/retail.json`；`policy.js` 是唯一回源判定（含 1、2 月合并公布与发布日回退）；`source.js` 请求国家数据月度库（`code=1`、期别如 `2026-09`）；`store.js` 按栏目分文件（`cache/livelihood-retail/catalogs/<key>.json`）；`service.js` 现算 4 个计算口径；限流复用父目录的 `queue` |
 | `lib/livelihood/employment/**` | livelihood-employment | `config.js` 读 `config/employment.json`；`policy.js` 是唯一回源判定（月度 15 日规则 + 年度 `releaseMonth` + `until` 归档）；`source.js` 同时支持月度库（`code=1`、`YYYYMM`）与年度库（`code=3`、`YYYY`）；`store.js` 按栏目分文件（`cache/livelihood-employment/catalogs/<key>.json`，同文件存月度与年度期别）；`service.js` 现算 3 个计算口径；限流复用父目录的 `queue` |
+| `lib/livelihood/security/**` | livelihood-security | `config.js` 读 `config/security.json`（校验四种 `derive` 与 `until` / `from`）；`policy.js` 是唯一回源判定（年度 `releaseMonth` + `until` 归档）；`store.js` 按栏目分文件（`cache/livelihood-security/catalogs/<key>.json`）；`service.js` 现算 24 个计算口径（`diff` / `ratio_pct` / `months` / `per_capita`，不落盘）；取数复用父目录的 `source`（同一年度库）、限流复用父目录的 `queue` |
 | `config/indicators.json` | macro | 宏观栏目 / 指标 / 分段 / 发布日 / 兜底的唯一事实来源 |
 | `config/livelihood.json` | livelihood | 人口与婚育 4 个栏目 / 16 个指标（含 `kind: percent` 的抚养比与 `until` 归档的预期寿命）/ 单位 / 历史起点的唯一事实来源 |
 | `config/income.json` | livelihood-income | 收支 6 个栏目 / 23 个指标 / 口径说明 / 历史起点（2013）的唯一事实来源 |
 | `config/deposit.json` | livelihood-deposit | 存款 5 个口径分组 / 7 个指标 / 表名与行名 / 人口分母编码 / 历史起点（2015）的唯一事实来源 |
 | `config/retail.json` | livelihood-retail | 社零 8 个栏目 / 26 个指标 / 6 个分组 / 计算口径 `derive` / 历史起点（2015）的唯一事实来源 |
 | `config/employment.json` | livelihood-employment | 就业 3 个栏目 / 19 个指标（含 3 个 `derive`）/ 6 个分组 / 双频次 `freq` 与 `releaseMonth` / `until` 归档 / 历史起点（月度 2018-01、年度 1978）的唯一事实来源 |
+| `config/security.json` | livelihood-security | 养老医保 9 个栏目 / 69 个指标（含 24 个 `derive`）/ 8 个分组 / `from` 与 `until` 归档 / 历史起点（1990）的唯一事实来源 |
 | `public/index.html` + `home.css` | 共用 | 模块选择入口 |
-| `public/housing/`、`public/macro/`、`public/lpr/`、`public/livelihood/`、`public/livelihood/income/`、`public/livelihood/deposit/`、`public/livelihood/retail/`、`public/livelihood/employment/` | 各自 | 每个页面自带 html / css / app.js，互不引用 |
+| `public/housing/`、`public/macro/`、`public/lpr/`、`public/livelihood/`、`public/livelihood/income/`、`public/livelihood/deposit/`、`public/livelihood/retail/`、`public/livelihood/employment/`、`public/livelihood/security/` | 各自 | 每个页面自带 html / css / app.js，互不引用 |
 | `public/vendor/echarts.min.js` | 共用 | 所有模块共用一份本地 ECharts，**禁止 CDN** |
 | `data/periods.json` | housing | 固化数据集（189 个月），随仓库提交 |
-| `.cache/` | 运行时 | `housing` 的解析结果与月报原文、`macro/` 的月缓存、`lpr/` 的全量缓存、`livelihood/` 的年度缓存、`livelihood-income/` 的收支年度缓存、`livelihood-deposit/` 的存款年度缓存、`livelihood-retail/` 的社零栏目缓存、`livelihood-employment/` 的就业栏目缓存，可随时删 |
+| `.cache/` | 运行时 | `housing` 的解析结果与月报原文、`macro/` 的月缓存、`lpr/` 的全量缓存、`livelihood/` 的年度缓存、`livelihood-income/` 的收支年度缓存、`livelihood-deposit/` 的存款年度缓存、`livelihood-retail/` 的社零栏目缓存、`livelihood-employment/` 的就业栏目缓存、`livelihood-security/` 的养老医保栏目缓存，可随时删 |
 
 - 新增模块时同样落在 `lib/<module>/` 与 `public/<module>/`，API 用 `/api/<module>/*` 前缀，并在入口页加入口卡片。
 - 模块之间**不互相 require**。共用能力要么下沉到各自模块内，要么新增 `lib/shared/`，不要跨模块取私有实现。
-- 同一模块内的子页面可以 require 父目录的实现：`lib/livelihood/income/` 就复用 `lib/livelihood/{source,queue,policy}.js`（同一年度库、同一套限流），只把配置与缓存目录独立出来；`lib/livelihood/deposit/` 只复用父目录的 `queue`（限流），取数完全自己实现（换成了央行站点）；`lib/livelihood/retail/` 也只复用父目录的 `queue`，取数自己走月度库；`lib/livelihood/employment/` 同样只复用父目录的 `queue`，取数自己走月度库 + 年度库。注意四个子模块的路由都必须排在 `/api/livelihood/` 前缀分支**之前**，否则会被婚育模块的分发吃掉。
+- 同一模块内的子页面可以 require 父目录的实现：`lib/livelihood/income/` 就复用 `lib/livelihood/{source,queue,policy}.js`（同一年度库、同一套限流），只把配置与缓存目录独立出来；`lib/livelihood/deposit/` 只复用父目录的 `queue`（限流），取数完全自己实现（换成了央行站点）；`lib/livelihood/retail/` 也只复用父目录的 `queue`，取数自己走月度库；`lib/livelihood/employment/` 同样只复用父目录的 `queue`，取数自己走月度库 + 年度库；`lib/livelihood/security/` 复用父目录的 `source`（同一年度库）与 `queue`（限流），配置、缓存目录、路由独立。注意五个子模块的路由都必须排在 `/api/livelihood/` 前缀分支**之前**，否则会被婚育模块的分发吃掉。
 
 ## 2. 技术约束
 
@@ -73,9 +75,9 @@
 ## 5. Git 与发布
 
 - 只提交源码：`.gitignore` 覆盖 `node_modules/`、`.cache/`、`release/`；打包脚本（`build.bat` + `packaging/build.ps1`）不含本机路径，随仓库提交。
-- `data/periods.json` 与 `config/indicators.json`、`config/livelihood.json`、`config/income.json`、`config/deposit.json`、`config/retail.json`、`config/employment.json` 属于数据/配置资产，**随代码提交**。
+- `data/periods.json` 与 `config/indicators.json`、`config/livelihood.json`、`config/income.json`、`config/deposit.json`、`config/retail.json`、`config/employment.json`、`config/security.json` 属于数据/配置资产，**随代码提交**。
 - 打包：双击根目录 `build.bat`（或 `powershell -File packaging\build.ps1`）产出 `release/中国经济统计数据看板/` 与 `release/china-economic-stats-dashboard-v<版本>-<系统标签>.zip`；zip 名必须纯 ASCII（中文附件名会被 GitHub 静默丢弃），目录名用中文。
-- 分发包必须带 `.cache/macro/`（宏观历史缓存，约 0.2 MB）并且**剔除其中的 `_meta.json`**：带上缓存后对方首次打开只补最近几期；而 `_meta.json` 是本机回源时间戳（10 分钟冷却），进包会抑制对方首次核对。`.cache/lpr/` 与 `.cache/livelihood/`、`.cache/livelihood-income/`、`.cache/livelihood-deposit/`、`.cache/livelihood-retail/`、`.cache/livelihood-employment/` 同理（都随包带、都剔 `_meta.json`）。
+- 分发包必须带 `.cache/macro/`（宏观历史缓存，约 0.2 MB）并且**剔除其中的 `_meta.json`**：带上缓存后对方首次打开只补最近几期；而 `_meta.json` 是本机回源时间戳（10 分钟冷却），进包会抑制对方首次核对。`.cache/lpr/` 与 `.cache/livelihood/`、`.cache/livelihood-income/`、`.cache/livelihood-deposit/`、`.cache/livelihood-retail/`、`.cache/livelihood-employment/`、`.cache/livelihood-security/` 同理（都随包带、都剔 `_meta.json`）。
 - 批处理负责搬运、PowerShell 负责逻辑：`.bat` 里不写大段中文（长批处理含多字节字符时 cmd 可能错行，把半行注释当命令执行），实现放在 UTF-8 with BOM 的 `.ps1` 里。
 - 发布走 GitHub Release + Tag `vX.Y.Z`，版本号以 `package.json` 为准。
 - 公开仓库：仓库级 git 身份为 `cwq503448212` + GitHub noreply 邮箱；提交前确认不含公司邮箱/真名拼音。

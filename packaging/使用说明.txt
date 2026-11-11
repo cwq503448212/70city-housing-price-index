@@ -14,15 +14,17 @@
   · 居民存款与人均存款（住户存款余额、当月新增、活期/定期结构、人均存款）
   · 社会消费品零售（社零总额、同比、餐饮/商品零售、城乡、网上零售、剔除汽车、重点品类）
   · 就业形势（城镇调查失业率全国/31 城/分户籍/分年龄、周平均工时、农民工、城镇登记失业）
-八个页面右上角都有「← 返回模块选择」，随时可以切回去。
+  · 养老医保（五险基金收支与累计结余、职工/城乡居民养老、基本医保、失业工伤生育、人均养老金与可支付月数）
+九个页面右上角都有「← 返回模块选择」，随时可以切回去。
 
 
 【几点说明】
 1. 那个黑色窗口是本地服务，别关它，关了页面就用不了了。用完直接关窗口即可。
 2. 房价数据已经打包在 data\periods.json 里（2011-01 ~ 2026-09，共 189 个月），
    打开时不会联网。
-3. 包里已经带了截至打包时的宏观、LPR、民生、收支、存款、社零与就业历史数据（.cache\macro、.cache\lpr、
-   .cache\livelihood、.cache\livelihood-income、.cache\livelihood-deposit、.cache\livelihood-retail、.cache\livelihood-employment），
+3. 包里已经带了截至打包时的宏观、LPR、民生、收支、存款、社零、就业与养老医保历史数据（.cache\macro、.cache\lpr、
+   .cache\livelihood、.cache\livelihood-income、.cache\livelihood-deposit、.cache\livelihood-retail、.cache\livelihood-employment、
+   .cache\livelihood-security），
   第一次打开只会补最近几期，通常几秒就完；以后每次打开只核对有没有发布新一期，有就补进去，没发布就直接读缓存。
 4. 想拿最新一期数据，点页面右上角「刷新数据」。
    房价需要能访问 www.stats.gov.cn（约 5-10 秒）；
@@ -32,21 +34,22 @@
    收支需要能访问 data.stats.gov.cn（年度库，六个请求，约十秒）；
    存款需要能访问 www.pbc.gov.cn（央行调查统计司，按年取表，首次全量约 45 秒）；
    社零需要能访问 data.stats.gov.cn（月度库国内贸易栏目，八个请求，约十秒）；
-   就业需要能访问 data.stats.gov.cn（月度库城镇调查失业率 + 年度库农民工与登记失业，三个请求，约五秒）。
-5. 八个页面都可以选时间范围，只影响展示，不会触发下载。
+   就业需要能访问 data.stats.gov.cn（月度库城镇调查失业率 + 年度库农民工与登记失业，三个请求，约五秒）；
+   养老医保需要能访问 data.stats.gov.cn（年度库「公共管理、社会保障及其他」九个栏目，约十秒）。
+5. 九个页面都可以选时间范围，只影响展示，不会触发下载。
 6. 需要 Windows 10 / 11（64 位）。Windows 7 / 8 不支持。
 7. 绿色版：不写注册表、不装服务、不需要管理员权限。
    换电脑直接整个文件夹拷过去就行，用完删文件夹即可卸载。
 8. 如果提示「端口 5173 被其它程序占用」：
    在黑窗口里执行   set DASH_PORT=5180   然后再双击一次 start.bat。
-9. 第一次运行会自动生成 .cache 文件夹（房价月报原文 + 宏观/LPR/民生/收支/存款/社零/就业缓存），
+9. 第一次运行会自动生成 .cache 文件夹（房价月报原文 + 宏观/LPR/民生/收支/存款/社零/就业/养老医保缓存），
    删掉也没关系，房价数据集仍在 data\periods.json，其它模块下次打开会重新拉全。
 
 
 【目录说明】
 start.bat            双击启动
 node.exe             内置的 Node.js 运行时，不用单独安装
-server.js            本地服务：首页 + 八个看板页面 + 数据接口
+server.js            本地服务：首页 + 九个看板页面 + 数据接口
 lib\housing\nbs70.js 房价数据抓取与解析
 lib\macro\           宏观数据：缓存、取数、指标配置校验
 lib\lpr\             LPR 数据：缓存、取数、回源判定
@@ -55,10 +58,11 @@ lib\livelihood\income\ 人均收支子页：独立配置与缓存，取数复用
 lib\livelihood\deposit\ 居民存款子页：解析央行信贷收支表 htm 附件，独立配置与缓存，限流复用民生
 lib\livelihood\retail\ 社零子页：走国家数据月度库，按栏目分文件缓存，限流复用民生
 lib\livelihood\employment\ 就业子页：月度库（调查失业率）+ 年度库（农民工 / 登记失业），双频次缓存，限流复用民生
-config\              指标配置（indicators.json 宏观、livelihood.json 民生、income.json 收支、deposit.json 存款、retail.json 社零、employment.json 就业）
-public\              页面本体（首页 + housing / macro / lpr / livelihood / livelihood\income / livelihood\deposit / livelihood\retail / livelihood\employment 八个看板，含 ECharts）
+lib\livelihood\security\ 养老医保子页：走年度库（公共管理、社会保障及其他），按栏目分文件缓存，计算值现算，限流复用民生
+config\              指标配置（indicators.json 宏观、livelihood.json 民生、income.json 收支、deposit.json 存款、retail.json 社零、employment.json 就业、security.json 养老医保）
+public\              页面本体（首页 + housing / macro / lpr / livelihood / livelihood\income / livelihood\deposit / livelihood\retail / livelihood\employment / livelihood\security 九个看板，含 ECharts）
 data\                房价数据集（189 个月）
-probe.js             指标编码探测工具（宏观 / 社零 / 就业月度库、民生 / 收支 / 农民工年度库，一般用不到）
+probe.js             指标编码探测工具（宏观 / 社零 / 就业月度库、民生 / 收支 / 农民工 / 养老医保年度库，一般用不到）
 docs\                截图
 
 
@@ -73,6 +77,10 @@ LPR ：中国货币网（www.chinamoney.com.cn，全国银行间同业拆借中�
 社零：国家统计局「国家数据」月度库「国内贸易」栏目（1、2 月合并公布；2026 年起网上零售换口径；剔除汽车与占比为计算值）
 就业：国家统计局「国家数据」月度库「城镇调查失业率」+ 年度库「农民工规模及收入主要数据」「城镇登记失业人员及失业率」
       （调查失业率与登记失业率口径不同不可比；「城镇新增就业」无结构化序列，本包不展示）
+养老医保：国家统计局「国家数据」年度库「公共管理、社会保障及其他」（社会保险基金收支及累计结余、职工与城乡
+      居民养老、基本医疗保险、失业保险、工伤保险、生育保险、人口与城镇就业分母）
+      （不解析人社部 / 医保局公报正文；人均养老金、可支付月数、参保率均为计算值；生育保险基金止于 2018、
+      享受生育待遇人数止于 2021，医保参保自 2017 年起为全口径）
 
 注：房价里的「指数」反映的是价格变动的相对幅度，不是房屋成交均价。
-    八个看板均仅供数据观察，不构成任何投资建议。
+    九个看板均仅供数据观察，不构成任何投资建议。

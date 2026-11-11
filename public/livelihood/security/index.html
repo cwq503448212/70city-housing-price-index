@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>中国社会保障看板 · 养老医保</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-main">
+    <div class="brand">
+      <h1>中国社会保障看板 · 养老医保</h1>
+      <p class="brand-sub">数据来源：国家统计局 · 国家数据（年度库 · 社会保险基金收支、各险种参保与待遇人数）　首次打开一次拉全，之后按年核对</p>
+    </div>
+
+    <div class="controls">
+      <a class="back-link" href="../../">← 返回模块选择</a>
+      <label class="ctrl">
+        <span class="ctrl-label">时间范围</span>
+        <select id="range">
+          <option value="10" selected>近 10 年</option>
+          <option value="20">近 20 年</option>
+          <option value="all">全部（1990 起）</option>
+          <option value="custom">自定义年份</option>
+        </select>
+      </label>
+
+      <div class="ctrl ctrl-custom" id="custom-box" hidden>
+        <label class="ctrl">
+          <span class="ctrl-label">起</span>
+          <input type="number" id="from" min="1990" max="2100" step="1" />
+        </label>
+        <label class="ctrl">
+          <span class="ctrl-label">止</span>
+          <input type="number" id="to" min="1990" max="2100" step="1" />
+        </label>
+      </div>
+
+      <button id="refresh" class="btn" type="button" title="跳过缓存，重新向统计局请求一次">刷新数据</button>
+      <span id="status" class="status">正在加载…</span>
+    </div>
+  </div>
+  <p class="range-hint" id="range-hint"></p>
+</header>
+
+<main>
+  <section class="kpi-row" id="kpi-row" aria-label="关键指标"></section>
+
+  <section class="grid">
+    <article class="card card-wide">
+      <header class="card-head">
+        <h2>五险基金总盘：当年收入、当年支出、累计结余</h2>
+        <p class="card-sub">
+          柱为<strong>当年</strong>收入与支出（亿元，左轴），虚线为<strong>累计</strong>结余（亿元，右轴）。
+          当年收支是「这一年的进账与出账」，累计结余是「历年攒下来的余额」，两者<strong>不是同一个量</strong>，不可相互替代
+        </p>
+      </header>
+      <div class="chart chart-lg" id="chart-fund"></div>
+    </article>
+
+    <article class="card card-wide">
+      <header class="card-head">
+        <h2>城镇职工基本养老保险：当期收支与累计结余</h2>
+        <p class="card-sub">
+          当年收入 / 支出（亿元，左轴，柱），累计结余（亿元，右轴，虚线）。职工养老是五险里盘子最大的一支，
+          收入端含单位与个人缴费及财政补贴，支出端主要是离退休人员的基本养老金
+        </p>
+      </header>
+      <div class="chart" id="chart-pension"></div>
+    </article>
+
+    <article class="card card-wide">
+      <header class="card-head">
+        <h2>城乡居民基本养老保险：当期收支与累计结余 <span class="tag info">2010 起</span></h2>
+        <p class="card-sub">
+          同结构：当年收入 / 支出（亿元，左轴），累计结余（亿元，右轴）。城乡居民养老由基础养老金与个人账户构成，
+          人均支出远低于职工养老，两条线<strong>不能放在一起比高低</strong>，制度与筹资方式都不同
+        </p>
+      </header>
+      <div class="chart" id="chart-resident"></div>
+    </article>
+
+    <article class="card card-wide">
+      <header class="card-head">
+        <h2>基本医疗保险：职工与居民两张表</h2>
+        <p class="card-sub">
+          当年收入与支出（亿元，左轴），职工医保两条柱、居民医保两条柱。职工医保单位缴费比例高、结余厚；
+          居民医保靠个人缴费 + 财政补助，收支更紧。<strong>2019 年起生育保险基金并入职工医保</strong>，因此职工医保口径在 2019 年有一次扩大
+        </p>
+      </header>
+      <div class="chart" id="chart-medical"></div>
+    </article>
+
+    <article class="card card-wide">
+      <header class="card-head">
+        <h2>失业保险、工伤保险、生育保险：当年结余</h2>
+        <p class="card-sub">
+          当年结余 = 当年收入 − 当年支出（亿元，左轴，本页计算值）。生育保险基金<strong>止于 2018 年</strong>：
+          2019 年起生育保险与职工医保合并实施，基金不再单列，因此这条线画到 2018 就断，不往后延伸
+        </p>
+      </header>
+      <div class="chart" id="chart-others"></div>
+    </article>
+
+    <article class="card card-wide">
+      <header class="card-head">
+        <h2>参保人数：养老、医保与三险</h2>
+        <p class="card-sub">
+          年末参保人数（万人，左轴）。基本医保为<strong>全口径</strong>（职工 + 居民）合计，2017 年起才按此口径发布；
+          职工养老参保人数<strong>含离退休人员</strong>，所以它比「在职参保人数」大，看覆盖率请看下一张图
+        </p>
+      </header>
+      <div class="chart" id="chart-insured"></div>
+    </article>
+
+    <article class="card card-wide">
+      <header class="card-head">
+        <h2>参保率：不同分母下的五个险种</h2>
+        <p class="card-sub">
+          参保率（%，左轴，<strong>均为本页计算值</strong>）。职工养老用「在职职工参保人数 ÷ 城镇就业人员」，
+          失业 / 工伤 / 生育用「参保人数 ÷ 城镇就业人员」；<strong>医保例外</strong>：全口径参保人数覆盖全体国民，
+          分母取年末总人口（若也除城镇就业会算出 280% 这种无意义的数）。超过 100% 说明参保面已超出分母口径
+          （灵活就业、农民工等也参保），属正常现象
+        </p>
+      </header>
+      <div class="chart" id="chart-coverage"></div>
+    </article>
+
+    <article class="card card-wide">
+      <header class="card-head">
+        <h2>人均养老金支出：职工 vs 城乡居民</h2>
+        <p class="card-sub">
+          人均养老金支出（元 / 人 / 年，左轴，<strong>本页计算值</strong>）= 当年基金支出 ÷ 当年领取待遇人数。
+          它把「总支出」摊到每个领钱的人头上，能看出两类制度的待遇水平差异；
+          基金支出里含丧葬补助、转移支出等，不等于个人到手养老金，口径见页脚
+        </p>
+      </header>
+      <div class="chart" id="chart-benefit"></div>
+    </article>
+
+    <article class="card card-wide">
+      <header class="card-head">
+        <h2>基金可支付月数：累计结余能撑几个月</h2>
+        <p class="card-sub">
+          可支付月数（月，左轴，<strong>本页计算值</strong>）= 累计结余 ÷（当年支出 ÷ 12），即「不再有新增收入时，账上的钱还够发几个月」。
+          虚线 12 个月是常用的「一年安全垫」参考线；职工养老结余厚、城乡养老支出小，两者水平差异很大
+        </p>
+      </header>
+      <div class="chart" id="chart-months"></div>
+    </article>
+  </section>
+
+  <section class="card">
+    <header class="card-head">
+      <h2>明细一：五险基金收支与累计结余</h2>
+      <p class="card-sub">
+        单位：亿元。合计行与各险种并列；「当期结余」为<strong>本页计算值</strong>（收入 − 支出），
+        累计结余为官方发布的历年滚存余额。生育保险三项官方止于 2018 年
+      </p>
+    </header>
+    <div class="table-wrap">
+      <table id="t-fund"></table>
+    </div>
+  </section>
+
+  <section class="card">
+    <header class="card-head">
+      <h2>明细二：城镇职工基本养老保险</h2>
+      <p class="card-sub">
+        参保人数单位为万人、基金为亿元、人均支出为元 / 年、参保率为 %、可支付月数为月。
+        标「计算」的四列是<strong>本页计算值</strong>，其余为统计局发布值
+      </p>
+    </header>
+    <div class="table-wrap">
+      <table id="t-pension"></table>
+    </div>
+  </section>
+
+  <section class="card">
+    <header class="card-head">
+      <h2>明细三：城乡居民基本养老保险</h2>
+      <p class="card-sub">
+        2010 年起建立、2012 年起覆盖全部县区，领取人数 2012 年起才有完整序列；
+        「领取人数占比」= 领取待遇人数 ÷ 参保人数（本页计算值）
+      </p>
+    </header>
+    <div class="table-wrap">
+      <table id="t-resident"></table>
+    </div>
+  </section>
+
+  <section class="card">
+    <header class="card-head">
+      <h2>明细四：基本医疗保险</h2>
+      <p class="card-sub">
+        参保人数为年末数（万人），基金为当年收支与累计结余（亿元）。2017 年起才有「全口径参保人数」，
+        2016 年及以前的分项口径与之后不可直接衔接；职工医保 2019 年起含生育保险基金
+      </p>
+    </header>
+    <div class="table-wrap">
+      <table id="t-medical"></table>
+    </div>
+  </section>
+
+  <section class="card">
+    <header class="card-head">
+      <h2>明细五：失业保险、工伤保险、生育保险</h2>
+      <p class="card-sub">
+        参保与待遇人数（万人），加上前面已列的基金当年结余与可支付月数（本页计算值）。
+        生育保险享受待遇人数官方止于 2021 年，基金收支结余止于 2018 年
+      </p>
+    </header>
+    <div class="table-wrap">
+      <table id="t-others"></table>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <p>
+      <strong>年度口径：</strong>本页所有序列都是<strong>年度</strong>数据，横向每一个点就是一年（图上标的是年末数或当年发生额），
+      没有月度、季度版本。社保基金收支随《中国统计年鉴》入库，通常在次年 9—12 月补齐上一年，
+      因此「应发布年度」按 10 月判断：10 月及以后应已发布上一年，之前仍算前一年。
+    </p>
+    <p>
+      <strong>当期收支 ≠ 累计结余：</strong>「当年收入 / 当年支出」是这一年发生的流量，「当期结余 = 收入 − 支出」是这一年的净增（本页计算）；
+      「累计结余」是历年到当年为止滚存下来的存量余额。前者可以一年为负（当年收不抵支），后者反映的是家底。
+      两者量纲相同（亿元）但含义完全不同，本页在任何一张图里都不混画成同一类指标。
+    </p>
+    <p>
+      <strong>生育保险为什么只到 2018：</strong>2019 年起生育保险与职工基本医疗保险合并实施（「四险」），
+      生育保险基金不再单列收支，官方序列就此终止。本页按归档处理：画到 2018 年为止，
+      <strong>不标「滞后」、不再回源、不往后延伸</strong>；2019 年之后的生育待遇在职工医保基金里，无法单独还原。
+      享受生育保险待遇人数另有一条到 2021 年的序列，同样按归档处理。
+    </p>
+    <p>
+      <strong>医保参保人数的口径断点：</strong>基本医疗保险「全口径参保人数」（职工 + 居民）2017 年起才有，
+      2016 年及以前的分项口径与之后不能直接上下衔接，因此本页相关指标<strong>从 2017 年开始画</strong>，
+      不做跨断点拼接、不补齐更早年份。职工医保 2019 年起含生育保险，收支与此前不完全可比。
+    </p>
+    <p>
+      <strong>参保率怎么算：</strong>职工养老分母取「城镇就业人员」、分子取「<strong>在职</strong>职工参保人数」（不含离退休）；
+      失业 / 工伤 / 生育分母同样取城镇就业人员；<strong>医保分母取年末总人口</strong>（全口径参保覆盖全体国民）。
+      之所以职工养老不用「参保人数 ÷ 总人口」：参保数含离退休人员，那样算会在 2024 年得到 113% 这种没有意义的数。
+      参保率超过 100% 也属正常——灵活就业、跨制度参保的人会让分子超出城镇单位就业口径。
+    </p>
+    <p>
+      <strong>人均养老金支出与可支付月数：</strong>
+      人均支出 = 当年基金支出（亿元）× 1e8 ÷（当年领取待遇人数（万人）× 1e4），单位元 / 人 / 年；
+      可支付月数 = 累计结余 ÷（当年支出 ÷ 12），单位月。两者都是本页计算值，
+      基金支出含管理费、丧葬抚恤、转移支出等，<strong>不等于个人实际到手金额</strong>；
+      可支付月数只是静态压力测试，不考虑人口老龄化带来的支出增长。
+    </p>
+    <p>
+      <strong>发布节奏与滞后：</strong>本页采用「首次打开拉全 + 之后按年核对」：第一次运行把 1990 年以来的九张表一次取回写入本地缓存，
+      以后每次打开只核对「应发布年度」是否已入库。上游还没挂出新年份时，照常展示已有年度，
+      并在状态栏标出「待更新」的指标数量，<strong>不空图、不补 0、不插值</strong>。
+    </p>
+    <p>
+      <strong>数据来源：</strong>国家统计局「国家数据」(data.stats.gov.cn) 年度库「公共管理、社会保障及其他」章节下的
+      「社会保险基金收支及累计结余」「城镇职工基本养老保险」「城乡居民基本养老保险情况」「基本医疗保险」「失业保险」
+      「工伤保险」「生育保险」七个栏目，以及「人口年龄结构和抚养比」「按城乡分就业人员数」两个分母栏目。
+      接口是站点前端自用的内部接口，<strong>不是官方开放 API</strong>，没有稳定性承诺；所有请求由本地服务端代取并写入 JSON 缓存，
+      上游失败时回退缓存并标记 stale。本页<strong>不解析</strong>人社部 / 医保局公报正文（版式年年变、部分年份整页转图片），
+      公报数字与本页序列如有差异，以公报为准。
+    </p>
+    <p>
+      <strong>缺失值：</strong>未发布或上游缺项一律显示为空缺，不插值、不补 0、不自行加权合成；一条序列只来自单一数据源。
+      当期结余、人均养老金支出、可支付月数、五个参保率、领取人数占比是本页计算值，图上与表头都标了「计算」。
+    </p>
+    <p id="foot-meta" class="foot-meta"></p>
+  </footer>
+</main>
+
+<script src="../../vendor/echarts.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

@@ -4,7 +4,8 @@
  * 指标编码探测工具
  *
  * 国家统计局的指标编码绝对不能靠猜。任何要写进 config/ 下指标配置
- * （indicators.json 宏观、livelihood.json 民生、income.json 收支、retail.json 社零、employment.json 就业）
+ * （indicators.json 宏观、livelihood.json 民生、income.json 收支、deposit.json 存款、retail.json 社零、
+ * employment.json 就业、security.json 养老医保）
  * 的栏目 id / 指标 id，都必须先用这个工具打印出来看一眼；宏观指标还要再用
  * DBnomics 同期刊交叉校验一次。
  *
@@ -16,7 +17,7 @@
  *                                          实际取数，看口径和量级对不对
  *   node probe.js check                    对宏观配置里的指标做「官方 vs DBnomics」交叉校验
  *
- * 年度库（民生、收支、就业的农民工 / 登记失业用，期别如 2024，年份参数写 1978 2025）：
+ * 年度库（民生、收支、就业的农民工 / 登记失业、养老医保用，期别如 2024，年份参数写 1978 2025）：
  *   node probe.js annual-tree [pid]        列出「年度数据」下的栏目树
  *   node probe.js annual-indicators <catalogId>
  *   node probe.js annual-data <catalogId> <indicatorId...> [fromYear] [toYear]

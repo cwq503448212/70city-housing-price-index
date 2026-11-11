@@ -1,6 +1,6 @@
 # 中国经济统计数据看板
 
-一个零依赖的本地看板，把房价、宏观、LPR、人口与婚育、收支、存款、社零、就业八类数据放在同一个服务里：
+一个零依赖的本地看板，把房价、宏观、LPR、人口与婚育、收支、存款、社零、就业、养老医保九类数据放在同一个服务里：
 
 | 模块 | 地址 | 内容 |
 | --- | --- | --- |
@@ -12,8 +12,9 @@
 | **居民存款与人均存款** | `/livelihood/deposit/` | 住户存款余额、当月新增与年初至今累计、活期 / 定期结构、余额同比、年末人均存款（月度，2015 起） |
 | **社会消费品零售** | `/livelihood/retail/` | 社零总额当月与累计、同比、餐饮 / 商品零售、城镇 / 乡村、实物网上零售规模与占比、剔除汽车、限额以上重点品类（月度，2015 起） |
 | **就业形势** | `/livelihood/employment/` | 全国与 31 个大城市城镇调查失业率、分户籍、分年龄（16—24 岁青年 / 25—29 / 30—59）、周平均工时、农民工规模与月均收入、城镇登记失业（月度 2018 起 + 年度 1978 起） |
+| **养老医保** | `/livelihood/security/` | 五险基金当年收支与累计结余、职工与城乡居民养老、基本医保、失业 / 工伤 / 生育配套指标，以及人均养老金支出、基金可支付月数、参保率（年度，1990 起；城乡居民养老 2010 起、医保 2015 起） |
 
-打开根地址 `/` 是模块选择页，点进去分别进入八个子页面；每个子页面右上角都有「← 返回模块选择」可以切回来。
+打开根地址 `/` 是模块选择页，点进去分别进入九个子页面；每个子页面右上角都有「← 返回模块选择」可以切回来。
 
 ![模块选择入口](docs/screenshot-home.png)
 
@@ -32,13 +33,13 @@ node server.js
 > 必须通过这个本地服务访问，直接双击 `public/**/index.html` 是不行的：`file://` 下 `fetch('/api/...')` 会被浏览器拦下，拿不到数据；而且统计局站点有 WAF，浏览器直连会 403，数据只能由服务端代取。
 
 - 需要 Node >= 20，**不需要 `npm install`**（ECharts 已内置在 `public/vendor/`，所有模块共用一份）。
-- 八个看板共用同一个端口和同一个进程，`/api/health` 会一并返回各边的概况。
+- 九个看板共用同一个端口和同一个进程，`/api/health` 会一并返回各边的概况。
 - 换端口：`PORT=8080 node server.js`（PowerShell 写法 `$env:PORT=8080; node server.js`）。用 `start.bat` 时可以 `set DASH_PORT=5180` 后再双击（旧的 `NBS_PORT` 仍然兼容）。
 
 ## 目录结构
 
 ```
-server.js                    本地 HTTP 服务：静态托管 + 路由分发（/api/nbs70、/api/macro/*、/api/lpr/*、/api/livelihood/*、/api/livelihood/income-expenditure、/api/livelihood/reserve-deposit、/api/livelihood/retail、/api/livelihood/employment）
+server.js                    本地 HTTP 服务：静态托管 + 路由分发（/api/nbs70、/api/macro/*、/api/lpr/*、/api/livelihood/*、/api/livelihood/income-expenditure、/api/livelihood/reserve-deposit、/api/livelihood/retail、/api/livelihood/employment、/api/livelihood/security）
 start.bat                    Windows 一键启动（双击即可）
 build.bat                    便携包一键打包（双击；转发给 packaging/build.ps1）
 AGENTS.md                    各看板共用的开发规范
@@ -58,6 +59,7 @@ lib/livelihood/income/       人均收支子模块：config（读 config/income.
 lib/livelihood/deposit/      居民存款子模块：config / store / policy / source（央行信贷收支表 htm 解析）/ service / api，限流复用父目录的 queue
 lib/livelihood/retail/       社零子模块：config / store（按栏目分文件）/ policy（1、2 月合并公布）/ source（国家数据月度库）/ service / api，限流复用父目录的 queue
 lib/livelihood/employment/   就业子模块：config（读 config/employment.json）/ policy（月度 15 日规则 + 年度发布月）/ source（月度库 MM 期别 + 年度库 YY 期别）/ store（按栏目分文件）/ service / api，限流复用父目录的 queue
+lib/livelihood/security/     养老医保子模块：config（读 config/security.json）/ policy（年度 releaseMonth + until 归档）/ store（按栏目分文件）/ service（4 种计算口径）/ api，取数复用父目录的 source（同一年度库）、限流复用父目录的 queue
 
 config/indicators.json       宏观指标配置（栏目 / 指标 / 分段 / 发布日 / 兜底）
 config/livelihood.json       民生指标配置（栏目 / 指标 / 单位 / 历史起点）
@@ -65,7 +67,8 @@ config/income.json           人均收支指标配置（6 个栏目 / 23 个指�
 config/deposit.json          居民存款指标配置（5 个口径分组 / 7 个指标 / 行名与表名 / 人口分母 / 历史起点 2015）
 config/retail.json           社零指标配置（8 个栏目 / 26 个指标 / 6 个分组 / 计算口径 / 历史起点 2015）
 config/employment.json       就业指标配置（3 个栏目 / 19 个指标 / 6 个分组 / 3 个计算口径 / 月度起点 2018-01、年度起点 1978）
-probe.js                     指标编码探测（月度库：宏观 / 社零 / 就业，年度库：民生 / 收支 / 农民工 / 登记失业）+ 宏观官方/镜像交叉校验
+config/security.json         养老医保指标配置（9 个栏目 / 69 个指标 / 8 个分组 / 4 种计算口径 / until 归档 / 历史起点 1990）
+probe.js                     指标编码探测（月度库：宏观 / 社零 / 就业，年度库：民生 / 收支 / 农民工 / 登记失业 / 养老医保）+ 宏观官方/镜像交叉校验
 
 public/index.html            模块选择入口（+ home.css）
 public/housing/              房价看板：index.html / styles.css / app.js
@@ -76,13 +79,14 @@ public/livelihood/income/    人均收入与支出看板：index.html / styles.c
 public/livelihood/deposit/   居民存款与人均存款看板：index.html / styles.css / app.js
 public/livelihood/retail/    社会消费品零售看板：index.html / styles.css / app.js
 public/livelihood/employment/ 就业看板：index.html / styles.css / app.js
+public/livelihood/security/  养老医保看板：index.html / styles.css / app.js
 public/vendor/               ECharts 5（所有模块共用）
 
 data/periods.json            房价数据集（189 个月，随项目分发）
 docs/                        页面截图
 packaging/                   便携包的 start.bat / 使用说明.txt / build.ps1（打包实现）
 release/                     打包产物，不入库
-.cache/                      抓取中间产物：房价解析结果与月报原文、macro/ 宏观月缓存、lpr/ LPR 全量缓存、livelihood/ 民生年度缓存、livelihood-income/ 人均收支年度缓存、livelihood-deposit/ 存款年度缓存、livelihood-retail/ 社零栏目缓存、livelihood-employment/ 就业栏目缓存（可安全删除）
+.cache/                      抓取中间产物：房价解析结果与月报原文、macro/ 宏观月缓存、lpr/ LPR 全量缓存、livelihood/ 民生年度缓存、livelihood-income/ 人均收支年度缓存、livelihood-deposit/ 存款年度缓存、livelihood-retail/ 社零栏目缓存、livelihood-employment/ 就业栏目缓存、livelihood-security/ 养老医保栏目缓存（可安全删除）
 ```
 
 ---
@@ -313,7 +317,7 @@ set MACRO_DATA_DIR=D:\macro-cache
 
 | 接口 | 说明 |
 | --- | --- |
-| `GET /api/health` | 健康检查（八个看板共用，含房价数据集与宏观 / LPR / 民生 / 收支 / 存款 / 社零 / 就业缓存概况） |
+| `GET /api/health` | 健康检查（九个看板共用，含房价数据集与宏观 / LPR / 民生 / 收支 / 存款 / 社零 / 就业 / 养老医保缓存概况） |
 | `GET /api/macro/health` | 同上，宏观模块内的别名 |
 | `GET /api/macro/indicators` | 指标清单（不含数据，含 stale / latestCached） |
 | `GET /api/macro/overview` | 看板一次性取全量（顶部时间选择就靠它；含 `refreshing` 后台补齐标记） |
@@ -831,6 +835,101 @@ POST …/stream/esData    body = { cid, indicatorIds, das:[{全国,000000000000}
 
 ---
 
+# 模块九：养老医保
+
+养老医保看板：**69 个指标（45 个统计局原值 + 24 个本页计算值），年度 1990 起**（各栏目按自己的起点：城乡居民养老 2010、基本医保 2015）。九个栏目全部来自国家统计局「国家数据」年度库「公共管理、社会保障及其他」章节，首次打开九次请求、约十秒拉全，之后按年核对。
+
+用户原始需求写的"职工养老 5 项、城乡居民养老 5 项、基本医保 14 项、五险基金收支结余 18 项、失业工伤生育配套指标"与探测到的栏目结构**完全对得上**：`社会保险基金收支及累计结余`恰好 18 个指标（合计 + 五险 × 收入/支出/累计结余）、`基本医疗保险`恰好 14 个指标，说明这套口径就是官方口径本身，不需要自己另造一套。
+
+## 看板上有什么
+
+| 区块 | 内容 | 口径 |
+| --- | --- | --- |
+| KPI 卡片 | 五险基金收入（合计）、支出（合计）、当期结余、累计结余、职工养老在职参保率、基本医保参保率（脚注均为"较上年"现算差值） | 亿元 / % |
+| 五险基金总盘 | 当年收入 / 支出柱 + 累计结余虚线（右轴） | 亿元 |
+| 职工养老 | 基金当年收入 / 支出柱 + 累计结余虚线（右轴） | 亿元 |
+| 城乡居民养老 | 同上结构，2010 起 | 亿元 |
+| 基本医保 | 职工医保收入 / 支出 + 居民医保收入 / 支出四根柱 | 亿元 |
+| 失业·工伤·生育 | 三险当年结余三条线（计算值），生育止于 2018 | 亿元 |
+| 参保人数 | 职工养老 / 城乡养老 / 医保全口径 / 失业 / 工伤 / 生育 6 条线 | 万人 |
+| 参保率 | 职工养老在职、医保、失业、工伤、生育 5 条线（均计算值） | % |
+| 人均养老金支出 | 职工 vs 城乡居民（计算值，基金支出 ÷ 领取人数） | 元 / 人 / 年 |
+| 基金可支付月数 | 职工养老 / 城乡养老 / 医保 / 失业 / 工伤 5 条线 + 12 个月参考线 | 月 |
+| 明细表 | 5 张：五险基金 24 列、职工养老 10 列、城乡居民养老 8 列、基本医保 15 列、失业·工伤·生育 13 列 | — |
+
+时间范围支持 **近 10 年 / 近 20 年 / 全部（1990 起）/ 自定义年份**，默认近 10 年；选择记在 `localStorage`（键 `livelihood.security.range.v1`）。
+
+## 为什么不解析人社部 / 医保局公报
+
+用户指定的数据源是"人社部、医保局公开年报"，但实际实现改走了国家数据年度库，理由与婚育模块放弃民政部季报一致：
+
+- 两部委的《人力资源和社会保障事业发展统计公报》《医疗保障事业发展统计公报》都是 **PDF / 网页正文 + 表格混排**，表格版式年年变，部分年份关键表直接转图片，零依赖项目无法 OCR；
+- 公报里的数字口径与年鉴不完全一致（比如参保人数含不含离退休、基金收入含不含财政补贴），逐年追口径的成本很高，且无法回溯 1990 年以来的长历史；
+- 国家数据年度库已经是 **两部委上报后的结构化序列**，栏目边界与用户需求一一对应（见下表），一条序列只来自一个源，可直接核对。
+
+公报仍是权威口径：页面页脚与 `config/security.json` 的 `source.note` 都写了"公报数字与本页序列如有差异，以公报为准"。
+
+## 指标与编码（探测所得，不靠猜）
+
+| 栏目 | 起点 | releaseMonth | catalogId | 指标（id → 编码） |
+| --- | --- | --- | --- | --- |
+| 社会保险基金收支及累计结余 | 1990 | 10 | `5833e7e6ad6b4c2ab01fa3e56da109a9` | `fund_total_in` → `9455940f7d494107ad21adefcb46c476`；`fund_total_out` → `4c156211611a4b5394a6c5ad1abad151`；`fund_total_balance` → `c4d18d7bc3aa47529171479e0787f3fb`；`fund_pension_in` → `b5662c911038456385d4ffb92e92b028`；`fund_pension_out` → `c3f232ae341849b8aa617c17bf3ce0de`；`fund_pension_balance` → `79475556e0fc45f0a4da8c2d7c2f3a6b`；`fund_medical_in` → `91f5d86e444b4de499e87d0cda9c25de`；`fund_medical_out` → `2899459e956845b7a4d1be60e0312754`；`fund_medical_balance` → `0a63598ae1e44ec58b26de5fd3af5f23`；`fund_unemp_in` → `90f9799595a8469db01a9d12c25e9215`；`fund_unemp_out` → `32cdf70b88704c2880cd863ac772487e`；`fund_unemp_balance` → `3418b469ff0649aa8b28d060d9ccd440`；`fund_injury_in` → `cf4a3a07660744c5be844810e497b03c`；`fund_injury_out` → `b071270db4614d62afcd9314212dc759`；`fund_injury_balance` → `786c39b8405446d8b142bd065bc3ed6a`；`fund_mat_in` → `b22b03ba81ca476385aa764dafe3a2d6`（until 2018）；`fund_mat_out` → `dc5b6e5d2f564c469f75941c5310fa1b`（until 2018）；`fund_mat_balance` → `4902f398837d4336a75e8f9ba9adcf75`（until 2018） |
+| 城镇职工基本养老保险 | 1990 | 10 | `f4b4e19ca8f24b49890c6ad0f7dd948b` | `worker_insured` → `55ce1f5afe644006ad987d15f07cff0a`；`worker_active` → `0a6085723a544626a7e63fe61f1b4bc0`；`worker_retired` → `24d96aef050440dcb3f2ebf8db620c68` |
+| 城乡居民基本养老保险情况 | 2010 | 10 | `9d4754173c644274bbbc69170c4fbbfa` | `resident_insured` → `1506084272244518b9e30077409dc971`；`resident_beneficiaries` → `7edc5952e19d4d20988426589ce9c64f`；`resident_in` → `180ead39d412463f8dd11c398f71f69e`；`resident_out` → `742a69a53ffe4c289393b583ba820b6e`；`resident_balance` → `2b191a1bfb50415291bc48d1330afbf4` |
+| 基本医疗保险 | 2015 | 10 | `082ea4e047cb4878a9909f29d46fae75` | `med_insured` → `0820ef93ad734be49bddc88486203080`（from 2017）；`med_employee` → `40d443b8d3fa4c2ca5d64ec8850d9903`；`med_active` → `c93e67dcb20544ad85716d5235357256`；`med_retired` → `8360182bfd76406f992e6e2827411546`；`med_resident` → `9bf7be65529b4f5299b5ee5261f30b76`（from 2017）；`med_employee_in` → `026c80a7230d439b968dd6a5fa360ca3`；`med_employee_out` → `8846a122f639458fab267511e1a54c61`；`med_employee_balance` → `34dbac71133b4158885716e37dba1e77`；`med_resident_in` → `b6fdbe15a7b445f69fd01b5f2fff6c74`；`med_resident_out` → `510da22cb51f45f391aa028581c3acbd`；`med_resident_balance` → `52b6952dfa7349c391638b17b35f068f` |
+| 失业保险 | 1990 | 10 | `635e81f489bb41979a2c286bddec7e0b` | `unemp_insured` → `5a5e2622ec134f3daf104c9b06b2b330`；`unemp_beneficiaries` → `f14e7c8f07f444aba22297ea6a4be324` |
+| 工伤保险 | 1990 | 10 | `418c554258a04029a34116cc59d5f44c` | `injury_insured` → `d70ced9e8be04090b2592589999daa40`；`injury_beneficiaries` → `9b7b456402d1441f81fde1238a8aafca` |
+| 生育保险 | 1990 | 10 | `7845acf4cd1f4ae9a898b6a016d53c2c` | `mat_insured` → `72cfb16a349e422ba2ad4d52e628f4c8`；`mat_beneficiaries` → `616b8f3c35f740348b3f1ca1c7eb466f`（until 2021） |
+| 人口年龄结构和抚养比（分母） | 1990 | 10 | `c7743eefda9d44b5ad2ab0b4f29ba969` | `total_population` → `9f39d77c761d4824940fc3c23d8281b0` |
+| 按城乡分就业人员数（分母） | 1990 | 10 | `075f123c1e5243b0ab56f275bd80e0fb` | `urban_jobs` → `43eff5be6c4b4109907a3a45f9da7e7c` |
+
+### 24 个计算值（`service.js` 的 `valueAt()` 现算，不落盘）
+
+| 口径 | 公式 | 用到的指标 |
+| --- | --- | --- |
+| `diff` | a − b | 五险 + 合计的 6 个当期结余：`fund_total_gap` / `fund_pension_gap` / `fund_medical_gap` / `fund_unemp_gap` / `fund_injury_gap` / `fund_mat_gap` |
+| `per_capita` | a（亿元）× 1e8 ÷（b（万人）× 1e4）→ 元 / 人 | `worker_pension_per_capita`（养老基金支出 ÷ 离退休人数）、`resident_pension_per_capita`（城乡养老支出 ÷ 领取人数） |
+| `months` | a ÷（b ÷ 12） | `worker_pay_months` / `resident_pay_months` / `med_pay_months` / `unemp_pay_months` / `injury_pay_months` |
+| `ratio_pct` | a ÷ b × 100 | `worker_coverage`（在职参保 ÷ 城镇就业）、`med_coverage`（全口径参保 ÷ 年末总人口）、`unemp_coverage` / `injury_coverage` / `mat_coverage`（÷ 城镇就业）、`worker_retiree_ratio`、`resident_beneficiary_ratio`、`unemp_benefit_ratio`、`injury_benefit_ratio` |
+
+计算量**没有自己的 catalog / indicatorId / until**：取数时沿 `inputs` 找第一个带 catalog 的输入，画到哪一年由各输入的最早截止点决定（所以生育当期结余跟着 2018 一起停），`config.js` 的 `validate()` 会把违反这三条的写法直接报错。
+
+## 口径规则（不许破）
+
+- **当期收支 ≠ 累计结余**：收入 / 支出是当年流量，当期结余 = 收入 − 支出（计算值）；累计结余是历年滚存存量。同单位（亿元）但含义不同，图上分柱 / 线、右轴分开，任何一张图里不混为同一类
+- **生育保险基金止于 2018**：2019 年起生育保险与职工医保合并实施，基金不再单列，`fund_mat_in/out/balance` 带 `until: "2018"`。归档序列不算 stale、不回源、不往后延伸；生育待遇人数另有一条到 2021 的序列（`mat_beneficiaries`，`until: "2021"`）
+- **医保参保人数 2017 起才是全口径**：`med_insured` / `med_resident` 带 `from: "2017"`，2016 与 2017 之间是口径跳变（7.4 亿 → 11.8 亿），**不拼接、不补更早年份**；职工医保 2019 年起含生育保险基金
+- **职工养老参保率分子不能含离退休**：`worker_insured` 含离退休人员，拿它除城镇就业会得到 113%（2024），所以 `worker_coverage` 的分子用 `worker_active`
+- **医保参保率分母不能用城镇就业**：全口径参保覆盖全体国民，`med_coverage` 分母取年末总人口（约 94.7%）；用城镇就业会算出 280%
+- **五险基金只取 5833e7e6**：各险种栏目的同名收支指标与合计栏目重复，为避免一条序列两个源，基金数据统一从「社会保险基金收支及累计结余」取，各险种栏目只取参保 / 待遇人数
+- **人均养老金 ≠ 到手养老金**：基金支出含管理费、丧葬抚恤、转移支出，计算值只用于看两类制度的待遇量级差异
+- **可支付月数是静态压力测试**：不考虑人口老龄化带来的支出增长，不是偿付能力预测
+- **缺失就是缺失**：未发布 / 上游缺项一律 `null`，不插值、不补 0、不按月均摊；计算量缺任一项输入就整个为 `null`
+
+## 缓存与拉取策略
+
+- 缓存按栏目分文件：`.cache/livelihood-security/catalogs/<栏目key>.json` + `_meta.json`（`lastAttempt` / `lastSuccess` / `lastError` / `latest`）；目录可用 `LIVELIHOOD_SECURITY_DATA_DIR` 覆盖
+- **首拉**：9 个栏目、9 次上游请求、实测约 10 秒，写入 45 条原值序列 / 1114 个数据点（覆盖 36 个年度）；拉全后写入缓存再渲染，之后每次打开只核对应发布年度
+- **年度口径**：期别编码 `YYYY`；`policy.js` 按栏目 `releaseMonth`（本模块统一 10）判应发布年份——月份 ≥ 10 取上一年，否则取前两年。社保基金收支随《中国统计年鉴》入库，近年多在次年 9—12 月才补齐，因此会出现"合计到 2025、各险种仍停 2024"的常态现象，页面状态栏直接写"N 项最新为 2024 年（应发布 2025，尚未入库）"，不说"数据过期"
+- **四分类**：`cold`（无缓存，同步拉全）/ `behind`（落后应发布年度 3 年以上，同步补齐再渲染）/ `warm`（先用缓存出图，后台 `dryRun` 探测，有新一期才补，前端轮询拿新数据）/ `force`（手动刷新跳过"已经够新"判定）
+- **限流**：取数复用 `lib/livelihood/source.js`，限流复用 `lib/livelihood/queue.js`（全局串行 + 1200 ms 间隔）；同一栏目 60 秒冷却；两次回源至少隔 10 分钟
+- **失败回退**：上游 4xx / 5xx / 超时 / 返回非 JSON → 回退已有缓存、标 `stale: true` 并带上 `errors`，**不抛 500、不返回空数组**；未知指标 404；连续 3 个栏目失败就停止本次尝试
+- **归档不核对**：带 `until` 的指标（生育基金三项、生育待遇人数）永远不算 stale，`force` 也不回源；计算量的有效期跟着输入指标走（取最早截止点）
+
+## 接口
+
+| 接口 | 说明 |
+| --- | --- |
+| `GET /api/livelihood/security` | 看板一次性取全量（含 `stale` / `refreshing` / `expectedYear` / `expectedYears` / `latestYear` / `firstRun` / `cache`） |
+| `GET /api/livelihood/security/indicators` | 指标清单（不含数据，含 groups / stale / latestCached / computed / archived） |
+| `GET /api/livelihood/security/series/:id` | 单指标序列 |
+| `GET /api/livelihood/security/refresh/:id` | 手动刷新单指标（等价于 `series?id&force=1`） |
+| `GET /api/livelihood/security/health` | 健康检查（含缓存与数据集概况） |
+
+查询参数：`range=10|20|all`（默认 all，页面前端默认 10）、`from=YYYY&to=YYYY`（优先于 range）、`force=1`。指标 id 见上方两张表（共 69 个，其中 24 个是计算值）。
+
+---
+
 ## 打包给别人（对方不装 Node）
 
 `node server.js` 需要 Node 运行时。要发给装不了 Node 的人，用**便携包**：把 `node.exe` 和项目一起打进去，对方解压双击 `start.bat` 就行，**不需要安装任何东西**。
@@ -850,10 +949,10 @@ powershell -ExecutionPolicy Bypass -File packaging\build.ps1
 
 ```
 release/中国经济统计数据看板/                                      解压后双击 start.bat
-release/china-economic-stats-dashboard-v3.6.0-win10-win11.zip     对外发送
+release/china-economic-stats-dashboard-v3.7.0-win10-win11.zip     对外发送
 ```
 
-包内是 `node.exe`（官方签名二进制，v20.12.2）、`server.js`、`package.json`、`lib/`、`config/`、`public/`、`data/periods.json`、`probe.js`、`docs/`、`README.md`、`start.bat`、`使用说明.txt`，以及一份 `.cache/macro/`、`.cache/lpr/`、`.cache/livelihood/`、`.cache/livelihood-income/`、`.cache/livelihood-deposit/`、`.cache/livelihood-retail/` 与 `.cache/livelihood-employment/`；不含 `node_modules/`、`AGENTS.md`。功能与源码版完全一致：八个看板、跨月 / 跨年自动核对、「刷新数据」都照常可用。
+包内是 `node.exe`（官方签名二进制，v20.12.2）、`server.js`、`package.json`、`lib/`、`config/`、`public/`、`data/periods.json`、`probe.js`、`docs/`、`README.md`、`start.bat`、`使用说明.txt`，以及一份 `.cache/macro/`、`.cache/lpr/`、`.cache/livelihood/`、`.cache/livelihood-income/`、`.cache/livelihood-deposit/`、`.cache/livelihood-retail/`、`.cache/livelihood-employment/` 与 `.cache/livelihood-security/`；不含 `node_modules/`、`AGENTS.md`。功能与源码版完全一致：九个看板、跨月 / 跨年自动核对、「刷新数据」都照常可用。
 
 - **分发包默认带宏观历史数据**：`.cache/macro/` 里是 20 个指标、约 1200 个月度文件（0.2 MB，打包时自动剔除本机的 `_meta.json` 回源时间戳），对方首次打开只需补最近几期，几秒钟就全了；删掉它才会全量重拉。
 - **LPR 历史同样随包分发**：`.cache/lpr/` 是一条全量序列（约 90 期 / 几 KB，同样剔 `_meta.json`），对方首次打开秒出图；就算不带，现场拉全也只要几秒。
@@ -862,6 +961,7 @@ release/china-economic-stats-dashboard-v3.6.0-win10-win11.zip     对外发送
 - **居民存款也随包**：`.cache/livelihood-deposit/` 是 12 个年度文件（每文件 12 个月 × 3 行原值，几十 KB，同样剔 `_meta.json`）+ 一份人口分母，对方首次打开直接出图，只补最新月份。
 - **社零也随包**：`.cache/livelihood-retail/` 是 8 个栏目文件（约 2.3 千个数据点 / 39 KB，同样剔 `_meta.json`），对方首次打开直接出图，只补最近一期。
 - **就业也随包**：`.cache/livelihood-employment/` 是 3 个栏目文件（19 个指标 / 796 个数据点，同样剔 `_meta.json`），对方首次打开直接出图，只补最近一期。
+- **养老医保也随包**：`.cache/livelihood-security/` 是 9 个栏目文件（45 条原值序列 / 1114 个数据点 / 约 18 KB，同样剔 `_meta.json`），对方首次打开直接出图，只补最近一期；计算值不落盘，随公式现算。
 - **包放很久才打开也没问题**：缓存里有多少就用多少，缺的月份按「应发布期别」一次性补齐（缺 3 个月就只拉 3 个月，不会从头重拉）。只有统计局改了栏目/接口时才需要重新发版，否则最多看到「待更新」提示。
 
 - 便携版的 `start.bat` 和 `使用说明.txt` 放在 `packaging/` 里跟代码一起维护，打包时会拷过去。
@@ -877,7 +977,7 @@ release/china-economic-stats-dashboard-v3.6.0-win10-win11.zip     对外发送
 
 - **房价不是成交均价**。价格指数反映的是价格变动的相对幅度，不含绝对价格水平。
 - 宏观接口随时可能变化或限流，页面出现「待更新」属正常现象，请以统计局官网公布为准。
-- 八个看板的数据版权分别归国家统计局（房价 / 宏观 / 民生 / 收支 / 人均存款的人口分母 / 社零 / 就业）、中国人民银行（存款 / 信贷收支表）、全国银行间同业拆借中心（LPR）所有，本项目只做本地可视化，不保存、不分发原始数据库。
+- 九个看板的数据版权分别归国家统计局（房价 / 宏观 / 民生 / 收支 / 人均存款的人口分母 / 社零 / 就业 / 养老医保）、中国人民银行（存款 / 信贷收支表）、全国银行间同业拆借中心（LPR）所有，本项目只做本地可视化，不保存、不分发原始数据库。
 - 仅供数据观察，**不要用于任何投资决策依据**。
 
 ## 反馈与联系
