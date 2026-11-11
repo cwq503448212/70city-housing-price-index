@@ -88,7 +88,7 @@ if (Test-Path $lprSrc) {
   Write-Host '      ! 未找到 .cache\lpr：包里不带 LPR 缓存，对方首次打开会现场拉全（几秒钟）'
 }
 
-# 民生（婚育）年度缓存：每年一个小文件，6 个指标 × 近 50 年也很轻，带上让首屏直接出图
+# 民生（人口与婚育）年度缓存：每年一个小文件，16 个指标 × 近 50 年也很轻，带上让首屏直接出图
 # _meta.json 同理剔掉（每个指标目录一份，含着本机的回源尝试时间戳与上次错误）
 $liveSrc = Join-Path $root '.cache\livelihood'
 if (Test-Path $liveSrc) {

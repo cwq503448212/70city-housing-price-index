@@ -8,13 +8,19 @@
   },
   "history": {
     "from": "1978",
-    "note": "年度库自 1978 年起；早期年份部分指标为空（如 1979-1981 年婚姻登记），缺失就是缺失，不补数"
+    "note": "年度库自 1978 年起；早期年份部分指标为空（如 1979-1981 年婚姻登记、1983-1986 与 1988-1989 年人口分段），缺失就是缺失，不补数"
   },
   "groups": [
+    { "key": "population", "label": "人口结构", "note": "年末人口（万人）与抚养比（%）" },
     { "key": "marriage", "label": "婚姻登记", "note": "民政统计年报口径，万对 / 万人" },
-    { "key": "birth", "label": "出生与人口", "note": "千分率，‰" }
+    { "key": "birth", "label": "出生与人口", "note": "千分率，‰" },
+    { "key": "life", "label": "预期寿命", "note": "岁，非逐年发布" }
   ],
   "catalogs": {
+    "population_structure": {
+      "label": "人口 · 人口年龄结构和抚养比（年度）",
+      "id": "c7743eefda9d44b5ad2ab0b4f29ba969"
+    },
     "marriage_service": {
       "label": "社会服务 · 婚姻服务（年度）",
       "id": "903b12570f7b4d73b578945248019f8f"
@@ -22,9 +28,146 @@
     "population_rate": {
       "label": "人口 · 人口出生率、死亡率和自然增长率（年度）",
       "id": "ffed4267bba24830beea5991d4c9bcfc"
+    },
+    "life_expectancy": {
+      "label": "人口 · 人口平均预期寿命（年度）",
+      "id": "0f6150cfa670407ab4a81669b9ed9dbc"
     }
   },
   "indicators": [
+    {
+      "id": "total_population",
+      "label": "年末总人口（年度）",
+      "shortLabel": "总人口",
+      "unit": "万人",
+      "kind": "count",
+      "group": "population",
+      "decimals": 0,
+      "note": "年末时点数，不是年平均人口；与 0—14 / 15—64 / 65 岁以上三段之和一致",
+      "catalog": "population_structure",
+      "indicatorId": "9f39d77c761d4824940fc3c23d8281b0",
+      "shown": "年末总人口 (万人)"
+    },
+    {
+      "id": "pop_0_14",
+      "label": "0—14 岁人口（年度）",
+      "shortLabel": "0—14 岁",
+      "unit": "万人",
+      "kind": "count",
+      "group": "population",
+      "decimals": 0,
+      "note": "年末人口；分段自 1982 年起（1978—1981、1983—1986、1988—1989 年官方未发布），图上为空缺",
+      "catalog": "population_structure",
+      "indicatorId": "067f5f3ec585402e9f31037e5f27eb17",
+      "shown": "0-14岁人口 (万人)"
+    },
+    {
+      "id": "pop_15_64",
+      "label": "15—64 岁人口（年度）",
+      "shortLabel": "15—64 岁",
+      "unit": "万人",
+      "kind": "count",
+      "group": "population",
+      "decimals": 0,
+      "note": "劳动年龄人口（统计口径，不是法定退休口径）",
+      "catalog": "population_structure",
+      "indicatorId": "a6051fc22d394d81b2007dc7c7c761fa",
+      "shown": "15-64岁人口 (万人)"
+    },
+    {
+      "id": "pop_65",
+      "label": "65 岁及以上人口（年度）",
+      "shortLabel": "65 岁以上",
+      "unit": "万人",
+      "kind": "count",
+      "group": "population",
+      "decimals": 0,
+      "note": "老龄化分母：65 岁以上人口占比 = 本值 ÷ 年末总人口，本页现算",
+      "catalog": "population_structure",
+      "indicatorId": "c2627d8e6b5843bfa3372bacdf858804",
+      "shown": "65岁及以上人口 (万人)"
+    },
+    {
+      "id": "dependency_ratio",
+      "label": "总抚养比（年度）",
+      "shortLabel": "总抚养比",
+      "unit": "%",
+      "kind": "percent",
+      "group": "population",
+      "decimals": 1,
+      "note": "每 100 名 15—64 岁人口负担的非劳动年龄人口，官方发布值",
+      "catalog": "population_structure",
+      "indicatorId": "0d2db39cd5424f5fbca859052413f4ad",
+      "shown": "总抚养比 (%)"
+    },
+    {
+      "id": "child_dependency",
+      "label": "少儿抚养比（年度）",
+      "shortLabel": "少儿抚养比",
+      "unit": "%",
+      "kind": "percent",
+      "group": "population",
+      "decimals": 1,
+      "note": "每 100 名 15—64 岁人口负担的 0—14 岁人口",
+      "catalog": "population_structure",
+      "indicatorId": "93c00898dbeb4aff881fa97723901739",
+      "shown": "少儿抚养比 (%)"
+    },
+    {
+      "id": "aged_dependency",
+      "label": "老年抚养比（年度）",
+      "shortLabel": "老年抚养比",
+      "unit": "%",
+      "kind": "percent",
+      "group": "population",
+      "decimals": 1,
+      "note": "每 100 名 15—64 岁人口负担的 65 岁以上人口，比总抚养比更能看出老龄化压力",
+      "catalog": "population_structure",
+      "indicatorId": "9d77e24ce8c94679937b07188f4e7fbc",
+      "shown": "老年抚养比 (%)"
+    },
+    {
+      "id": "life_expectancy",
+      "label": "平均预期寿命（年度）",
+      "shortLabel": "预期寿命",
+      "unit": "岁",
+      "kind": "count",
+      "group": "life",
+      "decimals": 2,
+      "until": "2020",
+      "note": "非逐年发布：只在人口普查与大样本抽样年份有值，官方最新为 2020 年；归档后不再核对、不算滞后",
+      "catalog": "life_expectancy",
+      "indicatorId": "d5ebe43c9aa3402299bfc780c40c7cc8",
+      "shown": "平均预期寿命 (岁)"
+    },
+    {
+      "id": "life_expectancy_male",
+      "label": "男性平均预期寿命（年度）",
+      "shortLabel": "男性",
+      "unit": "岁",
+      "kind": "count",
+      "group": "life",
+      "decimals": 2,
+      "until": "2020",
+      "note": "与平均预期寿命同一张表发布，非逐年",
+      "catalog": "life_expectancy",
+      "indicatorId": "f9ff7a38ff7a42b79d5565cf52819e1c",
+      "shown": "男性平均预期寿命 (岁)"
+    },
+    {
+      "id": "life_expectancy_female",
+      "label": "女性平均预期寿命（年度）",
+      "shortLabel": "女性",
+      "unit": "岁",
+      "kind": "count",
+      "group": "life",
+      "decimals": 2,
+      "until": "2020",
+      "note": "与平均预期寿命同一张表发布，非逐年；男女差值直接看两条线，本页不另算",
+      "catalog": "life_expectancy",
+      "indicatorId": "c6c5cfa4e7a743c4af98ba8461a53c1b",
+      "shown": "女性平均预期寿命 (岁)"
+    },
     {
       "id": "marriage_reg",
       "label": "结婚登记（年度）",

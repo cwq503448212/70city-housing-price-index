@@ -1,4 +1,4 @@
-/* 中国婚育与人口出生看板 —— 视觉与宏观模块共用同一套变量 */
+/* 中国人口与婚育看板 —— 视觉与宏观模块共用同一套变量 */
 
 :root {
   --bg: #f4f5f7;
@@ -237,7 +237,8 @@ main {
 
 .kpi-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  /* 6 张 KPI：固定 3 列排两行，auto-fit 会在宽屏上排成「5 + 1」 */
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
 }
 
@@ -466,9 +467,17 @@ tbody tr:hover {
   .grid {
     grid-template-columns: minmax(0, 1fr);
   }
+
+  .kpi-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 720px) {
+  .kpi-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .topbar {
     padding: 12px 14px 10px;
   }

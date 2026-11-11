@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>中国婚育与人口出生看板</title>
+<title>中国人口与婚育看板</title>
 <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -11,7 +11,7 @@
 <header class="topbar">
   <div class="topbar-main">
     <div class="brand">
-      <h1>中国婚育与人口出生看板</h1>
+      <h1>中国人口与婚育看板</h1>
       <p class="brand-sub">数据来源：国家统计局 · 国家数据（年度）　历史一次拉全，按年增补</p>
     </div>
 
@@ -52,6 +52,30 @@
   <section class="grid">
     <article class="card card-wide">
       <header class="card-head">
+        <h2>人口结构：年龄构成（万人）</h2>
+        <p class="card-sub">年末人口，三段之和等于年末总人口；分段缺失的年份不出柱。右轴为 65 岁以上占比（计算值 = 65 岁以上人口 ÷ 年末总人口）</p>
+      </header>
+      <div class="chart" id="chart-population"></div>
+    </article>
+
+    <article class="card card-wide">
+      <header class="card-head">
+        <h2>抚养比：每 100 名劳动年龄人口要养多少人</h2>
+        <p class="card-sub">分母是 15—64 岁人口；总 / 少儿 / 老年三条线均取官方发布值，本页不自行相加</p>
+      </header>
+      <div class="chart" id="chart-dependency"></div>
+    </article>
+
+    <article class="card card-wide">
+      <header class="card-head">
+        <h2>平均预期寿命（岁）</h2>
+        <p class="card-sub">非逐年发布：只在人口普查与大样本抽样年份有值，官方最新为 2020 年，断点是官方没发布而不是缺数据</p>
+      </header>
+      <div class="chart" id="chart-life"></div>
+    </article>
+
+    <article class="card card-wide">
+      <header class="card-head">
         <h2>婚姻登记：结婚 / 离婚（万对）</h2>
         <p class="card-sub">民政统计年报口径的全年登记对数；2025 年婚姻登记尚未入库，曲线尾部会空缺</p>
       </header>
@@ -86,7 +110,7 @@
   <section class="card">
     <header class="card-head">
       <h2>指标明细</h2>
-      <p class="card-sub">最新一年与上一年对比；「状态」列标出数据是否可能滞后</p>
+      <p class="card-sub">最新一年与此前最近一个有值年份对比；预期寿命这类稀疏序列的「上一期」可能不是紧邻年份</p>
     </header>
     <div class="table-wrap">
       <table id="detail-table">
@@ -94,7 +118,7 @@
           <tr>
             <th>指标</th>
             <th class="num">最新值</th>
-            <th class="num">上年</th>
+            <th class="num">上一期</th>
             <th class="num">变化</th>
             <th>年份</th>
             <th>来源</th>
@@ -108,9 +132,18 @@
 
   <footer class="foot">
     <p>
-      <strong>口径：</strong>结婚登记 / 离婚登记的单位是「万对」，初婚人数的单位是「万人」，出生率 / 死亡率 /
-      自然增长率的单位是「‰」（千分率）。人数与对数不是同一量纲，不换算、不相除，也不做任何加权合成。
-      自然增长率直接取官方发布值，不由本页用出生率减死亡率代替。
+      <strong>口径：</strong>人口数是「万人」，抚养比是「%」，预期寿命是「岁」，结婚登记 / 离婚登记是「万对」，
+      初婚人数是「万人」，出生率 / 死亡率 / 自然增长率是「‰」（千分率）。人数与对数不是同一量纲，不换算、不相除，
+      也不做任何加权合成。自然增长率直接取官方发布值，不由本页用出生率减死亡率代替。
+    </p>
+    <p>
+      <strong>人口结构与老龄化：</strong>人口数均为「年末」口径（不是年平均），0—14 / 15—64 / 65 岁及以上
+      三段之和等于年末总人口。抚养比是官方直接发布值：总抚养比 = 非劳动年龄人口 ÷ 15—64 岁人口，
+      少儿 / 老年抚养比分别以 0—14 岁、65 岁以上人口为分子。65 岁以上人口占比是本页现算，图上已标「计算值」。
+    </p>
+    <p>
+      <strong>预期寿命：</strong>不是逐年序列，只在人口普查与大样本抽样年份发布（1981、1990、2000、2010、2020 等），
+      官方最新为 2020 年，所以曲线止于 2020，断点是官方没有发布。该序列已归档：不再向统计局核对，也不计入「待更新」。
     </p>
     <p>
       <strong>为什么不用民政部季度公报：</strong>民政部「统计数据 → 季度民政统计数据」确实发布结婚 / 离婚登记，
@@ -122,8 +155,9 @@
       没有稳定性承诺；接口不可用时回退本地缓存并标记「数据可能滞后」，不返回空图。
     </p>
     <p>
-      <strong>缺失值：</strong>统计局未入库的年份显示为空缺，不插值、不补 0。2025 年婚姻登记尚未入库，
-      故结婚 / 离婚 / 初婚三条序列止于 2024 年，页面会照实标「待更新」。
+      <strong>缺失值：</strong>统计局未入库或未发布的年份显示为空缺，不插值、不补 0。2025 年婚姻登记尚未入库，
+      所以结婚 / 离婚 / 初婚三条序列止于 2024 年；人口分段自 1982 年起才有值（1978—1981、1983—1986、1988—1989 年官方未发布），预期寿命 2020 年之后不再发布，
+      图上照实断开，各个指标的「待更新」标记分开判断。
     </p>
     <p id="foot-meta" class="foot-meta"></p>
   </footer>

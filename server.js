@@ -7,7 +7,7 @@
  *   房价模块  /housing/    ← 页面    /api/nbs70            ← 数据（国家统计局月报解析）
  *   宏观模块  /macro/      ← 页面    /api/macro/*          ← 数据（国家数据站点，拉全后缓存）
  *   LPR 模块  /lpr/        ← 页面    /api/lpr/*            ← 数据（中国货币网官方 JSON，拉全后缓存）
- *   民生模块  /livelihood/ ← 页面    /api/livelihood/*     ← 数据（国家数据年度库，拉全后缓存）
+ *   人口与婚育 /livelihood/ ← 页面    /api/livelihood/*     ← 数据（国家数据年度库，拉全后缓存）
  *   人均收支  /livelihood/income/ ← 页面 /api/livelihood/income-expenditure ← 数据（同一年度库，独立缓存）
  *   居民存款  /livelihood/deposit/ ← 页面 /api/livelihood/reserve-deposit ← 数据（央行信贷收支表 + 人口分母）
  *   社会消费品零售 /livelihood/retail/ ← 页面 /api/livelihood/retail ← 数据（国家数据月度库，拉全后缓存）
@@ -352,7 +352,7 @@ const server = http.createServer((req, res) => {
     return undefined;
   }
 
-  // ---------------- 民生模块（婚育：国家数据年度库，缓存优先，接口层异步） ----------------
+  // ---------------- 民生模块（人口与婚育：国家数据年度库，缓存优先，接口层异步） ----------------
   if (pathname.indexOf('/api/livelihood/') === 0) {
     const run = async () => {
       if (pathname === '/api/livelihood/health') {
@@ -420,7 +420,7 @@ server.listen(PORT, HOST, () => {
   console.log('    ├─ 70 城房价指数     http://' + HOST + ':' + PORT + '/housing/');
   console.log('    ├─ 宏观经济指标      http://' + HOST + ':' + PORT + '/macro/');
   console.log('    ├─ 房贷利率 LPR      http://' + HOST + ':' + PORT + '/lpr/');
-  console.log('    ├─ 民生 · 婚育       http://' + HOST + ':' + PORT + '/livelihood/');
+  console.log('    ├─ 民生 · 人口与婚育 http://' + HOST + ':' + PORT + '/livelihood/');
   console.log('    ├─ 民生 · 人均收支   http://' + HOST + ':' + PORT + '/livelihood/income/');
   console.log('    ├─ 民生 · 居民存款   http://' + HOST + ':' + PORT + '/livelihood/deposit/');
   console.log('    ├─ 民生 · 社零       http://' + HOST + ':' + PORT + '/livelihood/retail/');

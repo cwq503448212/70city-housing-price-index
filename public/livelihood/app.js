@@ -1,16 +1,18 @@
 'use strict';
 
 /**
- * 中国婚育与人口出生看板 —— 前端渲染
+ * 中国人口与婚育看板 —— 前端渲染
  *
  * 数据只有一次请求：/api/livelihood/overview?range=...
- * 顶部时间选择一变，整页（KPI + 4 张图 + 明细表）全部按新区间重画。
+ * 顶部时间选择一变，整页（KPI + 7 张图 + 明细表）全部按新区间重画。
  * 前端不判断「哪一年该有数」——那是服务端 lib/livelihood/policy.js 的事，这里只消费 stale 字段。
  */
 
 (function () {
-  // 只有这 4 个指标进 KPI，其余指标在明细表与图中出现
+  // 只有这 6 个指标进 KPI，其余指标在明细表与图中出现
   const KPI_LIST = [
+    { id: 'pop_65', label: '65 岁以上人口' },
+    { id: 'aged_dependency', label: '老年抚养比' },
     { id: 'marriage_reg', label: '结婚登记' },
     { id: 'divorce_reg', label: '离婚登记' },
     { id: 'birth_rate', label: '人口出生率' },
@@ -97,6 +99,23 @@
     return ind.kind === 'rate';
   }
 
+  /** 百分比（抚养比等）：与千分率一样不带空格，但差值用「个百分点」 */
+  function isPercent(ind) {
+    return ind.kind === 'percent';
+  }
+
+  function unitOf(ind) {
+    if (isRate(ind)) return '‰';
+    if (isPercent(ind)) return '%';
+    return ind.unit;
+  }
+
+  /** 后缀：千分率 / 百分比紧跟数字，普通单位前留一个空格 */
+  function unitSuffix(ind) {
+    if (isRate(ind) || isPercent(ind)) return unitOf(ind);
+    return ' ' + ind.unit;
+  }
+
   function fmtNum(v, decimals) {
     if (v === null || v === undefined || !isFinite(v)) return '—';
     const d = typeof decimals === 'number' ? decimals : 2;
@@ -114,7 +133,7 @@
     if (v === null || v === undefined || !isFinite(v)) return '—';
     const body = fmtNum(v, ind.decimals);
     if (!withUnit) return body;
-    return body + (isRate(ind) ? '‰' : ' ' + ind.unit);
+    return body + unitSuffix(ind);
   }
 
   /** 上游错误信息会进 title 属性，做一次转义避免引号截断 */
@@ -134,9 +153,11 @@
     return 'flat';
   }
 
-  /** 差值的量纲：千分率用「个千分点」，其余沿用指标单位 */
+  /** 差值的量纲：千分率用「个千分点」，百分比用「个百分点」，其余沿用指标单位 */
   function deltaUnit(ind) {
-    return isRate(ind) ? ' 个千分点' : ' ' + ind.unit;
+    if (isRate(ind)) return ' 个千分点';
+    if (isPercent(ind)) return ' 个百分点';
+    return ' ' + ind.unit;
   }
 
   function fmtDelta(ind, d) {
@@ -264,6 +285,131 @@
   }
 
   /* ---------------- 各图 ---------------- */
+
+  /** 人口结构：三段堆叠柱 + 65 岁以上占比（本页现算） */
+  function renderPopulation() {
+    const years = yearsOf();
+    if (!years.length || !byId('pop_0_14') || !byId('pop_65')) {
+      return emptyChart('chart-population', '暂无数据');
+    }
+
+    const young = seriesOf('pop_0_14');
+    const work = seriesOf('pop_15_64');
+    const old = seriesOf('pop_65');
+    const total = seriesOf('total_population');
+    // 65 岁以上占比：两个原值都有的年份才算，不插值
+    const shares = years.map((y, i) => {
+      if (old[i] === null || total[i] === null || !total[i]) return null;
+      return Math.round((old[i] / total[i]) * 1000) / 10;
+    });
+
+    const option = baseOption();
+    option.grid.right = 52;
+    option.xAxis.data = years;
+    option.xAxis.boundaryGap = true;
+    option.yAxis = [
+      Object.assign({}, option.yAxis, {
+        name: '万人',
+        nameGap: 12,
+        nameTextStyle: { color: COLOR.muted, fontSize: 11 },
+      }),
+      {
+        type: 'value',
+        name: '占比',
+        position: 'right',
+        nameTextStyle: { color: COLOR.muted, fontSize: 11 },
+        axisLine: { show: false },
+        axisTick: { show: false },
+        axisLabel: { color: COLOR.muted, fontSize: 11, formatter: '{value}%' },
+        splitLine: { show: false },
+        scale: true,
+      },
+    ];
+    option.tooltip.formatter = (params) => {
+      const i = params[0].dataIndex;
+      const one = (name, v) => name + '　' + (v === null || v === undefined ? '—' : fmtNum(v, 0) + ' 万人');
+      return (
+        yearCn(years[i]) + '<br/>' +
+        one('0—14 岁', young[i]) + '<br/>' +
+        one('15—64 岁', work[i]) + '<br/>' +
+        one('65 岁及以上', old[i]) + '<br/>' +
+        '65 岁以上占比（计算值）　' + (shares[i] === null ? '—' : fmtNum(shares[i], 1) + '%')
+      );
+    };
+    const bar = (name, data, color) => ({
+      name: name,
+      type: 'bar',
+      stack: 'pop',
+      barMaxWidth: 20,
+      data: data,
+      itemStyle: { color: color },
+    });
+    option.series = [
+      bar('0—14 岁', young, COLOR.accent),
+      bar('15—64 岁', work, '#8fb2f2'),
+      bar('65 岁及以上', old, COLOR.orange),
+      {
+        name: '65 岁以上占比（计算值）',
+        type: 'line',
+        yAxisIndex: 1,
+        data: shares,
+        showSymbol: false,
+        smooth: 0.25,
+        connectNulls: false,
+        lineStyle: { width: 2, color: COLOR.violet, type: 'dashed' },
+        itemStyle: { color: COLOR.violet },
+      },
+    ];
+    chartOf('chart-population').setOption(option, true);
+  }
+
+  /** 抚养比：三条官方线，/100 名劳动年龄人口 */
+  function renderDependency() {
+    const years = yearsOf();
+    if (!years.length || (!byId('dependency_ratio') && !byId('aged_dependency'))) {
+      return emptyChart('chart-dependency', '暂无数据');
+    }
+    const option = baseOption();
+    option.xAxis.data = years;
+    option.yAxis.axisLabel.formatter = '{value}%';
+    option.tooltip.formatter = (params) => {
+      const head = yearCn(years[params[0].dataIndex]);
+      const rows = params
+        .map((p) => p.seriesName + '　' + (p.value === null || p.value === undefined ? '—' : fmtNum(p.value, 1) + '%'))
+        .join('<br/>');
+      return head + '<br/>' + rows;
+    };
+    const series = [];
+    if (byId('dependency_ratio')) series.push(lineSeries('总抚养比', seriesOf('dependency_ratio'), COLOR.ink));
+    if (byId('child_dependency')) series.push(lineSeries('少儿抚养比', seriesOf('child_dependency'), COLOR.accent));
+    if (byId('aged_dependency')) series.push(lineSeries('老年抚养比', seriesOf('aged_dependency'), COLOR.orange));
+    option.series = series;
+    chartOf('chart-dependency').setOption(option, true);
+  }
+
+  /** 预期寿命：稀疏序列，不画平滑曲线、保留数据点 */
+  function renderLife() {
+    const years = yearsOf();
+    if (!years.length || !byId('life_expectancy')) return emptyChart('chart-life', '暂无数据');
+    const option = baseOption();
+    option.xAxis.data = years;
+    option.yAxis.axisLabel.formatter = '{value}';
+    option.tooltip.formatter = (params) => {
+      const head = yearCn(years[params[0].dataIndex]);
+      const rows = params
+        .map((p) => p.seriesName + '　' + (p.value === null || p.value === undefined ? '—' : fmtNum(p.value, 2) + ' 岁'))
+        .join('<br/>');
+      return head + '<br/>' + rows;
+    };
+    // 隔了几年才有一个点，平滑曲线会把「10 年跨一步」画成「逐年连着涨」
+    const sparse = { smooth: false, showSymbol: true, symbolSize: 6 };
+    option.series = [
+      lineSeries('平均', seriesOf('life_expectancy'), COLOR.ink, sparse),
+      lineSeries('男性', seriesOf('life_expectancy_male'), COLOR.accent, sparse),
+      lineSeries('女性', seriesOf('life_expectancy_female'), COLOR.orange, sparse),
+    ];
+    chartOf('chart-life').setOption(option, true);
+  }
 
   function renderMarriage() {
     const years = yearsOf();
@@ -421,7 +567,7 @@
       }
 
       const valueText = latest
-        ? fmtNum(latest.value, ind.decimals) + '<small>' + (isRate(ind) ? '‰' : ' ' + ind.unit) + '</small>'
+        ? fmtNum(latest.value, ind.decimals) + '<small>' + unitSuffix(ind) + '</small>'
         : '—';
 
       card.innerHTML =
@@ -594,7 +740,15 @@
     return q.join('&');
   }
 
-  const CHART_IDS = ['chart-marriage', 'chart-first', 'chart-change', 'chart-rate'];
+  const CHART_IDS = [
+    'chart-population',
+    'chart-dependency',
+    'chart-life',
+    'chart-marriage',
+    'chart-first',
+    'chart-change',
+    'chart-rate',
+  ];
 
   async function load(force) {
     if (state.loading) return;
@@ -629,6 +783,9 @@
 
   function renderAll() {
     renderKpi();
+    renderPopulation();
+    renderDependency();
+    renderLife();
     renderMarriage();
     renderFirst();
     renderChange();
