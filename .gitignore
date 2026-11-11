@@ -4,6 +4,8 @@ probe-out/
 server.log
 server.err.log
 
+# 临时文件目录：忽略规则写在 .temp/.gitignore 内（那边保留空目录，clone 下来就有）
+
 # 系统垃圾文件
 Thumbs.db
 desktop.ini

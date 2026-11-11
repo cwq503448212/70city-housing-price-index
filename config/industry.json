@@ -1,0 +1,225 @@
+{
+  "source": {
+    "label": "国家统计局 · 国家数据（月度库 · 工业 / 采购经理指数）",
+    "url": "https://data.stats.gov.cn",
+    "chapter": "月度数据 · 工业分大类行业增加值增长速度 / 按行业分工业企业主要经济指标 / 制造业与非制造业采购经理指数",
+    "note": "全部指标取自统计局公开月度数据（国家数据站点内部接口，非官方开放 API）。只有采购经理指数属于景气调查（扩散指数，50 = 荣枯线）；41 个行业的增加值、营业收入、利润总额是产出与效益指标（0 = 持平），不是景气指数，本页不合成任何指数。"
+  },
+  "history": {
+    "from": "2018-01",
+    "note": "工业分大类行业增加值栏目从 2018-01 起（更早年份在 2003-2011 / 2012-2017 两个旧栏目，行业分类是旧国标，本页不拼接）"
+  },
+  "site": {
+    "baseUrl": "https://data.stats.gov.cn",
+    "ext": "/dg/website/publicrelease/web/external",
+    "rootId": "fc982599aa684be7969d7b90b1bd0e84"
+  },
+  "catalogs": [
+    {
+      "id": "output",
+      "label": "工业分大类行业增加值增长速度",
+      "catalogId": "f581720fd0f04d81a77bccebb429b913",
+      "release": { "day": 15 },
+      "note": "规模以上工业增加值当月同比（%），每月 15 日左右随「国民经济运行情况」发布上月值；1、2 月合并公布"
+    },
+    {
+      "id": "revenue",
+      "label": "按行业分工业企业营业收入",
+      "catalogId": "95fa01deb3f64a7cbcecb9d888b16492",
+      "release": { "day": 27 },
+      "note": "1—N 月累计同比（%），每月 27 日左右随「工业企业利润数据」发布上月值；累计口径，1 月不单独发布"
+    },
+    {
+      "id": "profit",
+      "label": "按行业分工业企业利润总额",
+      "catalogId": "643feccdedb64e38a64c65a00c390646",
+      "release": { "day": 27 },
+      "note": "1—N 月累计同比（%），与营业收入同批发布；累计口径，1 月不单独发布"
+    },
+    {
+      "id": "mfg_pmi",
+      "label": "制造业采购经理指数（分项）",
+      "catalogId": "93ffbb1aa85740d3aa2618371508b606",
+      "release": { "day": "eom" },
+      "note": "扩散指数，50 = 荣枯线；当月最后一个工作日发布当月值"
+    },
+    {
+      "id": "nonmfg_pmi",
+      "label": "非制造业采购经理指数",
+      "catalogId": "7a64a6e25aec4a8e9dde044ecd9e2cce",
+      "release": { "day": "eom" },
+      "note": "扩散指数，50 = 荣枯线；含建筑业与服务业商务活动指数"
+    }
+  ],
+  "groups": [
+    { "key": "pmi", "label": "景气基准（PMI 分项）", "note": "扩散指数：50 = 荣枯线，高于 50 为扩张" },
+    { "key": "mining", "label": "采矿业", "note": "7 个大类行业" },
+    { "key": "consumer", "label": "消费品制造", "note": "13 个大类行业" },
+    { "key": "material", "label": "原材料制造", "note": "7 个大类行业" },
+    { "key": "equipment", "label": "装备制造", "note": "8 个大类行业" },
+    { "key": "utility", "label": "电力燃气水", "note": "3 个大类行业" },
+    { "key": "other", "label": "其他制造与修理", "note": "3 个大类行业" }
+  ],
+  "pmi": [
+    {
+      "id": "mfg_new_orders",
+      "label": "制造业 PMI · 新订单",
+      "shortLabel": "新订单",
+      "catalog": "mfg_pmi",
+      "indicatorId": "4151df33b53f4d02ae9f51fe402f1a50",
+      "note": "需求端领先指标"
+    },
+    {
+      "id": "mfg_production",
+      "label": "制造业 PMI · 生产",
+      "shortLabel": "生产",
+      "catalog": "mfg_pmi",
+      "indicatorId": "6729aa00f9ed46d8b30c5d2312214b89",
+      "note": "供给端"
+    },
+    {
+      "id": "mfg_exports",
+      "label": "制造业 PMI · 新出口订单",
+      "shortLabel": "新出口订单",
+      "catalog": "mfg_pmi",
+      "indicatorId": "fb245388740743d0974af1b00cfd27bb",
+      "note": "外需"
+    },
+    {
+      "id": "mfg_inventory",
+      "label": "制造业 PMI · 原材料库存",
+      "shortLabel": "原材料库存",
+      "catalog": "mfg_pmi",
+      "indicatorId": "c149709d0c48422d83a59d4b94d03bbb",
+      "note": "库存周期"
+    },
+    {
+      "id": "mfg_employment",
+      "label": "制造业 PMI · 从业人员",
+      "shortLabel": "从业人员",
+      "catalog": "mfg_pmi",
+      "indicatorId": "24454731f2fd46f1850da13fe6f39263",
+      "note": "用工"
+    },
+    {
+      "id": "mfg_expect",
+      "label": "制造业 PMI · 生产经营活动预期",
+      "shortLabel": "经营活动预期",
+      "catalog": "mfg_pmi",
+      "indicatorId": "b0bf6dec50d3459086e79e0336c92246",
+      "note": "企业对未来 3 个月的判断"
+    },
+    {
+      "id": "nonmfg_business",
+      "label": "非制造业 PMI · 商务活动",
+      "shortLabel": "非制造业商务活动",
+      "catalog": "nonmfg_pmi",
+      "indicatorId": "88a150208f6e4a1db8babe41ae700f66",
+      "note": "非制造业总体景气"
+    },
+    {
+      "id": "nonmfg_construction",
+      "label": "非制造业 PMI · 建筑业商务活动",
+      "shortLabel": "建筑业",
+      "catalog": "nonmfg_pmi",
+      "indicatorId": "97a152f401d64409892a7fdbe22b0225",
+      "note": "建筑业单列"
+    },
+    {
+      "id": "nonmfg_service",
+      "label": "非制造业 PMI · 服务业商务活动",
+      "shortLabel": "服务业",
+      "catalog": "nonmfg_pmi",
+      "indicatorId": "6f77d579993b454d9e61776b7113a672",
+      "note": "服务业单列"
+    },
+    {
+      "id": "nonmfg_expect",
+      "label": "非制造业 PMI · 业务活动预期",
+      "shortLabel": "业务活动预期",
+      "catalog": "nonmfg_pmi",
+      "indicatorId": "7f8ebe0d686142cbaccf5b2ee450c50c",
+      "note": "非制造业企业对未来 3 个月的判断"
+    }
+  ],
+  "metrics": [
+    {
+      "key": "output",
+      "label": "增加值同比",
+      "unit": "%",
+      "kind": "pct_yoy",
+      "decimals": 1,
+      "catalog": "output",
+      "skipMonths": ["01", "02"],
+      "note": "规模以上工业增加值当月同比（%），0 = 持平；1、2 月合并公布，没有单独月度值"
+    },
+    {
+      "key": "revenue",
+      "label": "营业收入累计同比",
+      "unit": "%",
+      "kind": "pct_cum",
+      "decimals": 1,
+      "catalog": "revenue",
+      "skipMonths": ["01"],
+      "note": "1—N 月营业收入累计同比（%），累计口径；1 月不单独发布，2 月是 1—2 月累计"
+    },
+    {
+      "key": "profit",
+      "label": "利润总额累计同比",
+      "unit": "%",
+      "kind": "pct_cum",
+      "decimals": 1,
+      "catalog": "profit",
+      "skipMonths": ["01"],
+      "note": "1—N 月利润总额累计同比（%），累计口径；1 月不单独发布，2 月是 1—2 月累计"
+    }
+  ],
+  "industries": [
+    { "key": "coal", "label": "煤炭开采和洗选业", "shortLabel": "煤炭开采", "group": "mining", "output": "86d9effbcda34d80b7132e52c8c907f2", "revenue": "347bdff3f81e42e28800498a3c462296", "profit": "8c07c5722c3c47cb819dc025d14818ae" },
+    { "key": "oilgas", "label": "石油和天然气开采业", "shortLabel": "油气开采", "group": "mining", "output": "60fffacf11d948698ac163b7104d657d", "revenue": "896e91f393b346e9850493044fec7659", "profit": "b08d25111a3544a88435eac94b75e9ce" },
+    { "key": "ferrous_mining", "label": "黑色金属矿采选业", "shortLabel": "黑色矿采选", "group": "mining", "output": "b2ffc0c8e69c4e7dafdb96db04d1a4f3", "revenue": "341afc6ad95b440e80be245cab53ef86", "profit": "1af217b0ca7f4fd697fdd558f9f6848f" },
+    { "key": "nonferrous_mining", "label": "有色金属矿采选业", "shortLabel": "有色矿采选", "group": "mining", "output": "6d1e7e027a54409fa9cc583980c42e6b", "revenue": "7ca42b9854e141338f7423eb93c4319f", "profit": "fd109a818c764f52abde843c9a21a091" },
+    { "key": "nonmetal_mining", "label": "非金属矿采选业", "shortLabel": "非金属矿采选", "group": "mining", "output": "447f28924728407bbf29e7aae9d54cc5", "revenue": "4dd9c1c6c58b4e6eac84828c2acaccf9", "profit": "abc340a1147f4330966c1c96599e6679" },
+    { "key": "mining_support", "label": "开采专业及辅助性活动", "shortLabel": "开采辅助", "group": "mining", "output": "7e0b3d46f46e45209e53101c256216f0", "revenue": "fce0c6bcdeb1475ca7a4e0d96c4b6a69", "profit": "009240582bb6410b8bfe386f1246f76b" },
+    { "key": "other_mining", "label": "其他采矿业", "shortLabel": "其他采矿", "group": "mining", "output": "57377ebcfeb14c9894a455107738b103", "revenue": "07b6470b44934707965270f411fb88af", "profit": "9d8eb94b84e3470cad7bf3714c1e6bb4" },
+
+    { "key": "agri_food", "label": "农副食品加工业", "shortLabel": "农副食品", "group": "consumer", "output": "cc2e145d85704e2e9f713c1b896c183b", "revenue": "9ea9ef6e44e744cea7f21867446fdc6f", "profit": "fe84965e3abb476e82571db6cfd5c5df" },
+    { "key": "food", "label": "食品制造业", "shortLabel": "食品制造", "group": "consumer", "output": "46e5461f57a84f34b2e01ab965b74108", "revenue": "f1787bb2e8fb44d99193590879c25080", "profit": "54c13aa8f82941389a144f456e85d704" },
+    { "key": "beverage", "label": "酒、饮料和精制茶制造业", "shortLabel": "酒饮料茶", "group": "consumer", "output": "31cf5595c6d3450b99245a6fbed57345", "revenue": "f2bf9c164c6d4170bc3af0b291110cdf", "profit": "b5a65bea4cf541199ca2888e00f4e2f0" },
+    { "key": "tobacco", "label": "烟草制品业", "shortLabel": "烟草", "group": "consumer", "output": "85741cd9b6a2460e80d4b3c52c5cbae2", "revenue": "76a03674ad68481bb58e54fb86a1af03", "profit": "341011fbe88d4829ba5eadb25f4db182" },
+    { "key": "textile", "label": "纺织业", "shortLabel": "纺织", "group": "consumer", "output": "759e8993afec49128ac8d5c1771bca97", "revenue": "79c4105f513640b3bdef4494d7e497eb", "profit": "9a6734bf7b9e460aa84b61db2c99b9fd" },
+    { "key": "apparel", "label": "纺织服装、服饰业", "shortLabel": "服装服饰", "group": "consumer", "output": "06e93ce64df445029be551d7c6792c63", "revenue": "208310dfcb5f4fb481317da90587cc16", "profit": "b9a935ae44354ab28a0cd15afa0ed7ff" },
+    { "key": "leather", "label": "皮革、毛皮、羽毛及其制品和制鞋业", "shortLabel": "皮革制鞋", "group": "consumer", "output": "24c46d52b431472a8153c9ddb8f2d0d6", "revenue": "345b8159b5424cca94a10d8b5565cef5", "profit": "c2f738323aac449182ee7ac0422941ca" },
+    { "key": "wood", "label": "木材加工和木、竹、藤、棕、草制品业", "shortLabel": "木材加工", "group": "consumer", "output": "4c162b51880f4ab1ae031d3c0aad4fe0", "revenue": "8d5f76d72abc4663926ebf3e36084e4f", "profit": "d7e47b5ae49549a6969b2e1532833401" },
+    { "key": "furniture", "label": "家具制造业", "shortLabel": "家具", "group": "consumer", "output": "6b36cdc329294e33affe3f074d8e490a", "revenue": "77b46ad4028f47f8ac566ed6ac57fb0d", "profit": "9d887f1d133e449e805c60de838009d9" },
+    { "key": "paper", "label": "造纸和纸制品业", "shortLabel": "造纸", "group": "consumer", "output": "cf198c768bac44eb8b47f4ecacf1ded8", "revenue": "8a15d445a2944bcab1a3806cdab96d58", "profit": "1e29192fd16244289e9a5d51cad78b03" },
+    { "key": "printing", "label": "印刷和记录媒介复制业", "shortLabel": "印刷复制", "group": "consumer", "output": "f2b0ff8aab5644bdac23fef1598ce60e", "revenue": "89fd77a97f564714a519d59a26b887db", "profit": "f61b21241f80446fbd1eff6a2eb0eecd" },
+    { "key": "culture", "label": "文教、工美、体育和娱乐用品制造业", "shortLabel": "文教体育用品", "group": "consumer", "output": "e7f4998984704af898ae79af5c237626", "revenue": "c09e6dd5dbda4b67ad7aba99e7047a74", "profit": "660ee76efa944a27ab0ea5968fb415d2" },
+    { "key": "pharma", "label": "医药制造业", "shortLabel": "医药", "group": "consumer", "output": "a960197daf8b4dbbaa22fc02f9c4a86f", "revenue": "2b9be6b701e64ce8bab5a6acd8edea8e", "profit": "8ac08f575b544c7e938080c88a352265" },
+
+    { "key": "petro_coke", "label": "石油、煤炭及其他燃料加工业", "shortLabel": "石油煤炭加工", "group": "material", "output": "7e868832edfd4dd081a6125a6bab364a", "revenue": "58ea6eef710f41eab0732461a3056151", "profit": "f3591db78dba4f679d0214c30c8ad324" },
+    { "key": "chemical", "label": "化学原料和化学制品制造业", "shortLabel": "化学原料", "group": "material", "output": "07536245ca354345b921f94523a6054b", "revenue": "c13b39e1c6e74f05a99c7cf484a38471", "profit": "9b8086cad3634619b3a8e7dbef80f4b2" },
+    { "key": "chemical_fiber", "label": "化学纤维制造业", "shortLabel": "化纤", "group": "material", "output": "6fbf30d14a46482aa7cb60683599ace5", "revenue": "198de39535c041fd96f1ae48f8a7c5e6", "profit": "41ac9dfa9a4040c88de91ef7727730d3" },
+    { "key": "rubber_plastic", "label": "橡胶和塑料制品业", "shortLabel": "橡塑制品", "group": "material", "output": "4e60908c5fa743bdba8a2114fabd8bec", "revenue": "9dff1efd4c8945b9aebc2024e7fdc40c", "profit": "d2ab5b8d8a4a44f3844adbb891e73669" },
+    { "key": "nonmetal_mineral", "label": "非金属矿物制品业", "shortLabel": "非金属矿物", "group": "material", "output": "6048b1feaa314a71977520a18b6e9cef", "revenue": "ab67e004821c4749b0223726fc7abbaf", "profit": "aeca6b5741cb4cb088e87fd6e614fda4" },
+    { "key": "ferrous_smelt", "label": "黑色金属冶炼和压延加工业", "shortLabel": "黑色冶炼", "group": "material", "output": "9f91b5c9b41c4a60ba81547de56461eb", "revenue": "279d491edb9942f484145d84b167c02a", "profit": "169e72fbbb4646b9b2d72fdd5d8e5939" },
+    { "key": "nonferrous_smelt", "label": "有色金属冶炼和压延加工业", "shortLabel": "有色冶炼", "group": "material", "output": "5d9322cf50b44f9c937ac60a77ce0c29", "revenue": "de82c0d700ba4917bf4de396d4df6aa9", "profit": "c359b1945c494a08b3749cedf9443e5c" },
+
+    { "key": "metal_products", "label": "金属制品业", "shortLabel": "金属制品", "group": "equipment", "output": "28c52916286140608b86cc9b8fa61e96", "revenue": "6c1261480bf849f59235a026a8a98fc7", "profit": "e0448d508dd6424a850c1a6c42c0148b" },
+    { "key": "general_machinery", "label": "通用设备制造业", "shortLabel": "通用设备", "group": "equipment", "output": "8da0c4f539f74d0796a225efeca89a2b", "revenue": "1da64d35a7fa461ea6fb95b9c63879f9", "profit": "8c7999d78a9a406cb95b727ece771704" },
+    { "key": "special_machinery", "label": "专用设备制造业", "shortLabel": "专用设备", "group": "equipment", "output": "e6d81fff173f49cc98071ff519438bb0", "revenue": "7be95faed8f84f26a2af423edeeeffc8", "profit": "d10effb6fd9344ad9c02afbcb1ee647b" },
+    { "key": "auto", "label": "汽车制造业", "shortLabel": "汽车", "group": "equipment", "output": "b809399516314afba35e43a657f9ad2a", "revenue": "7c9d88aed24944e3b29beebd6d194fea", "profit": "bd132bef34624126963f3de3eab9e8b9" },
+    { "key": "transport_equip", "label": "铁路、船舶、航空航天和其他运输设备制造业", "shortLabel": "铁路船舶航空", "group": "equipment", "output": "a854420fb8984b188014dc082d014ed2", "revenue": "a2cdf1716fa140ebb29c58216e8118db", "profit": "6a9dd6ef0873419aaf79e09fa55f73b8" },
+    { "key": "electrical", "label": "电气机械和器材制造业", "shortLabel": "电气机械", "group": "equipment", "output": "2f10d95cee45461c81eb3805727bb904", "revenue": "f2a490cb08fc4d3e9cf40522b1a7bf29", "profit": "b691e21ce9284aab9a608867b7d7bd41" },
+    { "key": "electronics", "label": "计算机、通信和其他电子设备制造业", "shortLabel": "计算机通信", "group": "equipment", "output": "8e4ef34a37ce445fab7e5adaf34c43b0", "revenue": "3f47f0a8086b40369c2e312563f43330", "profit": "e6880584255542549d7e8a0511e628d6" },
+    { "key": "instruments", "label": "仪器仪表制造业", "shortLabel": "仪器仪表", "group": "equipment", "output": "f55cae6aa2fc4d7d87df5acb9a21c34c", "revenue": "09120f8f2db744f58534d56173cea6e2", "profit": "c1a8eb9fae144d5d94a65512ded23cb9" },
+
+    { "key": "power_heat", "label": "电力、热力生产和供应业", "shortLabel": "电力热力", "group": "utility", "output": "11b5f1bbbe514f4ebb7983f10711aa95", "revenue": "ea016cf061074057b0d426e3a1d8430c", "profit": "d9567bdbb5da4428bc3d7ccb6b3fa391" },
+    { "key": "gas", "label": "燃气生产和供应业", "shortLabel": "燃气", "group": "utility", "output": "58ecced8d21f42df8894ea513a4298f4", "revenue": "d360201a98204910b67aab357631dbc6", "profit": "e72d1a5436f74c7481aa9ed7d71194d7" },
+    { "key": "water", "label": "水的生产和供应业", "shortLabel": "水生产供应", "group": "utility", "output": "f92478f6958343d6bedf5145f0f1e21f", "revenue": "0c8b9522f14b4dc4bb13fe468ae53261", "profit": "22995523a4744fbf9c70fc74a825fbd8" },
+
+    { "key": "other_manufacture", "label": "其他制造业", "shortLabel": "其他制造", "group": "other", "output": "07605055fc05427bbc78741e3854f15b", "revenue": "befacccbde964f2393b20b8d8fed4f29", "profit": "ba994ae8a0cc41eead7b5c43f035f7ab" },
+    { "key": "recycling", "label": "废弃资源综合利用业", "shortLabel": "废弃资源", "group": "other", "output": "937a9870b234419fba9ec11b4c184ac2", "revenue": "1ddb5f4f63fa471e9b8d6da41b7caca7", "profit": "a7470d6654fe4ec78e578ddd5bb5f7ed" },
+    { "key": "repair", "label": "金属制品、机械和设备修理业", "shortLabel": "机械修理", "group": "other", "output": "00317f2e4cb44142afb4db09856b28f8", "revenue": "64c3740b97864a19a5296fa4124dd8f4", "profit": "03c62bced6424a9b9ecb3957122dc96d" }
+  ]
+}

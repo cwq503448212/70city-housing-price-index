@@ -47,7 +47,7 @@ Copy-Item $NodeExe (Join-Path $pkg 'node.exe')
 foreach ($f in @('server.js', 'package.json', 'probe.js', 'README.md')) {
   Copy-Item (Join-Path $root $f) $pkg
 }
-# 九个看板的代码、配置、页面、固化数据集与截图（docs 只被 README 引用）
+# 十个看板的代码、配置、页面、固化数据集与截图（docs 只被 README 引用）
 foreach ($d in @('lib', 'config', 'public', 'data', 'docs')) {
   Copy-Item (Join-Path $root $d) (Join-Path $pkg $d) -Recurse
 }
@@ -167,6 +167,19 @@ if (Test-Path $securitySrc) {
   Write-Host ('      + 养老医保缓存：' + $secCats.Count + ' 个栏目文件，' + $secKB + ' KB')
 } else {
   Write-Host '      ! 未找到 .cache\livelihood-security：包里不带养老医保缓存，对方首次打开会现场拉全（9 个请求，约 10 秒）'
+}
+# 行业运行栏目缓存：5 个栏目文件（133 条原值序列 / 约 1.2 万个数据点，约 0.2 MB），
+# 带上后对方首次打开只需补最近几期；_meta.json 同样剔掉（它带着本机的回源冷却时间戳）
+$industrySrc = Join-Path $root '.cache\industry'
+if (Test-Path $industrySrc) {
+  New-Item -ItemType Directory -Path (Join-Path $pkg '.cache') -Force | Out-Null
+  Copy-Item $industrySrc (Join-Path $pkg '.cache') -Recurse
+  Get-ChildItem (Join-Path $pkg '.cache\industry') -Recurse -File -Filter '_meta.json' | Remove-Item -Force
+  $indCats = Get-ChildItem (Join-Path $pkg '.cache\industry\catalogs') -File -Filter '*.json'
+  $indKB = '{0:N1}' -f (($indCats | Measure-Object Length -Sum).Sum / 1KB)
+  Write-Host ('      + 行业运行缓存：' + $indCats.Count + ' 个栏目文件，' + $indKB + ' KB')
+} else {
+  Write-Host '      ! 未找到 .cache\industry：包里不带行业运行缓存，对方首次打开会现场拉全（5 个请求，约 10 秒）'
 }
 Write-Host '[2/4] 已拷贝项目文件'
 

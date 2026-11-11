@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>中国工业行业运行看板</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-main">
+    <div class="brand">
+      <h1>中国工业行业运行看板</h1>
+      <p class="brand-sub">数据来源：国家统计局 · 国家数据（月度库 · 工业 / 采购经理指数）　历史一次拉全，按月核对</p>
+    </div>
+
+    <div class="controls">
+      <a class="back-link" href="../">← 返回模块选择</a>
+      <label class="ctrl">
+        <span class="ctrl-label">时间范围</span>
+        <select id="range">
+          <option value="2">近 2 年</option>
+          <option value="5" selected>近 5 年</option>
+          <option value="all">全部（2018 起）</option>
+          <option value="custom">自定义月份</option>
+        </select>
+      </label>
+
+      <div class="ctrl ctrl-custom" id="custom-box" hidden>
+        <label class="ctrl">
+          <span class="ctrl-label">起</span>
+          <input type="month" id="from" />
+        </label>
+        <label class="ctrl">
+          <span class="ctrl-label">止</span>
+          <input type="month" id="to" />
+        </label>
+      </div>
+
+      <button id="refresh" class="btn" type="button" title="跳过缓存，重新向统计局请求一次">刷新数据</button>
+      <span id="status" class="status">正在加载…</span>
+    </div>
+  </div>
+  <p class="range-hint" id="range-hint"></p>
+</header>
+
+<main>
+  <section class="kpi-row" id="kpi-row" aria-label="关键指标"></section>
+
+  <section class="grid">
+    <article class="card">
+      <header class="card-head">
+        <h2>规模以上工业增加值：分行业当月同比热力图</h2>
+        <p class="card-sub">
+          41 个大类行业 × 所选区间的每个月，颜色越红表示同比越高、越绿表示降幅越大，灰白为持平；
+          <strong>0 = 持平</strong>，不是 100。1、2 月合并公布，所以每年这两列是空白，不是缺数
+        </p>
+      </header>
+      <div class="chart chart-heat" id="chart-heat"></div>
+    </article>
+
+    <article class="card">
+      <header class="card-head">
+        <h2>最新一期：分行业增加值同比排行</h2>
+        <p class="card-sub" id="rank-sub">
+          按最新一期工业增加值当月同比排序，红为增长、绿为下降；只列该期有值的行业
+        </p>
+      </header>
+      <div class="chart" id="chart-rank"></div>
+    </article>
+
+    <article class="card">
+      <header class="card-head">
+        <h2>营收与利润：累计同比四象限</h2>
+        <p class="card-sub" id="quad-sub">
+          横轴为营业收入累计同比、纵轴为利润总额累计同比（%），每点一个行业，取该行业两条序列共同的最新月份；
+          右上「增收又增利」，右下「增收不增利」，左上是靠非经营因素扭亏，左下「双降」
+        </p>
+      </header>
+      <div class="chart" id="chart-quad"></div>
+    </article>
+
+    <article class="card">
+      <header class="card-head">
+        <h2>采购经理指数：分项与荣枯线</h2>
+        <p class="card-sub">
+          PMI 是<strong>扩散指数</strong>，<strong>50 = 荣枯线</strong>（与上面三张图的 0 不是一回事，两者不可同轴比较）；
+          默认只画四条主线，点击图例可打开其余分项
+        </p>
+      </header>
+      <div class="chart chart-pmi" id="chart-pmi"></div>
+    </article>
+  </section>
+
+  <section class="card">
+    <header class="card-head">
+      <h2>分行业明细</h2>
+      <p class="card-sub" id="table-sub">
+        按行业分组排列；各口径的月份可能不同（增加值 15 日左右发布，营收与利润 27 日左右发布），
+        「—」表示该期上游没有值，不插值、不补 0
+      </p>
+    </header>
+    <div class="table-wrap">
+      <table id="detail-table">
+        <thead>
+          <tr>
+            <th>行业</th>
+            <th class="num">增加值同比<br /><small>%</small></th>
+            <th class="num">营业收入累计同比<br /><small>%</small></th>
+            <th class="num">利润总额累计同比<br /><small>%</small></th>
+            <th class="num">增加值排名<br /><small>本期</small></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <p>
+      <strong>四个口径不要混着看：</strong>工业增加值是<strong>当月同比</strong>（0 = 持平）；
+      营业收入与利润总额是<strong>1—N 月累计同比</strong>（统计局发布的就是累计口径，本页不做单月差分，避免自行换算）；
+      PMI 是<strong>扩散指数</strong>（50 = 荣枯线）。四者的基准点不同，本页并列展示、不做加权合成，也不合成任何「景气指数」。
+    </p>
+    <p>
+      <strong>1、2 月合并公布：</strong>统计局把 1 月与 2 月的工业数据合并发布（春节错月影响），
+      因此增加值没有 1 月与 2 月的当月值，营收与利润的 2 月值是「1—2 月累计」。
+      图上空白、表里「—」都是真实缺失，本页不拆分、不按月均摊、不插值。
+    </p>
+    <p>
+      <strong>上游空档：</strong>累计同比在上年同期利润为负或接近 0 时无法计算，统计局会留空。
+      这类空档集中在石油煤炭加工、黑色冶炼、开采辅助活动等行业，表现为连续几个月甚至整年没有值——
+      本页照实留空（图上断线），不补 0、不估算。
+    </p>
+    <p>
+      <strong>口径范围：</strong>「规模以上工业」指年主营业务收入 2000 万元及以上的工业企业，
+      不是全部工业；41 个大类行业按《国民经济行业分类》划分，2023 年起利润总额口径含部分口径调整，
+      跨年比较请注意。<strong>本页只做单行业对比，不计算行业权重、不合成总体指数。</strong>
+    </p>
+    <p>
+      <strong>发布节奏：</strong>工业增加值每月 15 日左右随「国民经济运行情况」发布上月值；
+      工业企业营收与利润每月 27 日左右发布；PMI 在当月最后一天发布当月值。
+      因此同一时点四张图的「最新一期」月份并不相同，这是发布节奏差异，不是数据缺失。
+    </p>
+    <p>
+      <strong>数据来源：</strong>国家统计局「国家数据」(data.stats.gov.cn) 月度库「工业」栏目下的
+      工业分大类行业增加值增长速度、按行业分工业企业营业收入、按行业分工业企业利润总额，
+      以及「采购经理指数」栏目下的制造业与非制造业分项。接口是站点前端自用的内部接口，
+      <strong>不是官方开放 API</strong>，没有稳定性承诺；所有请求都由本地服务端代取并写入 JSON 缓存，
+      上游失败时回退缓存并标记 stale。
+    </p>
+    <p>
+      <strong>缺失值：</strong>未发布或上游缺项一律显示为空缺，不插值、不补 0、不自行加权合成；一条序列只来自单一数据源。
+    </p>
+    <p id="foot-meta" class="foot-meta"></p>
+  </footer>
+</main>
+
+<script src="../vendor/echarts.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
