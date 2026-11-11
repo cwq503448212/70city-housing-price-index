@@ -13,7 +13,7 @@
   "groups": [
     { "key": "population", "label": "人口结构", "note": "年末人口（万人）与抚养比（%）" },
     { "key": "marriage", "label": "婚姻登记", "note": "民政统计年报口径，万对 / 万人" },
-    { "key": "birth", "label": "出生与人口", "note": "千分率，‰" },
+    { "key": "birth", "label": "出生与死亡", "note": "出生率 / 死亡率是千分率（‰）；出生人口 / 死亡人口 / 自然增长量 / 生死比是本页计算值（万人 / 倍）" },
     { "key": "life", "label": "预期寿命", "note": "岁，非逐年发布" }
   ],
   "catalogs": {
@@ -245,6 +245,58 @@
       "catalog": "population_rate",
       "indicatorId": "3969129b26a846968a7dddff5f326f55",
       "shown": "人口自然增长率 (‰)"
+    },
+    {
+      "id": "birth_count",
+      "label": "出生人口（计算值）",
+      "shortLabel": "出生人口",
+      "unit": "万人",
+      "kind": "count",
+      "group": "birth",
+      "decimals": 1,
+      "derive": "rate_count",
+      "inputs": ["birth_rate", "total_population"],
+      "note": "本页计算值 = 人口出生率（‰）× 年平均人口（万人）÷ 1000，年平均人口 =（上年末 + 本年末总人口）÷ 2。年度库只发布千分率、不发布出生人口绝对数，故按官方定义还原；历史起点当年缺上年人口，留空",
+      "shown": "出生人口 (万人)"
+    },
+    {
+      "id": "death_count",
+      "label": "死亡人口（计算值）",
+      "shortLabel": "死亡人口",
+      "unit": "万人",
+      "kind": "count",
+      "group": "birth",
+      "decimals": 1,
+      "derive": "rate_count",
+      "inputs": ["death_rate", "total_population"],
+      "note": "本页计算值 = 人口死亡率（‰）× 年平均人口（万人）÷ 1000，与出生人口同一套分母",
+      "shown": "死亡人口 (万人)"
+    },
+    {
+      "id": "natural_growth_count",
+      "label": "人口自然增长量（计算值）",
+      "shortLabel": "自然增长",
+      "unit": "万人",
+      "kind": "count",
+      "group": "birth",
+      "decimals": 1,
+      "derive": "diff",
+      "inputs": ["birth_count", "death_count"],
+      "note": "本页计算值 = 出生人口 − 死亡人口（万人），为负即死亡多于出生；与官方「自然增长率（‰）」不同量纲，两条并列保留、不互相替代",
+      "shown": "自然增长量 (万人)"
+    },
+    {
+      "id": "birth_death_ratio",
+      "label": "出生死亡比（计算值）",
+      "shortLabel": "生死比",
+      "unit": "倍",
+      "kind": "count",
+      "group": "birth",
+      "decimals": 2,
+      "derive": "ratio",
+      "inputs": ["birth_count", "death_count"],
+      "note": "本页计算值 = 出生人口 ÷ 死亡人口；1.0 倍为生死平衡，低于 1 即死亡多于出生",
+      "shown": "出生死亡比 (倍)"
     }
   ]
 }

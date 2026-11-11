@@ -237,8 +237,8 @@ main {
 
 .kpi-row {
   display: grid;
-  /* 6 张 KPI：固定 3 列排两行，auto-fit 会在宽屏上排成「5 + 1」 */
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  /* 8 张 KPI：固定 4 列排两行，auto-fit 会在宽屏上排成「5 + 3」 */
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
 }
 

@@ -4,19 +4,22 @@
  * 中国人口与婚育看板 —— 前端渲染
  *
  * 数据只有一次请求：/api/livelihood/overview?range=...
- * 顶部时间选择一变，整页（KPI + 7 张图 + 明细表）全部按新区间重画。
+ * 顶部时间选择一变，整页（KPI + 9 张图 + 明细表）全部按新区间重画。
  * 前端不判断「哪一年该有数」——那是服务端 lib/livelihood/policy.js 的事，这里只消费 stale 字段。
+ * 出生 / 死亡人口、自然增长量、生死比是服务端现算的计算值（computed），图上必须标清。
  */
 
 (function () {
-  // 只有这 6 个指标进 KPI，其余指标在明细表与图中出现
+  // 8 张 KPI：出生 / 死亡排在首位（本页最想看的量），其余沿用原来的结构与婚姻指标
   const KPI_LIST = [
+    { id: 'birth_count', label: '出生人口' },
+    { id: 'death_count', label: '死亡人口' },
+    { id: 'birth_rate', label: '人口出生率' },
+    { id: 'natural_growth_rate', label: '人口自然增长率' },
     { id: 'pop_65', label: '65 岁以上人口' },
     { id: 'aged_dependency', label: '老年抚养比' },
     { id: 'marriage_reg', label: '结婚登记' },
     { id: 'divorce_reg', label: '离婚登记' },
-    { id: 'birth_rate', label: '人口出生率' },
-    { id: 'natural_growth_rate', label: '人口自然增长率' },
   ];
 
   const COLOR = {
@@ -285,6 +288,193 @@
   }
 
   /* ---------------- 各图 ---------------- */
+
+  /**
+   * 出生人口 / 死亡人口：双柱 + 自然增长量折线
+   * 三个序列全是服务端现算的计算值（年度库只发布千分率），不是官方发布值
+   */
+  function renderBirthDeath() {
+    const years = yearsOf();
+    if (!years.length || !byId('birth_count') || !byId('death_count')) {
+      return emptyChart('chart-birthdeath', '暂无数据');
+    }
+
+    const births = seriesOf('birth_count');
+    const deaths = seriesOf('death_count');
+    const net = seriesOf('natural_growth_count');
+
+    // 峰值 / 谷值只看出生人口；交叉年份 = 区间内第一个「死亡多于出生」的年
+    let peak = -1;
+    let trough = -1;
+    let cross = '';
+    years.forEach((y, i) => {
+      const b = births[i];
+      if (b === null) return;
+      if (peak < 0 || b > births[peak]) peak = i;
+      if (trough < 0 || b < births[trough]) trough = i;
+      if (!cross && deaths[i] !== null && b < deaths[i]) cross = y;
+    });
+
+    const option = baseOption();
+    // 顶部留出两层高度：第一层图例，第二层政策底带的文字
+    option.grid.top = 46;
+    option.xAxis.data = years;
+    option.xAxis.boundaryGap = true;
+    option.yAxis.name = '万人';
+    option.yAxis.nameGap = 12;
+    option.yAxis.nameTextStyle = { color: COLOR.muted, fontSize: 11 };
+    option.tooltip.formatter = (params) => {
+      const i = params[0].dataIndex;
+      const one = (name, v) => name + '　' + (v === null || v === undefined ? '—' : fmtNum(v, 1) + ' 万人');
+      return (
+        yearCn(years[i]) +
+        '<br/>' +
+        one('出生人口（计算值）', births[i]) +
+        '<br/>' +
+        one('死亡人口（计算值）', deaths[i]) +
+        '<br/>' +
+        one('自然增长量（计算值）', net[i])
+      );
+    };
+
+    const bar = (name, data, color) => ({
+      name: name,
+      type: 'bar',
+      barMaxWidth: 14,
+      data: data,
+      itemStyle: { color: color },
+      emphasis: { focus: 'series' },
+    });
+
+    // 政策节点：用淡色底带标出两次生育政策窗口。
+    // 不插竖线，因为 2021（三孩）和 2022（生死交叉）相邻，两条竖向标签会叠在一起
+    const policyAreas = [];
+    if (years.indexOf('2016') !== -1 && years.indexOf('2017') !== -1) {
+      policyAreas.push([
+        { name: '2016 全面二孩', xAxis: '2016', itemStyle: { color: 'rgba(43,110,214,0.05)' } },
+        { xAxis: '2017' },
+      ]);
+    }
+    if (years.indexOf('2021') !== -1) {
+      policyAreas.push([
+        { name: '2021 三孩', xAxis: '2021', itemStyle: { color: 'rgba(123,92,214,0.05)' } },
+        { xAxis: years[years.length - 1] },
+      ]);
+    }
+
+    // 极值标注：文字写在柱顶上方，加半透明白底，否则会压在相邻柱体上看不清
+    const marks = [];
+    if (peak >= 0) {
+      marks.push({ coord: [years[peak], births[peak]], value: years[peak] + ' 峰 ' + fmtNum(births[peak], 0) });
+    }
+    if (trough >= 0 && trough !== peak) {
+      marks.push({ coord: [years[trough], births[trough]], value: years[trough] + ' 谷 ' + fmtNum(births[trough], 0) });
+    }
+
+    option.series = [
+      Object.assign(bar('出生人口', births, COLOR.accent), {
+        markArea: policyAreas.length
+          ? {
+              silent: true,
+              label: { position: 'top', color: COLOR.muted, fontSize: 10 },
+              data: policyAreas,
+            }
+          : undefined,
+        markPoint: {
+          symbol: 'circle',
+          symbolSize: 7,
+          itemStyle: { color: COLOR.accent },
+          label: {
+            position: 'top',
+            distance: 6,
+            color: COLOR.accent,
+            fontSize: 11,
+            fontWeight: 600,
+            backgroundColor: 'rgba(255,255,255,0.9)',
+            padding: [1, 3],
+            borderRadius: 3,
+            formatter: (p) => p.value,
+          },
+          data: marks,
+        },
+        markLine: cross
+          ? {
+              silent: true,
+              symbol: 'none',
+              label: {
+                // 总人口 2021 年见顶、2022 年首次下降，与生死交叉是同一年同一件事。
+                // 标签放底部：顶部已经被图例和政策底带文字占满，放上面会叠在一起
+                formatter: cross + ' 起死亡>出生\n总人口同步转负',
+                position: 'insideEndBottom',
+                rotate: 0,
+                color: COLOR.ink,
+                fontSize: 10,
+                backgroundColor: 'rgba(255,255,255,0.85)',
+                padding: [2, 4],
+              },
+              lineStyle: { color: COLOR.ink, type: 'dashed', width: 1 },
+              data: [{ xAxis: cross }],
+            }
+          : undefined,
+      }),
+      bar('死亡人口', deaths, '#9aa3b2'),
+      lineSeries('自然增长量', net, COLOR.orange, {
+        smooth: false,
+        lineStyle: { width: 2, color: COLOR.orange },
+        markLine: {
+          silent: true,
+          symbol: 'none',
+          label: { formatter: '0 万人', color: COLOR.muted, fontSize: 11, position: 'insideEndTop' },
+          lineStyle: { color: COLOR.lineStrong, type: 'dashed', width: 1 },
+          data: [{ yAxis: 0 }],
+        },
+      }),
+    ];
+    chartOf('chart-birthdeath').setOption(option, true);
+  }
+
+  /** 出生死亡比：1.0 为生死平衡，跌破 1 之后死亡多于出生 */
+  function renderBirthRatio() {
+    const years = yearsOf();
+    const ind = byId('birth_death_ratio');
+    if (!ind || !years.length) return emptyChart('chart-ratio', '暂无数据');
+    const values = seriesOf('birth_death_ratio');
+
+    const option = baseOption();
+    option.grid.top = 16;
+    option.legend.show = false;
+    option.xAxis.data = years;
+    option.yAxis.axisLabel.formatter = '{value}';
+    option.tooltip.formatter = (params) => {
+      const p = params[0];
+      return yearCn(years[p.dataIndex]) + '<br/>出生死亡比　' + (p.value === null ? '—' : fmtNum(p.value, 2) + ' 倍');
+    };
+    option.series = [
+      lineSeries('出生死亡比', values, COLOR.violet, {
+        areaStyle: {
+          color: {
+            type: 'linear',
+            x: 0,
+            y: 0,
+            x2: 0,
+            y2: 1,
+            colorStops: [
+              { offset: 0, color: 'rgba(123,92,214,0.16)' },
+              { offset: 1, color: 'rgba(123,92,214,0.01)' },
+            ],
+          },
+        },
+        markLine: {
+          silent: true,
+          symbol: 'none',
+          label: { formatter: '1.0 生死平衡', color: COLOR.muted, fontSize: 11, position: 'insideEndTop' },
+          lineStyle: { color: COLOR.lineStrong, type: 'dashed', width: 1 },
+          data: [{ yAxis: 1 }],
+        },
+      }),
+    ];
+    chartOf('chart-ratio').setOption(option, true);
+  }
 
   /** 人口结构：三段堆叠柱 + 65 岁以上占比（本页现算） */
   function renderPopulation() {
@@ -573,6 +763,7 @@
       card.innerHTML =
         '<div class="kpi-label">' +
         cfg.label +
+        (ind.computed ? ' <span class="tag">计算值</span>' : '') +
         (ind.stale ? ' <span class="tag warn">待更新</span>' : '') +
         '</div>' +
         '<div class="kpi-value ' +
@@ -622,7 +813,7 @@
         yearCn(latest ? latest.year : '') +
         '</td>' +
         '<td>' +
-        (ind.source === 'nbs' ? '国家统计局' : '—') +
+        (ind.source === 'nbs' ? '国家统计局' : ind.computed ? '本页计算' : '—') +
         '</td>' +
         '<td><span class="tag ' +
         statusCls +
@@ -742,11 +933,13 @@
 
   const CHART_IDS = [
     'chart-population',
+    'chart-birthdeath',
     'chart-dependency',
     'chart-life',
     'chart-marriage',
     'chart-first',
     'chart-change',
+    'chart-ratio',
     'chart-rate',
   ];
 
@@ -784,11 +977,13 @@
   function renderAll() {
     renderKpi();
     renderPopulation();
+    renderBirthDeath();
     renderDependency();
     renderLife();
     renderMarriage();
     renderFirst();
     renderChange();
+    renderBirthRatio();
     renderRate();
     renderTable();
     renderMeta();
