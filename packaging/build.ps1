@@ -142,6 +142,19 @@ if (Test-Path $retailSrc) {
 } else {
   Write-Host '      ! 未找到 .cache\livelihood-retail：包里不带社零缓存，对方首次打开会现场拉全（8 个请求，约 9 秒）'
 }
+# 就业缓存：3 个栏目文件（月度失业率 + 年度农民工 / 登记失业，约 800 个数据点），轻量，带上让首屏直接出图
+# _meta.json 同样剔掉（它带着本机的回源冷却时间戳与上次错误）
+$employmentSrc = Join-Path $root '.cache\livelihood-employment'
+if (Test-Path $employmentSrc) {
+  New-Item -ItemType Directory -Path (Join-Path $pkg '.cache') -Force | Out-Null
+  Copy-Item $employmentSrc (Join-Path $pkg '.cache') -Recurse
+  Get-ChildItem (Join-Path $pkg '.cache\livelihood-employment') -Recurse -File -Filter '_meta.json' | Remove-Item -Force
+  $empCats = Get-ChildItem (Join-Path $pkg '.cache\livelihood-employment\catalogs') -File -Filter '*.json'
+  $empKB = '{0:N1}' -f (($empCats | Measure-Object Length -Sum).Sum / 1KB)
+  Write-Host ('      + 就业缓存：' + $empCats.Count + ' 个栏目文件，' + $empKB + ' KB')
+} else {
+  Write-Host '      ! 未找到 .cache\livelihood-employment：包里不带就业缓存，对方首次打开会现场拉全（3 个请求，约 5 秒）'
+}
 Write-Host '[2/4] 已拷贝项目文件'
 
 Add-Type -AssemblyName System.IO.Compression.FileSystem

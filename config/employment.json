@@ -1,0 +1,327 @@
+{
+  "source": {
+    "label": "国家统计局 · 国家数据（月度库 · 城镇调查失业率；年度库 · 农民工与登记失业）",
+    "url": "https://data.stats.gov.cn",
+    "chapter": "月度数据 · 城镇调查失业率；年度数据 · 人民生活 · 农民工规模及收入主要数据、就业人员和工资 · 城镇登记失业人员及失业率",
+    "note": "月度序列取自月度库「城镇调查失业率」栏目，年度序列取自年度库「农民工规模及收入主要数据」与「城镇登记失业人员及失业率」两个栏目。所有编码由 probe.js 探测确认，接口是站点前端自用的内部接口（非官方开放 API）。「城镇新增就业」只在月度新闻发布会通稿里以「1—X 月累计」文字出现，国家数据库未收录结构化序列，本页不展示、也不用估算值代替。"
+  },
+  "site": {
+    "baseUrl": "https://data.stats.gov.cn",
+    "ext": "/dg/website/publicrelease/web/external",
+    "page": "/dg/website/page.html",
+    "monthlyRootId": "fc982599aa684be7969d7b90b1bd0e84",
+    "annualRootId": "884c062607104a91967b22742537f44f"
+  },
+  "history": {
+    "month": "2018-01",
+    "year": "1978",
+    "note": "城镇调查失业率自 2018-01 起按月发布；年度库自 1978 年起，但农民工序列从 2013 年（新口径监测调查）开始，早期的空值就是没有数据"
+  },
+  "groups": [
+    {
+      "key": "rate",
+      "label": "失业率主线（全国 / 31 个大城市）",
+      "note": "城镇调查失业率：城镇常住人口中失业人口占劳动力（就业 + 失业）的比重，按月发布"
+    },
+    {
+      "key": "hukou",
+      "label": "分户籍（本地 / 外来）",
+      "note": "同一条失业率指标按户籍拆分：外来户籍劳动力指在城镇就业但户籍不在本地的常住人口"
+    },
+    {
+      "key": "age",
+      "label": "分年龄（青年与劳动年龄人口）",
+      "note": "2023-12 起统计局把 25—59 岁拆成 25—29 岁与 30—59 岁，16—24 岁改为「不含在校生」口径，新旧口径不拼接"
+    },
+    {
+      "key": "hours",
+      "label": "工作时间",
+      "note": "企业就业人员周平均工作时间：反映就业质量与加班强度，2022-01 起按月发布"
+    },
+    {
+      "key": "migrant",
+      "label": "农民工（年度）",
+      "note": "农民工监测调查：年末规模与月均收入，年度数据，次年 4—5 月随调查报告发布"
+    },
+    {
+      "key": "registered",
+      "label": "登记失业（年度 · 历史口径）",
+      "note": "城镇登记失业人数与登记失业率：靠本人到公共就业服务机构登记统计，与调查失业率口径不同、数值不可直接比较"
+    }
+  ],
+  "catalogs": [
+    {
+      "id": "unemployment",
+      "label": "城镇调查失业率（月度）",
+      "freq": "month",
+      "catalogId": "ee3b7046b390415b9b7745e3d16f6052"
+    },
+    {
+      "id": "migrant",
+      "label": "农民工规模及收入主要数据（年度）",
+      "freq": "year",
+      "catalogId": "fff100287213400a95a107248ea95c0a",
+      "from": "2013",
+      "releaseMonth": 5
+    },
+    {
+      "id": "registered",
+      "label": "城镇登记失业人员及失业率（年度）",
+      "freq": "year",
+      "catalogId": "19839dbd8e82481b9524f031c6d816c5",
+      "from": "1978",
+      "releaseMonth": 10
+    }
+  ],
+  "indicators": [
+    {
+      "id": "unemployment",
+      "label": "全国城镇调查失业率",
+      "shortLabel": "全国失业率",
+      "unit": "%",
+      "kind": "rate",
+      "freq": "month",
+      "group": "rate",
+      "catalog": "unemployment",
+      "indicatorId": "3888eac6062945a79c8a27e5f13d4953",
+      "decimals": 1,
+      "note": "国家统计局按月发布的城镇调查失业率，样本为城镇常住人口，与「城镇登记失业率」口径不同"
+    },
+    {
+      "id": "unemployment_city31",
+      "label": "31 个大城市城镇调查失业率",
+      "shortLabel": "31 城失业率",
+      "unit": "%",
+      "kind": "rate",
+      "freq": "month",
+      "group": "rate",
+      "catalog": "unemployment",
+      "indicatorId": "1d550f3ec77a463bb607d4a3427e1465",
+      "decimals": 1,
+      "note": "31 个省会城市与计划单列市的合计口径，反映大城市就业形势"
+    },
+    {
+      "id": "gap_city",
+      "label": "31 城与全国失业率差",
+      "shortLabel": "31 城 − 全国",
+      "unit": "个百分点",
+      "kind": "gap",
+      "freq": "month",
+      "group": "rate",
+      "derive": "gap_city",
+      "inputs": ["unemployment_city31", "unemployment"],
+      "decimals": 1,
+      "note": "31 个大城市失业率 − 全国失业率，本页计算值；大于 0 说明大城市失业率高于全国"
+    },
+    {
+      "id": "unemployment_local",
+      "label": "全国城镇本地户籍劳动力失业率",
+      "shortLabel": "本地户籍",
+      "unit": "%",
+      "kind": "rate",
+      "freq": "month",
+      "group": "hukou",
+      "catalog": "unemployment",
+      "indicatorId": "1c1b2d9ab24048bfadc5c7d9510dc663",
+      "decimals": 1,
+      "note": "2021-01 起发布"
+    },
+    {
+      "id": "unemployment_migrant",
+      "label": "全国城镇外来户籍劳动力失业率",
+      "shortLabel": "外来户籍",
+      "unit": "%",
+      "kind": "rate",
+      "freq": "month",
+      "group": "hukou",
+      "catalog": "unemployment",
+      "indicatorId": "3921da310de24f14b6457c235657baf9",
+      "decimals": 1,
+      "note": "2021-01 起发布；外来户籍劳动力在城镇的就业稳定性通常弱于本地户籍"
+    },
+    {
+      "id": "youth_unemployment",
+      "label": "16—24 岁劳动力失业率",
+      "shortLabel": "青年失业率",
+      "unit": "%",
+      "kind": "rate",
+      "freq": "month",
+      "group": "age",
+      "catalog": "unemployment",
+      "indicatorId": "bd6da1abb26046c2acb38aa701d90e86",
+      "decimals": 1,
+      "note": "2023-06 及以前为「16—24 岁人口调查失业率」（含在校生），2023-07 ~ 2023-11 暂停发布，2023-12 起改为「16—24 岁劳动力失业率」（不含在校生）；两段口径不同，不拼接"
+    },
+    {
+      "id": "age_25_29",
+      "label": "25—29 岁劳动力失业率",
+      "shortLabel": "25—29 岁",
+      "unit": "%",
+      "kind": "rate",
+      "freq": "month",
+      "group": "age",
+      "catalog": "unemployment",
+      "indicatorId": "7bc1bd5daeac48ae8bb413c34ece1d08",
+      "decimals": 1,
+      "note": "2023-12 起发布（原 25—59 岁口径拆分后的下段）"
+    },
+    {
+      "id": "age_30_59",
+      "label": "30—59 岁劳动力失业率",
+      "shortLabel": "30—59 岁",
+      "unit": "%",
+      "kind": "rate",
+      "freq": "month",
+      "group": "age",
+      "catalog": "unemployment",
+      "indicatorId": "c03a36c9562246b6bc8aab010951ef1c",
+      "decimals": 1,
+      "note": "2023-12 起发布（原 25—59 岁口径拆分后的上段）"
+    },
+    {
+      "id": "age_25_59",
+      "label": "25—59 岁劳动力失业率（旧口径）",
+      "shortLabel": "25—59 岁（旧）",
+      "unit": "%",
+      "kind": "rate",
+      "freq": "month",
+      "group": "age",
+      "catalog": "unemployment",
+      "indicatorId": "1061f276ce354907b0b9900c266cf851",
+      "until": "2023-06",
+      "decimals": 1,
+      "note": "2018-01 ~ 2023-06 的合并口径，2023-12 起拆分为 25—29 岁与 30—59 岁，本条序列不再更新"
+    },
+    {
+      "id": "gap_youth",
+      "label": "青年与全国失业率差",
+      "shortLabel": "青年 − 全国",
+      "unit": "个百分点",
+      "kind": "gap",
+      "freq": "month",
+      "group": "age",
+      "derive": "gap_youth",
+      "inputs": ["youth_unemployment", "unemployment"],
+      "decimals": 1,
+      "note": "16—24 岁失业率 − 全国失业率，本页计算值；衡量青年就业相对整体就业的差距"
+    },
+    {
+      "id": "weekly_hours",
+      "label": "企业就业人员周平均工作时间",
+      "shortLabel": "周平均工时",
+      "unit": "小时",
+      "kind": "hours",
+      "freq": "month",
+      "group": "hours",
+      "catalog": "unemployment",
+      "indicatorId": "40ab91b1ef4948e89633c5c7f55b9713",
+      "decimals": 1,
+      "note": "城镇企业就业人员上周实际工作时间的平均数，2022-01 起发布；48 小时 ≈ 每周 6 天 × 8 小时"
+    },
+    {
+      "id": "migrant_total",
+      "label": "农民工总量",
+      "shortLabel": "农民工总量",
+      "unit": "万人",
+      "kind": "count",
+      "freq": "year",
+      "group": "migrant",
+      "catalog": "migrant",
+      "indicatorId": "61bdcca74b8543c39a7fdc94d3702b51",
+      "decimals": 0,
+      "note": "年末农民工规模（外出务工或本地从事非农产业 6 个月以上的农村户籍劳动力）"
+    },
+    {
+      "id": "migrant_local",
+      "label": "本地农民工规模",
+      "shortLabel": "本地农民工",
+      "unit": "万人",
+      "kind": "count",
+      "freq": "year",
+      "group": "migrant",
+      "catalog": "migrant",
+      "indicatorId": "e1f7946bf511472abafdebdb45b51e37",
+      "decimals": 0,
+      "note": "在本乡镇以内从事非农产业的农民工；本地 + 外出 = 农民工总量"
+    },
+    {
+      "id": "migrant_out",
+      "label": "外出农民工规模",
+      "shortLabel": "外出农民工",
+      "unit": "万人",
+      "kind": "count",
+      "freq": "year",
+      "group": "migrant",
+      "catalog": "migrant",
+      "indicatorId": "5eae691d0f5b428a80011f496bca1187",
+      "decimals": 0,
+      "note": "在本乡镇以外从业的农民工，含省内流动与跨省流动"
+    },
+    {
+      "id": "migrant_cross_province",
+      "label": "跨省流动农民工规模",
+      "shortLabel": "跨省流动",
+      "unit": "万人",
+      "kind": "count",
+      "freq": "year",
+      "group": "migrant",
+      "catalog": "migrant",
+      "indicatorId": "df10732c328a4b5c8996121e25b3eee9",
+      "decimals": 0,
+      "note": "外出农民工中离开本省的规模"
+    },
+    {
+      "id": "migrant_income",
+      "label": "农民工月均收入",
+      "shortLabel": "农民工月均收入",
+      "unit": "元",
+      "kind": "money",
+      "freq": "year",
+      "group": "migrant",
+      "catalog": "migrant",
+      "indicatorId": "3fd8712839be4ada8c5a4438dd6d2d2d",
+      "decimals": 0,
+      "note": "农民工监测调查的月均收入，名义值，未扣除价格因素"
+    },
+    {
+      "id": "migrant_out_share",
+      "label": "外出农民工占比",
+      "shortLabel": "外出占比",
+      "unit": "%",
+      "kind": "share",
+      "freq": "year",
+      "group": "migrant",
+      "derive": "migrant_out_share",
+      "inputs": ["migrant_out", "migrant_total"],
+      "decimals": 1,
+      "note": "外出农民工 ÷ 农民工总量，本页计算值；占比下降说明更多人在本地就近就业"
+    },
+    {
+      "id": "registered_unemployed",
+      "label": "城镇登记失业人数",
+      "shortLabel": "登记失业人数",
+      "unit": "万人",
+      "kind": "count",
+      "freq": "year",
+      "group": "registered",
+      "catalog": "registered",
+      "indicatorId": "04702a1e85994f14991e0057a161e434",
+      "decimals": 0,
+      "note": "年末在公共就业服务机构登记失业的人数，与调查失业率的统计方法完全不同"
+    },
+    {
+      "id": "registered_rate",
+      "label": "城镇登记失业率",
+      "shortLabel": "登记失业率",
+      "unit": "%",
+      "kind": "rate",
+      "freq": "year",
+      "group": "registered",
+      "catalog": "registered",
+      "indicatorId": "456ef2f3d75f472b930384237bc6100f",
+      "until": "2021",
+      "decimals": 1,
+      "note": "登记失业人数 ÷（城镇单位就业人员 + 登记失业人数）；官方序列止于 2021 年，之后不再发布，与调查失业率不可直接比较"
+    }
+  ]
+}

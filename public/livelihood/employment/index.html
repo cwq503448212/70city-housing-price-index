@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>中国就业形势看板</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-main">
+    <div class="brand">
+      <h1>中国就业形势看板</h1>
+      <p class="brand-sub">数据来源：国家统计局 · 国家数据（月度库 · 城镇调查失业率；年度库 · 农民工与登记失业）　历史一次拉全，按月 / 按年核对</p>
+    </div>
+
+    <div class="controls">
+      <a class="back-link" href="../../">← 返回模块选择</a>
+      <label class="ctrl">
+        <span class="ctrl-label">时间范围</span>
+        <select id="range">
+          <option value="2">近 2 年</option>
+          <option value="5" selected>近 5 年</option>
+          <option value="all">全部（2018 起）</option>
+          <option value="custom">自定义月份</option>
+        </select>
+      </label>
+
+      <div class="ctrl ctrl-custom" id="custom-box" hidden>
+        <label class="ctrl">
+          <span class="ctrl-label">起</span>
+          <input type="month" id="from" />
+        </label>
+        <label class="ctrl">
+          <span class="ctrl-label">止</span>
+          <input type="month" id="to" />
+        </label>
+      </div>
+
+      <button id="refresh" class="btn" type="button" title="跳过缓存，重新向统计局请求一次">刷新数据</button>
+      <span id="status" class="status">正在加载…</span>
+    </div>
+  </div>
+  <p class="range-hint" id="range-hint"></p>
+</header>
+
+<main>
+  <section class="kpi-row" id="kpi-row" aria-label="关键指标"></section>
+
+  <section class="grid">
+    <article class="card card-wide">
+      <header class="card-head">
+        <h2>全国 vs 31 个大城市</h2>
+        <p class="card-sub">
+          实线为城镇调查失业率（%，左轴）；虚线为 <strong>31 城 − 全国</strong>的差值（个百分点，右轴，本页计算值）。
+          差值大于 0 说明大城市失业率高于全国平均水平
+        </p>
+      </header>
+      <div class="chart chart-lg" id="chart-line"></div>
+    </article>
+
+    <article class="card card-wide">
+      <header class="card-head">
+        <h2>分户籍：本地户籍 vs 外来户籍</h2>
+        <p class="card-sub">
+          同一条调查失业率按户籍拆分（%，左轴）。外来户籍劳动力指在城镇常住就业但户籍不在本地的人，
+          他们的就业更依赖经济景气，波动通常比本地户籍大；两条序列 2021-01 起发布
+        </p>
+      </header>
+      <div class="chart" id="chart-hukou"></div>
+    </article>
+
+    <article class="card card-wide">
+      <header class="card-head">
+        <h2>分年龄：青年与劳动年龄人口 <span class="tag info">口径有变更</span></h2>
+        <p class="card-sub">
+          %，左轴。2023-06 及以前 16—24 岁是「含在校生」口径，2023-07 ~ 2023-11 这段<strong>暂停发布</strong>（图上灰色区间），
+          2023-12 起改为「16—24 岁劳动力（不含在校生）」；25—59 岁旧口径在 2023-06 后停更，拆成 25—29 岁与 30—59 岁。
+          <strong>新旧口径不拼接</strong>，断点就是断点
+        </p>
+      </header>
+      <div class="chart" id="chart-age"></div>
+    </article>
+
+    <article class="card card-wide">
+      <header class="card-head">
+        <h2>企业就业人员周平均工作时间</h2>
+        <p class="card-sub">
+          小时 / 周，左轴。48 小时 ≈ 每周 6 天 × 8 小时，是很多人判断「有没有被加班」的心理线；
+          该序列 2022-01 起发布，反映的是<strong>就业质量</strong>而非就业数量——有活干但工时短，同样是压力
+        </p>
+      </header>
+      <div class="chart" id="chart-hours"></div>
+    </article>
+
+    <article class="card card-wide">
+      <header class="card-head">
+        <h2>农民工规模：本地 + 外出 = 总量 <span class="tag info">年度</span></h2>
+        <p class="card-sub">
+          堆叠柱为年末农民工规模（万人，左轴），虚线为外出农民工占比（%，右轴，本页计算值）。
+          占比下降说明更多人在本乡镇就近就业、不再跨地区流动；年度序列不受上方时间范围影响，固定画全历史
+        </p>
+      </header>
+      <div class="chart" id="chart-migrant"></div>
+    </article>
+
+    <article class="card card-wide">
+      <header class="card-head">
+        <h2>农民工月均收入及其增速 <span class="tag info">年度</span></h2>
+        <p class="card-sub">
+          柱为月均收入（元，左轴，<strong>名义值</strong>，未扣价格因素）；虚线为同比增速（%，右轴，<strong>本页计算值</strong>：
+          今年 ÷ 上年 − 1）。名义增速不等于购买力提升，扣掉 CPI 后的实际增速统计局并不单独发布
+        </p>
+      </header>
+      <div class="chart" id="chart-pay"></div>
+    </article>
+
+    <article class="card card-wide">
+      <header class="card-head">
+        <h2>城镇登记失业：1978 年以来的长历史 <span class="tag info">年度 · 历史口径</span></h2>
+        <p class="card-sub">
+          柱为年末城镇登记失业人数（万人，左轴），线为登记失业率（%，右轴，<strong>官方序列止于 2021 年</strong>）。
+          登记失业靠本人到公共就业服务机构登记统计，<strong>与调查失业率口径不同、数值不可直接比较</strong>，
+          这里只用它补齐 2018 年以前的长历史
+        </p>
+      </header>
+      <div class="chart" id="chart-registered"></div>
+    </article>
+  </section>
+
+  <section class="card">
+    <header class="card-head">
+      <h2>月度明细</h2>
+      <p class="card-sub">
+        按年分组，年份倒序、同一年内月份升序；— 表示该月这一口径没有数据（序列起点不同、口径已停更、尚未发布），
+        不插值、不补 0
+      </p>
+    </header>
+    <div class="table-wrap">
+      <table id="detail-month">
+        <thead>
+          <tr>
+            <th>月份</th>
+            <th class="num">全国<br /><small>%</small></th>
+            <th class="num">31 城<br /><small>%</small></th>
+            <th class="num">31 城 − 全国<br /><small>个百分点 · 计算</small></th>
+            <th class="num">本地户籍<br /><small>%</small></th>
+            <th class="num">外来户籍<br /><small>%</small></th>
+            <th class="num">16—24 岁<br /><small>%</small></th>
+            <th class="num">25—29 岁<br /><small>%</small></th>
+            <th class="num">30—59 岁<br /><small>%</small></th>
+            <th class="num">青年 − 全国<br /><small>个百分点 · 计算</small></th>
+            <th class="num">周平均工时<br /><small>小时</small></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card">
+    <header class="card-head">
+      <h2>年度明细</h2>
+      <p class="card-sub">
+        年份倒序。农民工为年末监测调查口径；登记失业人数截至最新年度，登记失业率官方止于 2021 年；
+        「收入同比」是本页计算值，其余为统计局发布值
+      </p>
+    </header>
+    <div class="table-wrap">
+      <table id="detail-year">
+        <thead>
+          <tr>
+            <th>年份</th>
+            <th class="num">农民工总量<br /><small>万人</small></th>
+            <th class="num">本地<br /><small>万人</small></th>
+            <th class="num">外出<br /><small>万人</small></th>
+            <th class="num">跨省流动<br /><small>万人</small></th>
+            <th class="num">外出占比<br /><small>% · 计算</small></th>
+            <th class="num">月均收入<br /><small>元 · 名义</small></th>
+            <th class="num">收入同比<br /><small>% · 计算</small></th>
+            <th class="num">登记失业人数<br /><small>万人</small></th>
+            <th class="num">登记失业率<br /><small>% · 止于 2021</small></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <p>
+      <strong>什么是城镇调查失业率：</strong>按国际通行的劳动力抽样调查方法，在城镇常住人口中统计
+      「失业人口 ÷（就业人口 + 失业人口）」。失业人口指在调查参考周内没有工作、近三个月内找过工作、
+      并且能在两周内到岗的人。它反映的是<strong>想工作而没工作</strong>的人，前提是这些人被抽中；
+      长期找不到工作后退出劳动力市场（ discouraged worker ）的人不计入失业，这是所有调查失业率的共同局限。
+    </p>
+    <p>
+      <strong>「城镇新增就业」为什么不在这一页：</strong>这个数字只在统计局每月新闻发布会的通稿里以
+      「1—X 月全国城镇新增就业 XXXX 万人」的文字出现，国家数据库（月度库 / 季度库 / 年度库）里
+      <strong>没有对应的结构化时间序列</strong>。本页不做新闻稿正文解析、不拿别的数估算，
+      所以宁可不展示，也不给一条来路不明的曲线。要看这个数，请以统计局官网当期通稿为准。
+    </p>
+    <p>
+      <strong>调查失业率 ≠ 登记失业率：</strong>登记失业率的分母是「城镇单位就业人员 + 登记失业人数」，
+      分子是主动到公共就业服务机构办理失业登记的人，既不含未登记者，也不含大量灵活就业人员，
+      因此长期显著低于调查失业率。两个口径<strong>不可直接比较</strong>，本页把它们放在不同图里，
+      只在登记失业那张图上交代历史；登记失业率的官方序列止于 2021 年，之后不再发布。
+    </p>
+    <p>
+      <strong>16—24 岁口径变更：</strong>2023-06 及以前发布的是「16—24 岁人口调查失业率」，分子分母都含在校学生；
+      2023-07 ~ 2023-11 统计局暂停发布并调整方法；2023-12 起改为「16—24 岁劳动力失业率」，
+      分子分母都<strong>不含在校生</strong>，因此新口径数值会明显低于旧口径。本页两段之间断开、不拼接，
+      也不做同比挂钩；跨 2023 年比较青年失业率时请务必注意这一点。
+    </p>
+    <p>
+      <strong>31 个大城市：</strong>指 31 个省会城市与计划单列市的<strong>合计</strong>口径（不是 31 个城市分别发布），
+      用来观察大城市就业形势。它与全国口径的样本范围不同，差值（本页计算）只用于看相对强弱，不代表哪个「更真实」。
+    </p>
+    <p>
+      <strong>周平均工时：</strong>城镇企业就业人员上周实际工作时间的平均数，2022-01 起按月发布。
+      48 小时大致相当于每周 6 天、每天 8 小时，超过它是常见的加班信号；
+      但它只是就业人员的平均，失业者与退出劳动力市场的人不在分母里，工时下降也可能是活少而不是轻松。
+    </p>
+    <p>
+      <strong>农民工：</strong>口径为农村户籍、在本乡镇从事非农产业 6 个月以上（本地农民工）或外出从业 6 个月以上
+      （外出农民工）的劳动力，年末规模来自农民工监测调查，次年 4—5 月随调查报告发布。
+      本地 + 外出 = 总量；外出占比下降说明就近就业增多。月均收入是<strong>名义值</strong>，
+      年际变化受行业结构与地区分布影响，不能直接当成人人加薪。
+    </p>
+    <p>
+      <strong>发布节奏与滞后：</strong>月度调查失业率每月 15 日左右随「国民经济运行情况」发布上月值，
+      因此「截至今天最晚应已发布」的月份是：当天 ≥ 15 日取上月，否则取上上月。
+      年度数据：农民工在次年 4—5 月、登记失业在当年 9—10 月前后入库。上期还没挂出来时，
+      本页照常展示已有期别，并在状态栏标「数据可能滞后」，不空图、不补 0。
+    </p>
+    <p>
+      <strong>数据来源：</strong>国家统计局「国家数据」(data.stats.gov.cn) 月度库「城镇调查失业率」栏目
+      （全国、31 个大城市、分户籍、分年龄、周平均工时），以及年度库「人民生活 · 农民工规模及收入主要数据」与
+      「就业人员和工资 · 城镇登记失业人员及失业率」两个栏目。接口是站点前端自用的内部接口，
+      <strong>不是官方开放 API</strong>，没有稳定性承诺；所有请求都由本地服务端代取并写入 JSON 缓存，
+      上游失败时回退缓存并标记 stale。
+    </p>
+    <p>
+      <strong>缺失值：</strong>未发布或上游缺项一律显示为空缺，不插值、不补 0、不自行加权合成；
+      一条序列只来自单一数据源。差值、外出占比、收入同比三处是本页计算值，图上与表头都标了「计算」。
+    </p>
+    <p id="foot-meta" class="foot-meta"></p>
+  </footer>
+</main>
+
+<script src="../../vendor/echarts.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

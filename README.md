@@ -1,6 +1,6 @@
 # 中国经济统计数据看板
 
-一个零依赖的本地看板，把房价、宏观、LPR、婚育、收支、存款、社零七类数据放在同一个服务里：
+一个零依赖的本地看板，把房价、宏观、LPR、婚育、收支、存款、社零、就业八类数据放在同一个服务里：
 
 | 模块 | 地址 | 内容 |
 | --- | --- | --- |
@@ -11,8 +11,9 @@
 | **人均收入与支出** | `/livelihood/income/` | 人均可支配收入（名义增速、中位数）、四项收入分项、人均消费支出、八项消费分项、城乡对比（年度，2013 起） |
 | **居民存款与人均存款** | `/livelihood/deposit/` | 住户存款余额、当月新增与年初至今累计、活期 / 定期结构、余额同比、年末人均存款（月度，2015 起） |
 | **社会消费品零售** | `/livelihood/retail/` | 社零总额当月与累计、同比、餐饮 / 商品零售、城镇 / 乡村、实物网上零售规模与占比、剔除汽车、限额以上重点品类（月度，2015 起） |
+| **就业形势** | `/livelihood/employment/` | 全国与 31 个大城市城镇调查失业率、分户籍、分年龄（16—24 岁青年 / 25—29 / 30—59）、周平均工时、农民工规模与月均收入、城镇登记失业（月度 2018 起 + 年度 1978 起） |
 
-打开根地址 `/` 是模块选择页，点进去分别进入七个子页面；每个子页面右上角都有「← 返回模块选择」可以切回来。
+打开根地址 `/` 是模块选择页，点进去分别进入八个子页面；每个子页面右上角都有「← 返回模块选择」可以切回来。
 
 ![模块选择入口](docs/screenshot-home.png)
 
@@ -31,13 +32,13 @@ node server.js
 > 必须通过这个本地服务访问，直接双击 `public/**/index.html` 是不行的：`file://` 下 `fetch('/api/...')` 会被浏览器拦下，拿不到数据；而且统计局站点有 WAF，浏览器直连会 403，数据只能由服务端代取。
 
 - 需要 Node >= 20，**不需要 `npm install`**（ECharts 已内置在 `public/vendor/`，所有模块共用一份）。
-- 七个看板共用同一个端口和同一个进程，`/api/health` 会一并返回各边的概况。
+- 八个看板共用同一个端口和同一个进程，`/api/health` 会一并返回各边的概况。
 - 换端口：`PORT=8080 node server.js`（PowerShell 写法 `$env:PORT=8080; node server.js`）。用 `start.bat` 时可以 `set DASH_PORT=5180` 后再双击（旧的 `NBS_PORT` 仍然兼容）。
 
 ## 目录结构
 
 ```
-server.js                    本地 HTTP 服务：静态托管 + 路由分发（/api/nbs70、/api/macro/*、/api/lpr/*、/api/livelihood/*、/api/livelihood/income-expenditure、/api/livelihood/reserve-deposit、/api/livelihood/retail）
+server.js                    本地 HTTP 服务：静态托管 + 路由分发（/api/nbs70、/api/macro/*、/api/lpr/*、/api/livelihood/*、/api/livelihood/income-expenditure、/api/livelihood/reserve-deposit、/api/livelihood/retail、/api/livelihood/employment）
 start.bat                    Windows 一键启动（双击即可）
 build.bat                    便携包一键打包（双击；转发给 packaging/build.ps1）
 AGENTS.md                    各看板共用的开发规范
@@ -56,13 +57,15 @@ lib/livelihood/              民生：config / policy（回源年度判定）/ s
 lib/livelihood/income/       人均收支子模块：config（读 config/income.json）/ store（独立缓存目录）/ service / api，取数复用父目录的 source / queue / policy
 lib/livelihood/deposit/      居民存款子模块：config / store / policy / source（央行信贷收支表 htm 解析）/ service / api，限流复用父目录的 queue
 lib/livelihood/retail/       社零子模块：config / store（按栏目分文件）/ policy（1、2 月合并公布）/ source（国家数据月度库）/ service / api，限流复用父目录的 queue
+lib/livelihood/employment/   就业子模块：config（读 config/employment.json）/ policy（月度 15 日规则 + 年度发布月）/ source（月度库 MM 期别 + 年度库 YY 期别）/ store（按栏目分文件）/ service / api，限流复用父目录的 queue
 
 config/indicators.json       宏观指标配置（栏目 / 指标 / 分段 / 发布日 / 兜底）
 config/livelihood.json       民生指标配置（栏目 / 指标 / 单位 / 历史起点）
 config/income.json           人均收支指标配置（6 个栏目 / 23 个指标 / 口径说明 / 历史起点 2013）
 config/deposit.json          居民存款指标配置（5 个口径分组 / 7 个指标 / 行名与表名 / 人口分母 / 历史起点 2015）
 config/retail.json           社零指标配置（8 个栏目 / 26 个指标 / 6 个分组 / 计算口径 / 历史起点 2015）
-probe.js                     指标编码探测（月度库：宏观 / 社零，年度库：民生 / 收支）+ 宏观官方/镜像交叉校验
+config/employment.json       就业指标配置（3 个栏目 / 19 个指标 / 6 个分组 / 3 个计算口径 / 月度起点 2018-01、年度起点 1978）
+probe.js                     指标编码探测（月度库：宏观 / 社零 / 就业，年度库：民生 / 收支 / 农民工 / 登记失业）+ 宏观官方/镜像交叉校验
 
 public/index.html            模块选择入口（+ home.css）
 public/housing/              房价看板：index.html / styles.css / app.js
@@ -72,13 +75,14 @@ public/livelihood/           民生看板：index.html / styles.css / app.js
 public/livelihood/income/    人均收入与支出看板：index.html / styles.css / app.js
 public/livelihood/deposit/   居民存款与人均存款看板：index.html / styles.css / app.js
 public/livelihood/retail/    社会消费品零售看板：index.html / styles.css / app.js
+public/livelihood/employment/ 就业看板：index.html / styles.css / app.js
 public/vendor/               ECharts 5（所有模块共用）
 
 data/periods.json            房价数据集（189 个月，随项目分发）
 docs/                        页面截图
 packaging/                   便携包的 start.bat / 使用说明.txt / build.ps1（打包实现）
 release/                     打包产物，不入库
-.cache/                      抓取中间产物：房价解析结果与月报原文、macro/ 宏观月缓存、lpr/ LPR 全量缓存、livelihood/ 民生年度缓存、livelihood-income/ 人均收支年度缓存、livelihood-deposit/ 存款年度缓存、livelihood-retail/ 社零栏目缓存（可安全删除）
+.cache/                      抓取中间产物：房价解析结果与月报原文、macro/ 宏观月缓存、lpr/ LPR 全量缓存、livelihood/ 民生年度缓存、livelihood-income/ 人均收支年度缓存、livelihood-deposit/ 存款年度缓存、livelihood-retail/ 社零栏目缓存、livelihood-employment/ 就业栏目缓存（可安全删除）
 ```
 
 ---
@@ -309,7 +313,7 @@ set MACRO_DATA_DIR=D:\macro-cache
 
 | 接口 | 说明 |
 | --- | --- |
-| `GET /api/health` | 健康检查（七个看板共用，含房价数据集与宏观 / LPR / 民生 / 收支 / 存款 / 社零缓存概况） |
+| `GET /api/health` | 健康检查（八个看板共用，含房价数据集与宏观 / LPR / 民生 / 收支 / 存款 / 社零 / 就业缓存概况） |
 | `GET /api/macro/health` | 同上，宏观模块内的别名 |
 | `GET /api/macro/indicators` | 指标清单（不含数据，含 stale / latestCached） |
 | `GET /api/macro/overview` | 看板一次性取全量（顶部时间选择就靠它；含 `refreshing` 后台补齐标记） |
@@ -712,6 +716,92 @@ POST …/stream/esData    body = { cid, indicatorIds, das:[{全国,000000000000}
 
 ---
 
+# 模块八：就业
+
+就业看板：**19 个指标（16 个统计局原值 + 3 个本页计算值），月度 2018-01 起 / 年度 1978 起**。月度数据（全国与 31 个大城市城镇调查失业率、分户籍、分年龄、周平均工时）来自国家统计局「国家数据」月度库「城镇调查失业率」栏目；年度数据（农民工规模与月均收入、城镇登记失业）来自年度库。月度每月 15 日左右随「国民经济运行情况」发布上月值，年度农民工次年 4—5 月、登记失业当年 9—10 月入库。
+
+## 看板上有什么
+
+| 区块 | 内容 | 口径 |
+| --- | --- | --- |
+| KPI 卡片 | 全国失业率、31 城失业率、16—24 岁青年失业率、周平均工时、农民工月均收入、农民工总量（脚注均为「较上年同期 / 较上年」现算差值） | % / 小时 / 元 / 万人 |
+| 全国 vs 31 个大城市 | 两条失业率线 + 31 城 − 全国差值（计算值，右轴） | % / 百分点 |
+| 分户籍 | 本地户籍 / 外来户籍两条失业率 | % |
+| 分年龄 | 16—24 岁 / 25—29 岁 / 30—59 岁 / 25—59 岁（旧口径，2023-06 停更）；2023-07 ~ 2023-11 灰色区标「暂停发布」，2023-12 起标「不含在校生」 | % |
+| 周平均工时 | 企业就业人员周平均工作时间 + 48 小时参考线（≈ 每周 6 天 × 8 小时） | 小时 |
+| 农民工规模 | 本地 + 外出堆叠柱（堆高 = 总量）+ 外出占比虚线（计算值） | 万人 / % |
+| 农民工月均收入 | 月均收入柱（名义值）+ 同比虚线（本页计算：今年 ÷ 上年 − 1） | 元 / % |
+| 城镇登记失业 | 登记失业人数柱（1978 ~ 2025）+ 登记失业率线（1978 ~ 2021，已停更） | 万人 / % |
+| 明细表 | 月度 11 列（全国 / 31 城 / 差值 / 本地 / 外来 / 16—24 / 25—29 / 30—59 / 青年差 / 周工时）+ 年度 10 列（总量 / 本地 / 外出 / 跨省 / 外出占比 / 月均收入 / 收入同比 / 登记人数 / 登记率） | — |
+
+时间范围支持 **近 2 年 / 近 5 年 / 全部（2018 起）/ 自定义月份**，默认近 5 年；选择记在 `localStorage`（键 `livelihood.employment.range.v1`）。**区间只作用于月度序列**：年度序列固定画全历史（1978 起），选「近 2 年」不会把登记失业的 48 年截掉。
+
+![就业看板](docs/screenshot-employment.png)
+
+## 「城镇新增就业」为什么不在这页
+
+用户要求里有这一项，探测后确认**国家数据库没有这条结构化序列**，所以本页不展示，也不用别的数估算：
+
+- 月度库（`code=1`）14 个顶层栏目里只有「城镇调查失业率」与就业相关，下挂 9 个指标，没有「新增就业」；
+- 季度库（`code=2`）8 个栏目均与就业无关；
+- 年度库（`code=3`）「就业人员和工资」29 张表里没有「城镇新增就业」，只有就业人员数、工资、登记失业等存量口径；
+- 用空 `cid` 做名称搜索返回 0 条，不存在另一个挂着它的栏目。
+
+这个数字只在统计局每月新闻发布会的通稿里以「1—X 月全国城镇新增就业 XXXX 万人」的文字出现。解析新闻稿正文既不稳定（通稿版式、栏目路径经常变）也违背「一条序列只来自单一数据源且可核对」的原则，所以**宁可不做**；要看请以统计局官网当期通稿为准。这一结论在 `config/employment.json` 的 `source.note`、页面页脚与「指标与编码」里都写明了，避免以后有人以为是漏做。
+
+## 指标与编码（探测所得，不靠猜）
+
+| 栏目 | freq | catalogId | 指标（id → 编码） |
+| --- | --- | --- | --- |
+| 城镇调查失业率（月度） | month | `ee3b7046b390415b9b7745e3d16f6052` | `unemployment` → `3888eac6062945a79c8a27e5f13d4953`；`unemployment_city31` → `1d550f3ec77a463bb607d4a3427e1465`；`unemployment_local` → `1c1b2d9ab24048bfadc5c7d9510dc663`；`unemployment_migrant` → `3921da310de24f14b6457c235657baf9`；`youth_unemployment` → `bd6da1abb26046c2acb38aa701d90e86`；`age_25_29` → `7bc1bd5daeac48ae8bb413c34ece1d08`；`age_30_59` → `c03a36c9562246b6bc8aab010951ef1c`；`age_25_59` → `1061f276ce354907b0b9900c266cf851`；`weekly_hours` → `40ab91b1ef4948e89633c5c7f55b9713` |
+| 农民工规模及收入主要数据（年度） | year | `fff100287213400a95a107248ea95c0a` | `migrant_total` → `61bdcca74b8543c39a7fdc94d3702b51`；`migrant_local` → `e1f7946bf511472abafdebdb45b51e37`；`migrant_out` → `5eae691d0f5b428a80011f496bca1187`；`migrant_cross_province` → `df10732c328a4b5c8996121e25b3eee9`；`migrant_income` → `3fd8712839be4ada8c5a4438dd6d2d2d` |
+| 城镇登记失业人员及失业率（年度） | year | `19839dbd8e82481b9524f031c6d816c5` | `registered_unemployed` → `04702a1e85994f14991e0057a161e434`；`registered_rate` → `456ef2f3d75f472b930384237bc6100f` |
+
+三个**计算值**在 `service.js` 的 `valueAt()` 里现算，不落缓存、不参与回源：
+
+| 指标 | 算法 |
+| --- | --- |
+| `gap_city` | 31 个大城市失业率 − 全国失业率（百分点） |
+| `gap_youth` | 16—24 岁失业率 − 全国失业率（百分点，衡量青年相对整体） |
+| `migrant_out_share` | 外出农民工 ÷ 农民工总量（年度） |
+
+前端另有一个计算量：农民工月均收入的**同比增速**（今年 ÷ 上年 − 1），只在图上与年度表出现，同样标「计算」。
+
+## 口径规则（不许破）
+
+- **调查失业率 ≠ 登记失业率**：调查失业率是抽样调查，分母是城镇劳动力（就业 + 失业），失业指「没工作、近三个月找过工作、两周内能到岗」；登记失业率的分子只有主动到公共就业服务机构登记的人，分母是「城镇单位就业人员 + 登记失业人数」，长期显著偏低。两个口径**不可直接比较**，本页分图、分表放置，页脚已说明
+- **16—24 岁两段不拼接**：2023-06 及以前为「16—24 岁人口调查失业率」（含在校生），2023-07 ~ 2023-11 暂停发布，2023-12 起改为「16—24 岁劳动力失业率」（不含在校生）。两段之间画断点 + 灰色「暂停发布」区，不做同比挂钩、不做倍数修正
+- **25—59 岁旧口径已停更**：`until: "2023-06"`，2023-12 起拆成 25—29 岁与 30—59 岁。归档序列不算 stale、不回源；选「近 2 年」时它没有点，这是真缺失
+- **登记失业率止于 2021 年**：`until: "2021"`，之后官方不再发布。本页不补、不外推，图上线就是断的
+- **31 个大城市是合计口径**：31 个省会城市与计划单列市合并计算，不是 31 个城市分别发布；与全国口径的样本不同，差值只用于看相对强弱
+- **周平均工时不是就业量**：它是企业就业人员的平均工时，失业者和退出劳动力市场的人不在分母里；工时下降可能是「活少了」而不是「轻松了」
+- **农民工**：年末规模（本地 + 外出 = 总量），月均收入是**名义值**。统计局不单独发布「扣掉 CPI 的实际增速」，所以本页只用名义同比，不自行折算
+- **缺失就是缺失**：序列起点不同、口径停更、未发布一律 `null`，不插值、不补 0、不按月均摊
+
+## 缓存与拉取策略
+
+- 缓存按**栏目**分文件：`.cache/livelihood-employment/catalogs/<栏目key>.json`（一个文件同时存月度 `YYYY-MM` 与年度 `YYYY` 期别）+ `_meta.json`（`lastAttempt` / `lastSuccess` / `lastError`，落盘后可跨进程生效）；目录可用 `LIVELIHOOD_EMPLOYMENT_DATA_DIR` 覆盖
+- **首拉**：3 个栏目、3 次上游请求、实测约 5 秒，写入 16 条序列 / 796 个数据点（月度 105 期 2018-01 ~ 2026-09、年度 48 年 1978 ~ 2025），拉全后写入缓存再渲染；之后每次打开只核对应发布期别
+- **双频次**：月度期别编码 `YYYYMM`、年度 `YYYY`；`policy.js` 里月度按「当天 ≥ 15 日取上月，否则取上上月」，年度按栏目 `releaseMonth`（农民工 5、登记失业 10）判应发布年份
+- **四分类**：`cold`（无缓存，同步拉全）/ `behind`（落后应发布期别 3 期以上，同步补齐再渲染）/ `warm`（先用缓存出图，后台 `dryRun` 探测，有新一期才补，前端轮询一次拿新数据）/ `force`（手动刷新跳过「已经够新」的判定）
+- **限流**：复用 `lib/livelihood/queue.js`，所有请求串行 + 全局最小间隔 1200 ms；同一栏目 60 秒冷却；两次回源至少隔 10 分钟
+- **失败回退**：上游 4xx / 5xx / 超时 / 返回非 JSON → 回退已有缓存、标 `stale: true` 并带上 `errors`，**不抛 500、不返回空数组**；未知指标 404。连续 3 个栏目都失败就停止本次尝试
+- **归档不核对**：带 `until` 的指标（25—59 岁旧口径、登记失业率）永远不算 stale、`force` 也不回源
+
+## 接口
+
+| 接口 | 说明 |
+| --- | --- |
+| `GET /api/livelihood/employment` | 看板一次性取全量（含 `stale` / `refreshing` / `expectedMonth`（别名 `expectedLatest`）/ `expectedYears` / `latestMonth` / `latestYear` / `cache`） |
+| `GET /api/livelihood/employment/indicators` | 指标清单（不含数据，含 groups / stale / latestCached / freq） |
+| `GET /api/livelihood/employment/series/:id` | 单指标序列（年度指标的 `range` 返回 `null`） |
+| `GET /api/livelihood/employment/refresh/:id` | 手动刷新单指标（等价于 `series?id&force=1`） |
+| `GET /api/livelihood/employment/health` | 健康检查（含缓存与数据集概况） |
+
+查询参数：`range=2|5|all`（默认 5）、`from=YYYY-MM&to=YYYY-MM`（优先于 range）、`force=1`；**区间只对 `freq=month` 的指标生效**。指标 id：`unemployment` / `unemployment_city31` / `gap_city` / `unemployment_local` / `unemployment_migrant` / `youth_unemployment` / `age_25_29` / `age_30_59` / `age_25_59` / `gap_youth` / `weekly_hours` / `migrant_total` / `migrant_local` / `migrant_out` / `migrant_cross_province` / `migrant_income` / `migrant_out_share` / `registered_unemployed` / `registered_rate`。
+
+---
+
 ## 打包给别人（对方不装 Node）
 
 `node server.js` 需要 Node 运行时。要发给装不了 Node 的人，用**便携包**：把 `node.exe` 和项目一起打进去，对方解压双击 `start.bat` 就行，**不需要安装任何东西**。
@@ -731,10 +821,10 @@ powershell -ExecutionPolicy Bypass -File packaging\build.ps1
 
 ```
 release/中国经济统计数据看板/                                      解压后双击 start.bat
-release/china-economic-stats-dashboard-v3.4.0-win10-win11.zip     对外发送
+release/china-economic-stats-dashboard-v3.5.0-win10-win11.zip     对外发送
 ```
 
-包内是 `node.exe`（官方签名二进制，v20.12.2）、`server.js`、`package.json`、`lib/`、`config/`、`public/`、`data/periods.json`、`probe.js`、`docs/`、`README.md`、`start.bat`、`使用说明.txt`，以及一份 `.cache/macro/`、`.cache/lpr/`、`.cache/livelihood/`、`.cache/livelihood-income/`、`.cache/livelihood-deposit/` 与 `.cache/livelihood-retail/`；不含 `node_modules/`、`AGENTS.md`。功能与源码版完全一致：七个看板、跨月 / 跨年自动核对、「刷新数据」都照常可用。
+包内是 `node.exe`（官方签名二进制，v20.12.2）、`server.js`、`package.json`、`lib/`、`config/`、`public/`、`data/periods.json`、`probe.js`、`docs/`、`README.md`、`start.bat`、`使用说明.txt`，以及一份 `.cache/macro/`、`.cache/lpr/`、`.cache/livelihood/`、`.cache/livelihood-income/`、`.cache/livelihood-deposit/`、`.cache/livelihood-retail/` 与 `.cache/livelihood-employment/`；不含 `node_modules/`、`AGENTS.md`。功能与源码版完全一致：八个看板、跨月 / 跨年自动核对、「刷新数据」都照常可用。
 
 - **分发包默认带宏观历史数据**：`.cache/macro/` 里是 20 个指标、约 1200 个月度文件（0.2 MB，打包时自动剔除本机的 `_meta.json` 回源时间戳），对方首次打开只需补最近几期，几秒钟就全了；删掉它才会全量重拉。
 - **LPR 历史同样随包分发**：`.cache/lpr/` 是一条全量序列（约 90 期 / 几 KB，同样剔 `_meta.json`），对方首次打开秒出图；就算不带，现场拉全也只要几秒。
@@ -742,6 +832,7 @@ release/china-economic-stats-dashboard-v3.4.0-win10-win11.zip     对外发送
 - **人均收支年度数据同样随包**：`.cache/livelihood-income/` 是 23 个指标 × 13 年（约 300 个小文件，同样剔 `_meta.json`），对方首次打开只补最近一期。
 - **居民存款也随包**：`.cache/livelihood-deposit/` 是 12 个年度文件（每文件 12 个月 × 3 行原值，几十 KB，同样剔 `_meta.json`）+ 一份人口分母，对方首次打开直接出图，只补最新月份。
 - **社零也随包**：`.cache/livelihood-retail/` 是 8 个栏目文件（约 2.3 千个数据点 / 39 KB，同样剔 `_meta.json`），对方首次打开直接出图，只补最近一期。
+- **就业也随包**：`.cache/livelihood-employment/` 是 3 个栏目文件（19 个指标 / 796 个数据点，同样剔 `_meta.json`），对方首次打开直接出图，只补最近一期。
 - **包放很久才打开也没问题**：缓存里有多少就用多少，缺的月份按「应发布期别」一次性补齐（缺 3 个月就只拉 3 个月，不会从头重拉）。只有统计局改了栏目/接口时才需要重新发版，否则最多看到「待更新」提示。
 
 - 便携版的 `start.bat` 和 `使用说明.txt` 放在 `packaging/` 里跟代码一起维护，打包时会拷过去。
@@ -757,7 +848,7 @@ release/china-economic-stats-dashboard-v3.4.0-win10-win11.zip     对外发送
 
 - **房价不是成交均价**。价格指数反映的是价格变动的相对幅度，不含绝对价格水平。
 - 宏观接口随时可能变化或限流，页面出现「待更新」属正常现象，请以统计局官网公布为准。
-- 七个看板的数据版权分别归国家统计局（房价 / 宏观 / 民生 / 收支 / 人均存款的人口分母 / 社零）、中国人民银行（存款 / 信贷收支表）、全国银行间同业拆借中心（LPR）所有，本项目只做本地可视化，不保存、不分发原始数据库。
+- 八个看板的数据版权分别归国家统计局（房价 / 宏观 / 民生 / 收支 / 人均存款的人口分母 / 社零 / 就业）、中国人民银行（存款 / 信贷收支表）、全国银行间同业拆借中心（LPR）所有，本项目只做本地可视化，不保存、不分发原始数据库。
 - 仅供数据观察，**不要用于任何投资决策依据**。
 
 ## 反馈与联系
