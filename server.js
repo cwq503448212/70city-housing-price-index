@@ -3,13 +3,14 @@
 /**
  * 中国经济统计数据看板 —— 本地服务
  *
- * 一个服务、六个看板，共用同一个端口与静态目录：
+ * 一个服务、七个看板，共用同一个端口与静态目录：
  *   房价模块  /housing/    ← 页面    /api/nbs70            ← 数据（国家统计局月报解析）
  *   宏观模块  /macro/      ← 页面    /api/macro/*          ← 数据（国家数据站点，拉全后缓存）
  *   LPR 模块  /lpr/        ← 页面    /api/lpr/*            ← 数据（中国货币网官方 JSON，拉全后缓存）
  *   民生模块  /livelihood/ ← 页面    /api/livelihood/*     ← 数据（国家数据年度库，拉全后缓存）
  *   人均收支  /livelihood/income/ ← 页面 /api/livelihood/income-expenditure ← 数据（同一年度库，独立缓存）
  *   居民存款  /livelihood/deposit/ ← 页面 /api/livelihood/reserve-deposit ← 数据（央行信贷收支表 + 人口分母）
+ *   社会消费品零售 /livelihood/retail/ ← 页面 /api/livelihood/retail ← 数据（国家数据月度库，拉全后缓存）
  *   入口页    /            ← 选择进入哪个模块
  *
  * 职责：
@@ -37,6 +38,8 @@ const incomeApi = require('./lib/livelihood/income/api');
 const incomeService = require('./lib/livelihood/income/service');
 const depositApi = require('./lib/livelihood/deposit/api');
 const depositService = require('./lib/livelihood/deposit/service');
+const retailApi = require('./lib/livelihood/retail/api');
+const retailService = require('./lib/livelihood/retail/service');
 
 const PORT = Number(process.env.PORT) || 5173;
 const HOST = process.env.HOST || '127.0.0.1';
@@ -128,13 +131,22 @@ function health() {
     ok: true,
     uptime: process.uptime(),
     now: new Date().toISOString(),
-    modules: ['housing', 'macro', 'lpr', 'livelihood', 'livelihood-income', 'livelihood-deposit'],
+    modules: [
+      'housing',
+      'macro',
+      'lpr',
+      'livelihood',
+      'livelihood-income',
+      'livelihood-deposit',
+      'livelihood-retail',
+    ],
     housing: { dataset: housingDatasetInfo() },
     macro: { cache: macroStore.stats(), dataset: macroSeries.datasetStatus() },
     lpr: lprApi.health(),
     livelihood: livelihoodApi.health(),
     livelihoodIncome: incomeApi.health(),
     livelihoodDeposit: depositApi.health(),
+    livelihoodRetail: retailApi.health(),
   };
 }
 
@@ -218,6 +230,41 @@ const server = http.createServer((req, res) => {
           res,
           200,
           await depositApi.one(decodeURIComponent(r[1]), Object.assign({}, query, { force: '1' }))
+        );
+      }
+      return sendJson(res, 404, { status: 'error', error: '未知接口 ' + pathname });
+    };
+    run().catch((e) => {
+      // 上游失败不会走到这里（服务层已回退缓存）；
+      // 只有「未知指标」这类请求错误（带 status）和配置/代码错误才会落到这里
+      sendJson(res, e.status || 500, { status: 'error', error: e.message || String(e) });
+    });
+    return undefined;
+  }
+
+  // ---------------- 社会消费品零售（民生子模块：国家数据月度库，独立缓存） ----------------
+  // 同样必须排在 /api/livelihood/ 前缀分支之前
+  if (pathname.indexOf('/api/livelihood/retail') === 0) {
+    const run = async () => {
+      if (pathname === '/api/livelihood/retail/health') {
+        return sendJson(res, 200, health());
+      }
+      if (pathname === '/api/livelihood/retail/indicators') {
+        return sendJson(res, 200, await retailApi.indicators());
+      }
+      if (pathname === '/api/livelihood/retail') {
+        return sendJson(res, 200, await retailApi.overview(query));
+      }
+      const m = /^\/api\/livelihood\/retail\/series\/([\w-]+)$/.exec(pathname);
+      if (m) {
+        return sendJson(res, 200, await retailApi.one(decodeURIComponent(m[1]), query));
+      }
+      const r = /^\/api\/livelihood\/retail\/refresh\/([\w-]+)$/.exec(pathname);
+      if (r) {
+        return sendJson(
+          res,
+          200,
+          await retailApi.one(decodeURIComponent(r[1]), Object.assign({}, query, { force: '1' }))
         );
       }
       return sendJson(res, 404, { status: 'error', error: '未知接口 ' + pathname });
@@ -335,7 +382,8 @@ server.listen(PORT, HOST, () => {
   console.log('    ├─ 房贷利率 LPR      http://' + HOST + ':' + PORT + '/lpr/');
   console.log('    ├─ 民生 · 婚育       http://' + HOST + ':' + PORT + '/livelihood/');
   console.log('    ├─ 民生 · 人均收支   http://' + HOST + ':' + PORT + '/livelihood/income/');
-  console.log('    └─ 民生 · 居民存款   http://' + HOST + ':' + PORT + '/livelihood/deposit/');
+  console.log('    ├─ 民生 · 居民存款   http://' + HOST + ':' + PORT + '/livelihood/deposit/');
+  console.log('    └─ 民生 · 社零       http://' + HOST + ':' + PORT + '/livelihood/retail/');
   const macroSet = macroSeries.datasetStatus();
   console.log('  [宏观] 缓存目录：' + macroSet.dir);
   if (!macroSet.files) {
@@ -395,6 +443,22 @@ server.listen(PORT, HOST, () => {
         depositSet.latest + '，已对应当前应发布月份'
     );
   }
+  const retailSet = retailService.datasetStatus();
+  if (!retailSet.catalogs) {
+    console.log(
+      '  [民生·社零] 尚无缓存：首次打开会把 ' + retailSet.historyFrom + ' 起的全部月度数据一次拉全（八个栏目，十几秒）'
+    );
+  } else if (retailSet.behind) {
+    console.log(
+      '  [民生·社零] 已缓存 ' + retailSet.catalogs + ' 个栏目（' + retailSet.points + ' 个数据点），最新 ' +
+        retailSet.latest + '；应发布 ' + retailSet.expected + '，打开页面时核对'
+    );
+  } else {
+    console.log(
+      '  [民生·社零] 已缓存 ' + retailSet.catalogs + ' 个栏目（' + retailSet.points + ' 个数据点），最新 ' +
+        retailSet.latest + '，已对应当前应发布月份'
+    );
+  }
   console.log('');
 
   // 房价模块：直接读 data/periods.json；月份戳不是本月时在后台自动核对一次
@@ -446,5 +510,12 @@ server.listen(PORT, HOST, () => {
     require('./lib/livelihood/deposit/config').load();
   } catch (e) {
     console.error('  [民生·存款] 配置有误：' + e.message);
+  }
+
+  // 社会消费品零售子模块：配置独立（config/retail.json），走国家数据月度库
+  try {
+    require('./lib/livelihood/retail/config').load();
+  } catch (e) {
+    console.error('  [民生·社零] 配置有误：' + e.message);
   }
 });

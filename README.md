@@ -1,6 +1,6 @@
 # 中国经济统计数据看板
 
-一个零依赖的本地看板，把房价、宏观、LPR、婚育、收支、存款六类数据放在同一个服务里：
+一个零依赖的本地看板，把房价、宏观、LPR、婚育、收支、存款、社零七类数据放在同一个服务里：
 
 | 模块 | 地址 | 内容 |
 | --- | --- | --- |
@@ -10,8 +10,9 @@
 | **婚育与人口出生** | `/livelihood/` | 结婚登记 / 离婚登记 / 初婚人数、出生率 / 死亡率 / 自然增长率（年度，1978 起） |
 | **人均收入与支出** | `/livelihood/income/` | 人均可支配收入（名义增速、中位数）、四项收入分项、人均消费支出、八项消费分项、城乡对比（年度，2013 起） |
 | **居民存款与人均存款** | `/livelihood/deposit/` | 住户存款余额、当月新增与年初至今累计、活期 / 定期结构、余额同比、年末人均存款（月度，2015 起） |
+| **社会消费品零售** | `/livelihood/retail/` | 社零总额当月与累计、同比、餐饮 / 商品零售、城镇 / 乡村、实物网上零售规模与占比、剔除汽车、限额以上重点品类（月度，2015 起） |
 
-打开根地址 `/` 是模块选择页，点进去分别进入六个子页面；每个子页面右上角都有「← 返回模块选择」可以切回来。
+打开根地址 `/` 是模块选择页，点进去分别进入七个子页面；每个子页面右上角都有「← 返回模块选择」可以切回来。
 
 ![模块选择入口](docs/screenshot-home.png)
 
@@ -30,13 +31,13 @@ node server.js
 > 必须通过这个本地服务访问，直接双击 `public/**/index.html` 是不行的：`file://` 下 `fetch('/api/...')` 会被浏览器拦下，拿不到数据；而且统计局站点有 WAF，浏览器直连会 403，数据只能由服务端代取。
 
 - 需要 Node >= 20，**不需要 `npm install`**（ECharts 已内置在 `public/vendor/`，所有模块共用一份）。
-- 六个看板共用同一个端口和同一个进程，`/api/health` 会一并返回各边的概况。
+- 七个看板共用同一个端口和同一个进程，`/api/health` 会一并返回各边的概况。
 - 换端口：`PORT=8080 node server.js`（PowerShell 写法 `$env:PORT=8080; node server.js`）。用 `start.bat` 时可以 `set DASH_PORT=5180` 后再双击（旧的 `NBS_PORT` 仍然兼容）。
 
 ## 目录结构
 
 ```
-server.js                    本地 HTTP 服务：静态托管 + 路由分发（/api/nbs70、/api/macro/*、/api/lpr/*、/api/livelihood/*、/api/livelihood/income-expenditure、/api/livelihood/reserve-deposit）
+server.js                    本地 HTTP 服务：静态托管 + 路由分发（/api/nbs70、/api/macro/*、/api/lpr/*、/api/livelihood/*、/api/livelihood/income-expenditure、/api/livelihood/reserve-deposit、/api/livelihood/retail）
 start.bat                    Windows 一键启动（双击即可）
 build.bat                    便携包一键打包（双击；转发给 packaging/build.ps1）
 AGENTS.md                    各看板共用的开发规范
@@ -54,11 +55,13 @@ lib/lpr/                     LPR：config（上游与发布日）/ policy（回�
 lib/livelihood/              民生：config / policy（回源年度判定）/ source（国家数据年度库）/ store（年度文件缓存）/ service / queue / api
 lib/livelihood/income/       人均收支子模块：config（读 config/income.json）/ store（独立缓存目录）/ service / api，取数复用父目录的 source / queue / policy
 lib/livelihood/deposit/      居民存款子模块：config / store / policy / source（央行信贷收支表 htm 解析）/ service / api，限流复用父目录的 queue
+lib/livelihood/retail/       社零子模块：config / store（按栏目分文件）/ policy（1、2 月合并公布）/ source（国家数据月度库）/ service / api，限流复用父目录的 queue
 
 config/indicators.json       宏观指标配置（栏目 / 指标 / 分段 / 发布日 / 兜底）
 config/livelihood.json       民生指标配置（栏目 / 指标 / 单位 / 历史起点）
 config/income.json           人均收支指标配置（6 个栏目 / 23 个指标 / 口径说明 / 历史起点 2013）
 config/deposit.json          居民存款指标配置（5 个口径分组 / 7 个指标 / 行名与表名 / 人口分母 / 历史起点 2015）
+config/retail.json           社零指标配置（8 个栏目 / 26 个指标 / 6 个分组 / 计算口径 / 历史起点 2015）
 probe.js                     指标编码探测（宏观月度库 / 民生年度库）+ 官方/镜像交叉校验
 
 public/index.html            模块选择入口（+ home.css）
@@ -68,13 +71,14 @@ public/lpr/                  LPR 看板：index.html / styles.css / app.js
 public/livelihood/           民生看板：index.html / styles.css / app.js
 public/livelihood/income/    人均收入与支出看板：index.html / styles.css / app.js
 public/livelihood/deposit/   居民存款与人均存款看板：index.html / styles.css / app.js
+public/livelihood/retail/    社会消费品零售看板：index.html / styles.css / app.js
 public/vendor/               ECharts 5（所有模块共用）
 
 data/periods.json            房价数据集（189 个月，随项目分发）
 docs/                        页面截图
 packaging/                   便携包的 start.bat / 使用说明.txt / build.ps1（打包实现）
 release/                     打包产物，不入库
-.cache/                      抓取中间产物：房价解析结果与月报原文、macro/ 宏观月缓存、lpr/ LPR 全量缓存、livelihood/ 民生年度缓存、livelihood-income/ 人均收支年度缓存、livelihood-deposit/ 存款年度缓存（可安全删除）
+.cache/                      抓取中间产物：房价解析结果与月报原文、macro/ 宏观月缓存、lpr/ LPR 全量缓存、livelihood/ 民生年度缓存、livelihood-income/ 人均收支年度缓存、livelihood-deposit/ 存款年度缓存、livelihood-retail/ 社零栏目缓存（可安全删除）
 ```
 
 ---
@@ -305,7 +309,7 @@ set MACRO_DATA_DIR=D:\macro-cache
 
 | 接口 | 说明 |
 | --- | --- |
-| `GET /api/health` | 健康检查（六个看板共用，含房价数据集与宏观 / LPR / 民生 / 收支 / 存款缓存概况） |
+| `GET /api/health` | 健康检查（七个看板共用，含房价数据集与宏观 / LPR / 民生 / 收支 / 存款 / 社零缓存概况） |
 | `GET /api/macro/health` | 同上，宏观模块内的别名 |
 | `GET /api/macro/indicators` | 指标清单（不含数据，含 stale / latestCached） |
 | `GET /api/macro/overview` | 看板一次性取全量（顶部时间选择就靠它；含 `refreshing` 后台补齐标记） |
@@ -631,6 +635,83 @@ POST …/stream/esData    body = { cid, indicatorIds, das:[{全国,000000000000}
 
 ---
 
+# 模块七：社会消费品零售
+
+社零的本地看板：**26 个指标（22 个统计局原值 + 4 个本页计算值），2015-01 起**，全部来自国家统计局「国家数据」月度库「国内贸易」栏目，每月 15 日左右随「国民经济运行情况」发布上月数据。
+
+## 看板上有什么
+
+| 区块 | 内容 | 口径 |
+| --- | --- | --- |
+| KPI 卡片 | 社零总额当月、社零总额累计、餐饮收入、网上商品零售累计、剔除汽车后社零 | 亿元 |
+| 社零总额：当月值与当月同比 | 当月值柱状 + 统计局发布当月同比虚线（双轴） | 亿元 / % |
+| 社零总额：累计值与累计同比 | 年初至今累计面积线 + 累计同比虚线 | 亿元 / % |
+| 餐饮收入 / 商品零售 | 两条当月值 + 两条当月同比虚线 | 亿元 / % |
+| 城镇 / 乡村消费 | 城镇、乡村当月值 + 乡村占比（计算值） | 亿元 / % |
+| 实物网上零售 | 旧口径 / 新口径两条累计线并列（不拼接）+ 占社零比重（计算值） | 亿元 / % |
+| 限额以上重点品类 | 粮油食品类 / 家电类 / 汽车类当月零售额 | 亿元 |
+| 限额以上重点品类同比 | 三类当月同比 + 0% 参考线 | % |
+| 剔除汽车后的社零 | 当月值柱状 + 同比虚线（计算值） | 亿元 / % |
+| 月度明细 | 16 列：当月 / 当月同比 / 累计 / 累计同比 / 餐饮 / 商品零售 / 城镇 / 乡村 / 网上（旧）/ 网上（新）/ 网上占比 / 粮油 / 家电 / 汽车 / 剔除汽车 | — |
+
+时间范围支持 **近 2 年 / 近 5 年 / 全部（2015 起）/ 自定义月份**，默认近 5 年；选择记在 `localStorage`（键 `livelihood.retail.range.v1`）。
+
+![社会消费品零售看板](docs/screenshot-retail-full.png)
+
+## 指标与编码（探测所得，不靠猜）
+
+| 栏目 | catalogId | 指标 |
+| --- | --- | --- |
+| 社会消费品零售总额 | `d0cb882c7f27443ab6b3ef9421901961` | `total_amount` / `total_cum` / `total_yoy` / `total_cum_yoy` |
+| 按经营地分（城镇 / 乡村） | `d5c7d1062a5742c69a02c39650c7c327` | `urban_amount` / `urban_yoy` / `rural_amount` / `rural_yoy` |
+| 按消费类型分（餐饮 / 商品零售） | `d9821f4ad1ec42ebbbd0554efb3e3772` | `catering_amount` / `catering_yoy` / `goods_amount` / `goods_yoy` |
+| 限额以上 · 汽车类 | `5615be125f5e46638d646e1037a07842` | `car_amount` / `car_yoy` |
+| 限额以上 · 家用电器和音像器材类 | `4bc877911968450aadee4fe871e5044f` | `appliance_amount` / `appliance_yoy` |
+| 限额以上 · 粮油食品类 | `a78d7ed67b2b40a58bb28c15c908296e` | `grain_amount` / `grain_yoy` |
+| 网上零售额（旧口径 · 实物商品，2018-01 ~ 2025-12，frozen） | `fb09cbc680fe4d348c9d05f535ebf77c` | `online_goods_cum` / `online_goods_cum_yoy` |
+| 网上商品和服务零售额（新口径，2026-01 起） | `ce144b3caaf9498aabcc713e671c1f33` | `online_goods_cum_new` / `online_goods_cum_new_yoy` |
+
+四个**计算值**在 `service.js` 的 `valueAt()` 里现算，不落缓存、不参与回源：
+
+| 指标 | 算法 |
+| --- | --- |
+| `ex_car_amount` | 社零总额当月 − 限额以上汽车类当月 |
+| `ex_car_yoy` | 本月剔除值 ÷ 上年同月剔除值 − 1 |
+| `online_share` | 当期口径网上商品零售累计 ÷ 社零累计（2025-12 及以前用旧口径，2026-02 起用新口径） |
+| `rural_share` | 乡村当月 ÷ 社零总额当月 |
+
+## 口径规则（不许破）
+
+- **1、2 月合并公布**：统计局每年把 1 月与 2 月合并发布（春节错月影响）。所以**当月值没有 1 月与 2 月**，累计值只在 2 月给出 1—2 月合计。`skipMonths` 就写在这两类指标上：当月类 `["01","02"]`、累计类 `["01"]`；policy 算「应发布月份」时会自动回退，不会因为「2 月没有当月值」而把整页误标成 stale
+- **网上零售 2026 年起换口径**：旧口径「实物商品网上零售额」停在 2025-12（栏目 `frozen: true`，拉到一次就不再回源），新口径「网上商品零售额」从 2026-02 起。两段**并列画两条线，不做倍数修正、不做拼接**，占社零比重在两段各自成立
+- **剔除汽车是计算值**：统计局不发布「剔除汽车的社会消费品零售总额」。汽车类只有**限额以上单位**口径（不含限额以下汽车经销与二手车），所以「社零 − 限额以上汽车」只能作趋势参考，不等于官方口径的「社零扣除汽车」，图注与页脚都已标注
+- **限额以上品类不是全口径**：粮油食品类、家用电器和音像器材类、汽车类都是「限额以上单位商品零售类值」，即年主营业务收入达到限额标准的单位，与全行业规模不同
+- **口径不混画**：当月值 / 累计值 / 同比三种口径分开画，不共用同一条曲线；指数类原值不在这里出现，本模块的量都是「亿元」或「%」原值
+- **缺失就是缺失**：未发布、上游缺项一律 `null`，不插值、不补 0、不按月均摊
+
+## 缓存与拉取策略
+
+- 缓存按**栏目**分文件：`.cache/livelihood-retail/catalogs/<栏目key>.json`（一个文件存该栏目下所有指标的 `{月份: 值}`）+ `_meta.json`（`lastAttempt` / `lastSuccess` / `lastError`，落盘后可跨进程生效）；目录可用 `LIVELIHOOD_RETAIL_DATA_DIR` 覆盖
+- **首拉**：8 个栏目、8 次上游请求、实测 8.5 秒，写入 22 条序列 / 2322 个数据点（129 个月 / 2015-03 ~ 2026-09），拉全后写入缓存再渲染；之后每次打开只核对应发布月份
+- **四分类**：`cold`（无缓存，同步拉全）/ `behind`（最新缓存落后应发布月份 3 期以上，同步补齐再渲染）/ `warm`（先用缓存出图，后台 `dryRun` 探测，有新一期才在后台补，前端轮询一次拿新数据）
+- **限流**：复用 `lib/livelihood/queue.js`，所有请求串行 + 全局最小间隔 1200 ms；同一栏目 60 秒冷却；两次回源至少隔 10 分钟
+- **失败回退**：上游 4xx / 5xx / 超时 / 返回非 JSON → 回退已有缓存、标 `stale: true` 并带上 `errors`，**不抛 500、不返回空数组**；未知指标 404。连续 3 个栏目都失败就停止本次尝试（上游整体不可用时不再一个个重试）
+- **手动刷新**：`force=1` 会绕开「已经够新」的判定，真的去上游核一遍；frozen 栏目除外（拉到过一次就永远读缓存）
+
+## 接口
+
+| 接口 | 说明 |
+| --- | --- |
+| `GET /api/livelihood/retail` | 看板一次性取全量（含 `stale` / `refreshing` / `latestMonth` / `expectedLatest` / `cache`） |
+| `GET /api/livelihood/retail/indicators` | 指标清单（不含数据，含 groups / stale / latestCached） |
+| `GET /api/livelihood/retail/series/:id` | 单指标序列 |
+| `GET /api/livelihood/retail/refresh/:id` | 手动刷新单指标（等价于 `series?id&force=1`） |
+| `GET /api/livelihood/retail/health` | 健康检查（含缓存与数据集概况） |
+
+查询参数：`range=2|5|all`（默认 5）、`from=YYYY-MM&to=YYYY-MM`（优先于 range）、`force=1`。指标 id：`total_amount` / `total_cum` / `total_yoy` / `total_cum_yoy` / `catering_amount` / `catering_yoy` / `goods_amount` / `goods_yoy` / `urban_amount` / `urban_yoy` / `rural_amount` / `rural_yoy` / `rural_share` / `online_goods_cum` / `online_goods_cum_yoy` / `online_goods_cum_new` / `online_goods_cum_new_yoy` / `online_share` / `car_amount` / `car_yoy` / `appliance_amount` / `appliance_yoy` / `grain_amount` / `grain_yoy` / `ex_car_amount` / `ex_car_yoy`。
+
+---
+
 ## 打包给别人（对方不装 Node）
 
 `node server.js` 需要 Node 运行时。要发给装不了 Node 的人，用**便携包**：把 `node.exe` 和项目一起打进去，对方解压双击 `start.bat` 就行，**不需要安装任何东西**。
@@ -650,16 +731,17 @@ powershell -ExecutionPolicy Bypass -File packaging\build.ps1
 
 ```
 release/中国经济统计数据看板/                                      解压后双击 start.bat
-release/china-economic-stats-dashboard-v3.3.0-win10-win11.zip     对外发送
+release/china-economic-stats-dashboard-v3.4.0-win10-win11.zip     对外发送
 ```
 
-包内是 `node.exe`（官方签名二进制，v20.12.2）、`server.js`、`package.json`、`lib/`、`config/`、`public/`、`data/periods.json`、`probe.js`、`docs/`、`README.md`、`start.bat`、`使用说明.txt`，以及一份 `.cache/macro/`、`.cache/lpr/`、`.cache/livelihood/`、`.cache/livelihood-income/` 与 `.cache/livelihood-deposit/`；不含 `node_modules/`、`AGENTS.md`。功能与源码版完全一致：六个看板、跨月 / 跨年自动核对、「刷新数据」都照常可用。
+包内是 `node.exe`（官方签名二进制，v20.12.2）、`server.js`、`package.json`、`lib/`、`config/`、`public/`、`data/periods.json`、`probe.js`、`docs/`、`README.md`、`start.bat`、`使用说明.txt`，以及一份 `.cache/macro/`、`.cache/lpr/`、`.cache/livelihood/`、`.cache/livelihood-income/`、`.cache/livelihood-deposit/` 与 `.cache/livelihood-retail/`；不含 `node_modules/`、`AGENTS.md`。功能与源码版完全一致：七个看板、跨月 / 跨年自动核对、「刷新数据」都照常可用。
 
 - **分发包默认带宏观历史数据**：`.cache/macro/` 里是 20 个指标、约 1200 个月度文件（0.2 MB，打包时自动剔除本机的 `_meta.json` 回源时间戳），对方首次打开只需补最近几期，几秒钟就全了；删掉它才会全量重拉。
 - **LPR 历史同样随包分发**：`.cache/lpr/` 是一条全量序列（约 90 期 / 几 KB，同样剔 `_meta.json`），对方首次打开秒出图；就算不带，现场拉全也只要几秒。
 - **民生年度数据也随包分发**：`.cache/livelihood/` 是 6 个指标 × 48 年（约 270 个小文件，同样剔 `_meta.json`），对方首次打开直接出图，只补新年份。
 - **人均收支年度数据同样随包**：`.cache/livelihood-income/` 是 23 个指标 × 13 年（约 300 个小文件，同样剔 `_meta.json`），对方首次打开只补最近一期。
 - **居民存款也随包**：`.cache/livelihood-deposit/` 是 12 个年度文件（每文件 12 个月 × 3 行原值，几十 KB，同样剔 `_meta.json`）+ 一份人口分母，对方首次打开直接出图，只补最新月份。
+- **社零也随包**：`.cache/livelihood-retail/` 是 8 个栏目文件（约 2.3 千个数据点 / 39 KB，同样剔 `_meta.json`），对方首次打开直接出图，只补最近一期。
 - **包放很久才打开也没问题**：缓存里有多少就用多少，缺的月份按「应发布期别」一次性补齐（缺 3 个月就只拉 3 个月，不会从头重拉）。只有统计局改了栏目/接口时才需要重新发版，否则最多看到「待更新」提示。
 
 - 便携版的 `start.bat` 和 `使用说明.txt` 放在 `packaging/` 里跟代码一起维护，打包时会拷过去。
@@ -675,7 +757,7 @@ release/china-economic-stats-dashboard-v3.3.0-win10-win11.zip     对外发送
 
 - **房价不是成交均价**。价格指数反映的是价格变动的相对幅度，不含绝对价格水平。
 - 宏观接口随时可能变化或限流，页面出现「待更新」属正常现象，请以统计局官网公布为准。
-- 六个看板的数据版权分别归国家统计局（房价 / 宏观 / 民生 / 收支 / 人均存款的人口分母）与中国人民银行（存款 / 信贷收支表）、全国银行间同业拆借中心（LPR）所有，本项目只做本地可视化，不保存、不分发原始数据库。
+- 七个看板的数据版权分别归国家统计局（房价 / 宏观 / 民生 / 收支 / 人均存款的人口分母 / 社零）、中国人民银行（存款 / 信贷收支表）、全国银行间同业拆借中心（LPR）所有，本项目只做本地可视化，不保存、不分发原始数据库。
 - 仅供数据观察，**不要用于任何投资决策依据**。
 
 ## 反馈与联系

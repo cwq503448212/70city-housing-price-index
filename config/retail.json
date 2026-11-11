@@ -1,0 +1,410 @@
+{
+  "source": {
+    "label": "国家统计局 · 国家数据（月度库 · 国内贸易）",
+    "url": "https://data.stats.gov.cn",
+    "chapter": "月度数据 · 社会消费品零售总额 / 按经营地分 / 按消费类型分 / 限额以上单位商品零售类值 / 网上零售额",
+    "note": "全部指标取自统计局公开月度数据（国家数据站点内部接口，非官方开放 API）。1、2 月合并公布：当月值没有 1 月与 2 月，累计值只在 2 月给出 1—2 月合计；2026 年起网上零售口径调整为「网上商品和服务零售额」，其中实物商品口径改为「网上商品零售额」，与旧口径「实物商品网上零售额」不拼接。"
+  },
+  "history": {
+    "from": "2015-01"
+  },
+  "site": {
+    "baseUrl": "https://data.stats.gov.cn",
+    "ext": "/dg/website/publicrelease/web/external",
+    "rootId": "fc982599aa684be7969d7b90b1bd0e84"
+  },
+  "catalogs": [
+    { "id": "total", "label": "社会消费品零售总额", "catalogId": "d0cb882c7f27443ab6b3ef9421901961" },
+    { "id": "place", "label": "按经营地分（城镇 / 乡村）", "catalogId": "d5c7d1062a5742c69a02c39650c7c327" },
+    { "id": "type", "label": "按消费类型分（餐饮 / 商品零售）", "catalogId": "d9821f4ad1ec42ebbbd0554efb3e3772" },
+    { "id": "car", "label": "限额以上 · 汽车类", "catalogId": "5615be125f5e46638d646e1037a07842" },
+    { "id": "appliance", "label": "限额以上 · 家用电器和音像器材类", "catalogId": "4bc877911968450aadee4fe871e5044f" },
+    { "id": "grain", "label": "限额以上 · 粮油食品类", "catalogId": "a78d7ed67b2b40a58bb28c15c908296e" },
+    {
+      "id": "online_old",
+      "label": "网上零售额（旧口径 · 实物商品）",
+      "catalogId": "fb09cbc680fe4d348c9d05f535ebf77c",
+      "from": "2018-01",
+      "to": "2025-12",
+      "frozen": true
+    },
+    {
+      "id": "online_new",
+      "label": "网上商品和服务零售额（新口径 · 网上商品）",
+      "catalogId": "ce144b3caaf9498aabcc713e671c1f33",
+      "from": "2026-01"
+    }
+  ],
+  "groups": [
+    {
+      "key": "total",
+      "label": "总量（当月 / 累计 / 增速）",
+      "note": "当月值是单月数，累计值是年初至今合计；1、2 月合并公布，所以当月值没有 1 月与 2 月"
+    },
+    {
+      "key": "type",
+      "label": "按消费类型分（餐饮 / 商品零售）",
+      "note": "餐饮收入 + 商品零售 = 社零总额，官方分项原值"
+    },
+    {
+      "key": "place",
+      "label": "按经营地分（城镇 / 乡村）",
+      "note": "城镇 + 乡村 = 社零总额；乡村占比是本页计算值"
+    },
+    {
+      "key": "online",
+      "label": "实物网上零售与占比",
+      "note": "累计口径；2026 年起口径调整，新旧两段并列展示、不拼接"
+    },
+    {
+      "key": "exclude",
+      "label": "剔除汽车（计算值）",
+      "note": "社零总额 − 限额以上汽车类零售额；统计局不发布「剔除汽车」指标，这里是本页计算值"
+    },
+    {
+      "key": "category",
+      "label": "限额以上重点品类",
+      "note": "粮油食品类 / 家用电器和音像器材类 / 汽车类，均为限额以上单位商品零售类值"
+    }
+  ],
+  "indicators": [
+    {
+      "id": "total_amount",
+      "label": "社零总额（当月）",
+      "shortLabel": "社零当月",
+      "unit": "亿元",
+      "kind": "money",
+      "group": "total",
+      "catalog": "total",
+      "indicatorId": "1142a3a03e9045959e606a21822641ac",
+      "skipMonths": ["01", "02"],
+      "decimals": 1,
+      "note": "单月社会消费品零售总额；1、2 月合并公布，没有单独的 1 月与 2 月值"
+    },
+    {
+      "id": "total_cum",
+      "label": "社零总额（累计）",
+      "shortLabel": "社零累计",
+      "unit": "亿元",
+      "kind": "money",
+      "group": "total",
+      "catalog": "total",
+      "indicatorId": "260a1794443b43dd93a59928b12f38af",
+      "skipMonths": ["01"],
+      "decimals": 1,
+      "note": "年初至今累计；2 月的值是 1—2 月合计"
+    },
+    {
+      "id": "total_yoy",
+      "label": "社零总额当月同比",
+      "shortLabel": "当月同比",
+      "unit": "%",
+      "kind": "growth",
+      "group": "total",
+      "catalog": "total",
+      "indicatorId": "aaac57d54d2e465d91bc9f3ea1a8618e",
+      "skipMonths": ["01", "02"],
+      "decimals": 1,
+      "note": "官方发布值，未扣除价格因素"
+    },
+    {
+      "id": "total_cum_yoy",
+      "label": "社零总额累计同比",
+      "shortLabel": "累计同比",
+      "unit": "%",
+      "kind": "growth",
+      "group": "total",
+      "catalog": "total",
+      "indicatorId": "e3ca151b53d347b78d1e179e5ebf1d33",
+      "skipMonths": ["01"],
+      "decimals": 1,
+      "note": "官方发布值；2 月为 1—2 月累计同比"
+    },
+    {
+      "id": "catering_amount",
+      "label": "餐饮收入（当月）",
+      "shortLabel": "餐饮",
+      "unit": "亿元",
+      "kind": "money",
+      "group": "type",
+      "catalog": "type",
+      "indicatorId": "446765807521445c8bbe7b7526501dc8",
+      "skipMonths": ["01", "02"],
+      "decimals": 1,
+      "note": "全口径餐饮收入，不限限额以上"
+    },
+    {
+      "id": "catering_yoy",
+      "label": "餐饮收入当月同比",
+      "shortLabel": "餐饮同比",
+      "unit": "%",
+      "kind": "growth",
+      "group": "type",
+      "catalog": "type",
+      "indicatorId": "476cfe584e9849c2a2bac63a2fe1dd49",
+      "skipMonths": ["01", "02"],
+      "decimals": 1,
+      "note": "官方发布值"
+    },
+    {
+      "id": "goods_amount",
+      "label": "商品零售（当月）",
+      "shortLabel": "商品零售",
+      "unit": "亿元",
+      "kind": "money",
+      "group": "type",
+      "catalog": "type",
+      "indicatorId": "2d3e611af5214aa480b8a0a4f2c1785d",
+      "skipMonths": ["01", "02"],
+      "decimals": 1,
+      "note": "社零总额 − 餐饮收入 = 商品零售，官方分项原值"
+    },
+    {
+      "id": "goods_yoy",
+      "label": "商品零售当月同比",
+      "shortLabel": "商品零售同比",
+      "unit": "%",
+      "kind": "growth",
+      "group": "type",
+      "catalog": "type",
+      "indicatorId": "d76706323b3743da8b198c7f7d8c6a1c",
+      "skipMonths": ["01", "02"],
+      "decimals": 1,
+      "note": "官方发布值"
+    },
+    {
+      "id": "urban_amount",
+      "label": "城镇社零（当月）",
+      "shortLabel": "城镇",
+      "unit": "亿元",
+      "kind": "money",
+      "group": "place",
+      "catalog": "place",
+      "indicatorId": "9ef40e1bd70e4fd1a94005ef9a3b9e6a",
+      "skipMonths": ["01", "02"],
+      "decimals": 1,
+      "note": "按经营地分：城镇"
+    },
+    {
+      "id": "urban_yoy",
+      "label": "城镇社零当月同比",
+      "shortLabel": "城镇同比",
+      "unit": "%",
+      "kind": "growth",
+      "group": "place",
+      "catalog": "place",
+      "indicatorId": "0a131939174d4d21885d3ce53cbe147f",
+      "skipMonths": ["01", "02"],
+      "decimals": 1,
+      "note": "官方发布值"
+    },
+    {
+      "id": "rural_amount",
+      "label": "乡村社零（当月）",
+      "shortLabel": "乡村",
+      "unit": "亿元",
+      "kind": "money",
+      "group": "place",
+      "catalog": "place",
+      "indicatorId": "f32d705cc284404e82849c934011d6b0",
+      "skipMonths": ["01", "02"],
+      "decimals": 1,
+      "note": "按经营地分：乡村"
+    },
+    {
+      "id": "rural_yoy",
+      "label": "乡村社零当月同比",
+      "shortLabel": "乡村同比",
+      "unit": "%",
+      "kind": "growth",
+      "group": "place",
+      "catalog": "place",
+      "indicatorId": "dd474a9e7b7745fba458e648f1f013f6",
+      "skipMonths": ["01", "02"],
+      "decimals": 1,
+      "note": "官方发布值"
+    },
+    {
+      "id": "rural_share",
+      "label": "乡村消费占比",
+      "shortLabel": "乡村占比",
+      "unit": "%",
+      "kind": "share",
+      "group": "place",
+      "derive": "rural_share",
+      "inputs": ["rural_amount", "total_amount"],
+      "skipMonths": ["01", "02"],
+      "decimals": 1,
+      "note": "乡村当月 ÷ 社零总额当月，本页计算值"
+    },
+    {
+      "id": "online_goods_cum",
+      "label": "实物商品网上零售额（累计，旧口径）",
+      "shortLabel": "实物网上累计",
+      "unit": "亿元",
+      "kind": "money",
+      "group": "online",
+      "catalog": "online_old",
+      "indicatorId": "05fbe85e09c842098509c6b29481ab0c",
+      "skipMonths": ["01"],
+      "decimals": 1,
+      "note": "2018-02 至 2025-12 的旧口径序列，2026 年起统计局不再发布"
+    },
+    {
+      "id": "online_goods_cum_yoy",
+      "label": "实物商品网上零售额累计同比（旧口径）",
+      "shortLabel": "实物网上同比",
+      "unit": "%",
+      "kind": "growth",
+      "group": "online",
+      "catalog": "online_old",
+      "indicatorId": "f12bf45bdfbb47b18147406246c787a7",
+      "skipMonths": ["01"],
+      "decimals": 1,
+      "note": "旧口径官方发布值，序列止于 2025-12"
+    },
+    {
+      "id": "online_goods_cum_new",
+      "label": "网上商品零售额（累计，新口径）",
+      "shortLabel": "网上商品累计",
+      "unit": "亿元",
+      "kind": "money",
+      "group": "online",
+      "catalog": "online_new",
+      "indicatorId": "000aa31f692c4f1796dc4cbcefa6133d",
+      "skipMonths": ["01"],
+      "decimals": 1,
+      "note": "2026 年起的新口径（原「实物商品网上零售额」改名并重算），与旧序列不拼接"
+    },
+    {
+      "id": "online_goods_cum_new_yoy",
+      "label": "网上商品零售额累计同比（新口径）",
+      "shortLabel": "网上商品同比",
+      "unit": "%",
+      "kind": "growth",
+      "group": "online",
+      "catalog": "online_new",
+      "indicatorId": "ad9696b7ff4a49bbb9e0b40374e74ae7",
+      "skipMonths": ["01"],
+      "decimals": 1,
+      "note": "新口径官方发布值，序列起于 2026-02"
+    },
+    {
+      "id": "online_share",
+      "label": "实物网上零售占社零比重",
+      "shortLabel": "网上占比",
+      "unit": "%",
+      "kind": "share",
+      "group": "online",
+      "derive": "online_share",
+      "inputs": ["online_goods_cum", "online_goods_cum_new", "total_cum"],
+      "skipMonths": ["01"],
+      "decimals": 1,
+      "note": "（实物商品 / 网上商品）网上零售额累计 ÷ 社零总额累计，本页计算值；口径切换处按当期口径计算"
+    },
+    {
+      "id": "car_amount",
+      "label": "汽车类零售额（当月，限上）",
+      "shortLabel": "汽车类",
+      "unit": "亿元",
+      "kind": "money",
+      "group": "category",
+      "catalog": "car",
+      "indicatorId": "c97179dabcaf4a3b8f3fb70a6646456a",
+      "skipMonths": ["01", "02"],
+      "decimals": 1,
+      "note": "限额以上单位商品零售类值，不含限额以下汽车销售"
+    },
+    {
+      "id": "car_yoy",
+      "label": "汽车类零售额同比（限上）",
+      "shortLabel": "汽车类同比",
+      "unit": "%",
+      "kind": "growth",
+      "group": "category",
+      "catalog": "car",
+      "indicatorId": "6025375b14d140ae873c317e6a12dc6c",
+      "skipMonths": ["01", "02"],
+      "decimals": 1,
+      "note": "官方发布值"
+    },
+    {
+      "id": "appliance_amount",
+      "label": "家用电器和音像器材类（当月，限上）",
+      "shortLabel": "家电类",
+      "unit": "亿元",
+      "kind": "money",
+      "group": "category",
+      "catalog": "appliance",
+      "indicatorId": "033747ece86d47e683f3734da7687eba",
+      "skipMonths": ["01", "02"],
+      "decimals": 1,
+      "note": "限额以上单位商品零售类值"
+    },
+    {
+      "id": "appliance_yoy",
+      "label": "家用电器和音像器材类同比（限上）",
+      "shortLabel": "家电类同比",
+      "unit": "%",
+      "kind": "growth",
+      "group": "category",
+      "catalog": "appliance",
+      "indicatorId": "3e9f9ca9f4194757b229fcb6c5181283",
+      "skipMonths": ["01", "02"],
+      "decimals": 1,
+      "note": "官方发布值"
+    },
+    {
+      "id": "grain_amount",
+      "label": "粮油食品类（当月，限上）",
+      "shortLabel": "粮油食品类",
+      "unit": "亿元",
+      "kind": "money",
+      "group": "category",
+      "catalog": "grain",
+      "indicatorId": "d22f3466e81243d38f203f7da7c3a9e9",
+      "skipMonths": ["01", "02"],
+      "decimals": 1,
+      "note": "限额以上单位商品零售类值；同栏目还有饮料类、烟酒类"
+    },
+    {
+      "id": "grain_yoy",
+      "label": "粮油食品类同比（限上）",
+      "shortLabel": "粮油食品类同比",
+      "unit": "%",
+      "kind": "growth",
+      "group": "category",
+      "catalog": "grain",
+      "indicatorId": "ba21c628b5e44fa5a9a2a7d7059d6d05",
+      "skipMonths": ["01", "02"],
+      "decimals": 1,
+      "note": "官方发布值"
+    },
+    {
+      "id": "ex_car_amount",
+      "label": "剔除汽车后社零（当月）",
+      "shortLabel": "剔除汽车",
+      "unit": "亿元",
+      "kind": "money",
+      "group": "exclude",
+      "derive": "ex_car",
+      "inputs": ["total_amount", "car_amount"],
+      "skipMonths": ["01", "02"],
+      "decimals": 1,
+      "note": "社零总额当月 − 限额以上汽车类零售额当月，本页计算值"
+    },
+    {
+      "id": "ex_car_yoy",
+      "label": "剔除汽车后社零同比",
+      "shortLabel": "剔除汽车同比",
+      "unit": "%",
+      "kind": "growth",
+      "group": "exclude",
+      "derive": "ex_car_yoy",
+      "inputs": ["ex_car_amount"],
+      "skipMonths": ["01", "02"],
+      "decimals": 1,
+      "note": "剔除汽车后当月值 ÷ 上年同月剔除值 − 1，本页计算值"
+    }
+  ]
+}

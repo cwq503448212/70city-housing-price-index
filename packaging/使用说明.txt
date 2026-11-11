@@ -12,45 +12,48 @@
   · 婚育与人口出生（结婚 / 离婚登记、初婚人数、出生率）
   · 人均收入与支出（可支配收入、四项收入分项、八项消费分项、城乡对比）
   · 居民存款与人均存款（住户存款余额、当月新增、活期/定期结构、人均存款）
-六个页面右上角都有「← 返回模块选择」，随时可以切回去。
+  · 社会消费品零售（社零总额、同比、餐饮/商品零售、城乡、网上零售、剔除汽车、重点品类）
+七个页面右上角都有「← 返回模块选择」，随时可以切回去。
 
 
 【几点说明】
 1. 那个黑色窗口是本地服务，别关它，关了页面就用不了了。用完直接关窗口即可。
 2. 房价数据已经打包在 data\periods.json 里（2011-01 ~ 2026-09，共 189 个月），
    打开时不会联网。
-3. 包里已经带了截至打包时的宏观、LPR、民生、收支与存款历史数据（.cache\macro、.cache\lpr、
-   .cache\livelihood、.cache\livelihood-income、.cache\livelihood-deposit），第一次打开只会补
-   最近几期，通常几秒就完；以后每次打开只核对有没有发布新一期，有就补进去，没发布就直接读缓存。
+3. 包里已经带了截至打包时的宏观、LPR、民生、收支、存款与社零历史数据（.cache\macro、.cache\lpr、
+   .cache\livelihood、.cache\livelihood-income、.cache\livelihood-deposit、.cache\livelihood-retail），
+  第一次打开只会补最近几期，通常几秒就完；以后每次打开只核对有没有发布新一期，有就补进去，没发布就直接读缓存。
 4. 想拿最新一期数据，点页面右上角「刷新数据」。
    房价需要能访问 www.stats.gov.cn（约 5-10 秒）；
    宏观需要能访问 data.stats.gov.cn（同样只请求缺的月份）；
    LPR 需要能访问 www.chinamoney.com.cn（按年分段取数，几秒）；
    民生需要能访问 data.stats.gov.cn（年度库，一次就几秒）；
    收支需要能访问 data.stats.gov.cn（年度库，六个请求，约十秒）；
-   存款需要能访问 www.pbc.gov.cn（央行调查统计司，按年取表，首次全量约 45 秒）。
-5. 六个页面都可以选时间范围，只影响展示，不会触发下载。
+   存款需要能访问 www.pbc.gov.cn（央行调查统计司，按年取表，首次全量约 45 秒）；
+   社零需要能访问 data.stats.gov.cn（月度库国内贸易栏目，八个请求，约十秒）。
+5. 七个页面都可以选时间范围，只影响展示，不会触发下载。
 6. 需要 Windows 10 / 11（64 位）。Windows 7 / 8 不支持。
 7. 绿色版：不写注册表、不装服务、不需要管理员权限。
    换电脑直接整个文件夹拷过去就行，用完删文件夹即可卸载。
 8. 如果提示「端口 5173 被其它程序占用」：
    在黑窗口里执行   set DASH_PORT=5180   然后再双击一次 start.bat。
-9. 第一次运行会自动生成 .cache 文件夹（房价月报原文 + 宏观/LPR/民生/收支/存款缓存），
+9. 第一次运行会自动生成 .cache 文件夹（房价月报原文 + 宏观/LPR/民生/收支/存款/社零缓存），
    删掉也没关系，房价数据集仍在 data\periods.json，其它模块下次打开会重新拉全。
 
 
 【目录说明】
 start.bat            双击启动
 node.exe             内置的 Node.js 运行时，不用单独安装
-server.js            本地服务：首页 + 六个看板页面 + 数据接口
+server.js            本地服务：首页 + 七个看板页面 + 数据接口
 lib\housing\nbs70.js 房价数据抓取与解析
 lib\macro\           宏观数据：缓存、取数、指标配置校验
 lib\lpr\             LPR 数据：缓存、取数、回源判定
 lib\livelihood\      民生数据：缓存、取数、回源判定（年度）
 lib\livelihood\income\ 人均收支子页：独立配置与缓存，取数复用民生的年度库通道
 lib\livelihood\deposit\ 居民存款子页：解析央行信贷收支表 htm 附件，独立配置与缓存，限流复用民生
-config\              指标配置（indicators.json 宏观、livelihood.json 民生、income.json 收支、deposit.json 存款）
-public\              页面本体（首页 + housing / macro / lpr / livelihood / livelihood\income / livelihood\deposit 六个看板，含 ECharts）
+lib\livelihood\retail\ 社零子页：走国家数据月度库，按栏目分文件缓存，限流复用民生
+config\              指标配置（indicators.json 宏观、livelihood.json 民生、income.json 收支、deposit.json 存款、retail.json 社零）
+public\              页面本体（首页 + housing / macro / lpr / livelihood / livelihood\income / livelihood\deposit / livelihood\retail 七个看板，含 ECharts）
 data\                房价数据集（189 个月）
 probe.js             指标编码探测工具（宏观月度库 / 民生年度库，一般用不到）
 docs\                截图
@@ -64,6 +67,7 @@ LPR ：中国货币网（www.chinamoney.com.cn，全国银行间同业拆借中�
 民生：国家统计局「国家数据」年度库（婚姻登记来自民政统计年报口径，人口为千分率）
 收支：国家统计局「国家数据」年度库「人民生活」栏目（人均可支配收入与消费支出，只有名义增速）
 存款：中国人民银行《金融机构人民币信贷收支表》（「住户存款」月末余额；当月新增 / 同比 / 人均为差分计算值）
+社零：国家统计局「国家数据」月度库「国内贸易」栏目（1、2 月合并公布；2026 年起网上零售换口径；剔除汽车与占比为计算值）
 
 注：房价里的「指数」反映的是价格变动的相对幅度，不是房屋成交均价。
-    六个看板均仅供数据观察，不构成任何投资建议。
+    七个看板均仅供数据观察，不构成任何投资建议。

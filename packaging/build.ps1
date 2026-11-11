@@ -47,7 +47,7 @@ Copy-Item $NodeExe (Join-Path $pkg 'node.exe')
 foreach ($f in @('server.js', 'package.json', 'probe.js', 'README.md')) {
   Copy-Item (Join-Path $root $f) $pkg
 }
-# 六个看板的代码、配置、页面、固化数据集与截图（docs 只被 README 引用）
+# 七个看板的代码、配置、页面、固化数据集与截图（docs 只被 README 引用）
 foreach ($d in @('lib', 'config', 'public', 'data', 'docs')) {
   Copy-Item (Join-Path $root $d) (Join-Path $pkg $d) -Recurse
 }
@@ -128,6 +128,19 @@ if (Test-Path $depositSrc) {
   Write-Host ('      + 存款缓存：' + $depositYears.Count + ' 个年度文件，最新 ' + $depositLatest)
 } else {
   Write-Host '      ! 未找到 .cache\livelihood-deposit：包里不带存款缓存，对方首次打开会现场拉全（约 45 秒）'
+}
+# 社零栏目缓存：8 个栏目文件（约 2.3 千个数据点），轻量，带上让首屏直接出图
+# _meta.json 同样剔掉（它带着本机的回源冷却时间戳与上次错误）
+$retailSrc = Join-Path $root '.cache\livelihood-retail'
+if (Test-Path $retailSrc) {
+  New-Item -ItemType Directory -Path (Join-Path $pkg '.cache') -Force | Out-Null
+  Copy-Item $retailSrc (Join-Path $pkg '.cache') -Recurse
+  Get-ChildItem (Join-Path $pkg '.cache\livelihood-retail') -Recurse -File -Filter '_meta.json' | Remove-Item -Force
+  $retailCats = Get-ChildItem (Join-Path $pkg '.cache\livelihood-retail\catalogs') -File -Filter '*.json'
+  $retailKB = '{0:N1}' -f (($retailCats | Measure-Object Length -Sum).Sum / 1KB)
+  Write-Host ('      + 社零缓存：' + $retailCats.Count + ' 个栏目文件，' + $retailKB + ' KB')
+} else {
+  Write-Host '      ! 未找到 .cache\livelihood-retail：包里不带社零缓存，对方首次打开会现场拉全（8 个请求，约 9 秒）'
 }
 Write-Host '[2/4] 已拷贝项目文件'
 

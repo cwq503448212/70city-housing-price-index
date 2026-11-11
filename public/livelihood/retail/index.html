@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>中国社会消费品零售看板</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-main">
+    <div class="brand">
+      <h1>中国社会消费品零售看板</h1>
+      <p class="brand-sub">数据来源：国家统计局 · 国家数据（月度库 · 国内贸易）　历史一次拉全，按月核对</p>
+    </div>
+
+    <div class="controls">
+      <a class="back-link" href="../../">← 返回模块选择</a>
+      <label class="ctrl">
+        <span class="ctrl-label">时间范围</span>
+        <select id="range">
+          <option value="2">近 2 年</option>
+          <option value="5" selected>近 5 年</option>
+          <option value="all">全部（2015 起）</option>
+          <option value="custom">自定义月份</option>
+        </select>
+      </label>
+
+      <div class="ctrl ctrl-custom" id="custom-box" hidden>
+        <label class="ctrl">
+          <span class="ctrl-label">起</span>
+          <input type="month" id="from" />
+        </label>
+        <label class="ctrl">
+          <span class="ctrl-label">止</span>
+          <input type="month" id="to" />
+        </label>
+      </div>
+
+      <button id="refresh" class="btn" type="button" title="跳过缓存，重新向统计局请求一次">刷新数据</button>
+      <span id="status" class="status">正在加载…</span>
+    </div>
+  </div>
+  <p class="range-hint" id="range-hint"></p>
+</header>
+
+<main>
+  <section class="kpi-row" id="kpi-row" aria-label="关键指标"></section>
+
+  <section class="grid">
+    <article class="card card-wide">
+      <header class="card-head">
+        <h2>社零总额：当月值与当月同比</h2>
+        <p class="card-sub">
+          柱为当月社会消费品零售总额（亿元），线为统计局发布的当月同比（%，右轴）。
+        1、2 月合并公布，所以每年的 1 月与 2 月没有当月值，柱状图会有一格空档
+        </p>
+      </header>
+      <div class="chart chart-lg" id="chart-total"></div>
+    </article>
+
+    <article class="card card-wide">
+      <header class="card-head">
+        <h2>社零总额：累计值与累计同比</h2>
+        <p class="card-sub">
+          线为年初至今累计（亿元），虚线为累计同比（%，右轴）。2 月的累计值是 1—2 月合计，所以这条线每年从 2 月开始
+        </p>
+      </header>
+      <div class="chart" id="chart-cum"></div>
+    </article>
+
+    <article class="card card-wide">
+      <header class="card-head">
+        <h2>餐饮收入 / 商品零售：当月值与同比</h2>
+        <p class="card-sub">
+          实线为当月值（亿元，左轴），虚线为当月同比（%，右轴）；餐饮收入 + 商品零售 = 社零总额
+        </p>
+      </header>
+      <div class="chart" id="chart-type"></div>
+    </article>
+
+    <article class="card card-wide">
+      <header class="card-head">
+        <h2>城镇 / 乡村消费：当月值与乡村占比</h2>
+        <p class="card-sub">
+          实线为城镇 / 乡村当月社零（亿元，左轴），虚线为乡村占比（%，右轴）——<strong>占比是本页计算值</strong>：乡村当月 ÷ 社零总额当月
+        </p>
+      </header>
+      <div class="chart" id="chart-place"></div>
+    </article>
+
+    <article class="card card-wide">
+      <header class="card-head">
+        <h2>实物网上零售：规模与占社零比重</h2>
+        <p class="card-sub">
+          累计口径（亿元，左轴）：2018-02 ~ 2025-12 是旧口径「实物商品网上零售额」，2026-02 起是新口径「网上商品零售额」，
+          <strong>两段口径不同、不拼接</strong>；虚线为占社零累计比重（%，右轴，本页计算值）
+        </p>
+      </header>
+      <div class="chart" id="chart-online"></div>
+    </article>
+
+    <article class="card card-wide">
+      <header class="card-head">
+        <h2>限额以上重点品类：当月零售额</h2>
+        <p class="card-sub">
+          粮油食品类 / 家用电器和音像器材类 / 汽车类的当月零售额（亿元）；均为<strong>限额以上单位</strong>商品零售类值，
+          不含限额以下门店与个体户，因此不是全口径行业规模
+        </p>
+      </header>
+      <div class="chart" id="chart-category"></div>
+    </article>
+
+    <article class="card card-wide">
+      <header class="card-head">
+        <h2>限额以上重点品类：当月同比</h2>
+        <p class="card-sub">
+          统计局发布的当月同比（%）；0 线以下为该品类当月零售额同比下降，红涨绿跌仅用于表格与 KPI，曲线本身按品类配色
+        </p>
+      </header>
+      <div class="chart" id="chart-category-yoy"></div>
+    </article>
+
+    <article class="card card-wide">
+      <header class="card-head">
+        <h2>剔除汽车后的社零：当月值与同比</h2>
+        <p class="card-sub">
+          <strong>本页计算值</strong>：社零总额当月 − 限额以上汽车类零售额当月；因为汽车类只有限额以上口径，
+          这个值不等于统计局口径的「社零扣除汽车」
+        </p>
+      </header>
+      <div class="chart" id="chart-excar"></div>
+    </article>
+  </section>
+
+  <section class="card">
+    <header class="card-head">
+      <h2>月度明细</h2>
+      <p class="card-sub">
+        按年分组，月份升序；— 表示该月没有这一口径的数据（1、2 月合并公布、旧口径网上零售已停更），不插值、不补 0
+      </p>
+    </header>
+    <div class="table-wrap">
+      <table id="detail-table">
+        <thead>
+          <tr>
+            <th>月份</th>
+            <th class="num">社零当月<br /><small>亿元</small></th>
+            <th class="num">当月同比<br /><small>%</small></th>
+            <th class="num">社零累计<br /><small>亿元</small></th>
+            <th class="num">累计同比<br /><small>%</small></th>
+            <th class="num">餐饮<br /><small>亿元</small></th>
+            <th class="num">商品零售<br /><small>亿元</small></th>
+            <th class="num">城镇<br /><small>亿元</small></th>
+            <th class="num">乡村<br /><small>亿元</small></th>
+            <th class="num">实物网上累计<br /><small>亿元 · 旧口径</small></th>
+            <th class="num">网上商品累计<br /><small>亿元 · 新口径</small></th>
+            <th class="num">网上占比<br /><small>%</small></th>
+            <th class="num">粮油食品类<br /><small>亿元</small></th>
+            <th class="num">家电类<br /><small>亿元</small></th>
+            <th class="num">汽车类<br /><small>亿元</small></th>
+            <th class="num">剔除汽车<br /><small>亿元 · 计算</small></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <p>
+      <strong>总量口径：</strong>「社会消费品零售总额」是国民经济各行业直接售给城乡居民和社会集团的消费品零售额，
+      包含餐饮收入与商品零售两部分，不含服务消费。当月值是单月数，累计值是年初至今合计。
+    </p>
+    <p>
+      <strong>1、2 月合并公布：</strong>统计局每年把 1 月与 2 月合并发布（春节错月影响），因此
+      <em>当月值没有 1 月与 2 月</em>，累计值只在 2 月给出 1—2 月合计。本页不做拆分、不按月均摊，
+      图上空档、表里「—」都是真实缺失。
+    </p>
+    <p>
+      <strong>剔除汽车（计算值）：</strong>统计局不发布「剔除汽车的社会消费品零售总额」。本页用
+      「社零总额当月 − 限额以上汽车类零售额当月」估算，同比用同月上年剔除值计算。
+      由于汽车类只有<strong>限额以上单位</strong>口径（不含限额以下汽车经销与二手车），
+      这个减法只能作为趋势参考，不能当成官方口径的社零扣除汽车。
+    </p>
+    <p>
+      <strong>限额以上品类：</strong>粮油食品类、家用电器和音像器材类、汽车类均为「限额以上单位商品零售类值」，
+      即年主营业务收入达到限额标准的批发零售、住宿餐饮单位，与全口径行业规模不同；
+      同一栏目下还有服装鞋帽、化妆品、金银珠宝等类值，本页只取用户关心的三类。
+    </p>
+    <p>
+      <strong>网上零售口径变更：</strong>2025 年及以前统计局发布「网上零售额」与其中的「实物商品网上零售额」；
+      2026 年起口径调整为「网上商品和服务零售额」，其中实物商品部分改称「网上商品零售额」，并单独发布「网上服务零售额」。
+      新旧口径不可直接比较，本页把两段<strong>并列画两条线</strong>，不做倍数修正、不做拼接。
+      占社零比重 = 当期口径的网上商品零售额累计 ÷ 社零总额累计，2025-12 及以前用旧口径、2026-02 起用新口径。
+    </p>
+    <p>
+      <strong>统计时点与发布节奏：</strong>社零数据每月 15 日左右随「国民经济运行情况」发布上月值，
+      因此「截至今天最晚应已发布」的月份是：当天 ≥ 15 日取上月，否则取上上月（1 月的数据并入 1—2 月，2 月中旬不单独发布）。
+      上个月的数据还没挂出来时，本页照常展示已有月份，并在状态栏标「数据可能滞后」，不空图、不补 0。
+    </p>
+    <p>
+      <strong>数据来源：</strong>国家统计局「国家数据」(data.stats.gov.cn) 月度库「国内贸易」栏目下的
+      社会消费品零售总额、按经营地分、按消费类型分、限额以上单位商品零售类值、网上零售额等序列。
+      接口是站点前端自用的内部接口，<strong>不是官方开放 API</strong>，没有稳定性承诺；
+      所有请求都由本地服务端代取并写入 JSON 缓存，上游失败时回退缓存并标记 stale。
+    </p>
+    <p>
+      <strong>缺失值：</strong>未发布或上游缺项一律显示为空缺，不插值、不补 0、不自行加权合成；
+      一条序列只来自单一数据源。
+    </p>
+    <p id="foot-meta" class="foot-meta"></p>
+  </footer>
+</main>
+
+<script src="../../vendor/echarts.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
