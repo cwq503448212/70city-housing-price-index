@@ -9,183 +9,304 @@
     <link rel="stylesheet" href="home.css" />
   </head>
   <body>
-    <header class="home-head">
-      <div class="home-brand">中国</div>
-      <div>
-        <h1>中国经济统计数据看板</h1>
-        <p class="home-sub">数据来源：国家统计局 / 中国人民银行 / 全国银行间同业拆借中心 · 本地服务运行，数据存本机，平时不联网</p>
-      </div>
-    </header>
+    <div class="home-wrap">
+      <header class="home-hero">
+        <div class="hero-inner">
+          <div class="hero-top">
+            <div class="hero-head">
+              <div class="hero-brand">中国</div>
+              <div class="hero-text">
+                <h1>中国经济统计数据看板</h1>
+                <p class="hero-sub">数据来源：国家统计局 / 中国人民银行 / 全国银行间同业拆借中心 · 本地服务运行，数据存本机，平时不联网</p>
+              </div>
+            </div>
 
-    <main class="home-main">
-      <h2 class="home-ask">请选择要看的数据</h2>
-
-      <div class="modules">
-        <a class="module" href="housing/">
-          <div class="module-top">
-            <span class="module-mark">70</span>
-            <span class="module-tag">月度 · 2011 年起</span>
+            <div class="hero-tags">
+              <span class="hero-tag"><b data-stat="total">11</b> 个看板</span>
+              <span class="hero-tag"><b data-stat="monthly">7</b> 个月度</span>
+              <span class="hero-tag"><b data-stat="yearly">4</b> 个年度</span>
+            </div>
           </div>
-          <h3>70 个大中城市房价指数</h3>
-          <p>
-            商品住宅销售价格变动情况：新房 / 二手房环比、同比，城市排行、涨跌城市数、
-            城市 × 月份热力图、单城详情与定基指数。数据集已固化为本地 189 个月，打开即读。
-          </p>
-          <span class="module-go">进入房价看板 →</span>
-        </a>
 
-        <a class="module" href="macro/">
-          <div class="module-top">
-            <span class="module-mark">宏</span>
-            <span class="module-tag">月度 · 2021 年起</span>
+          <div class="hero-search">
+            <svg class="hero-search-icon" viewBox="0 0 20 20" aria-hidden="true">
+              <circle cx="8.6" cy="8.6" r="5.4" fill="none" stroke="currentColor" stroke-width="1.6" />
+              <path d="M12.8 12.8 17 17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+            </svg>
+            <label class="sr-only" for="module-search">搜索看板</label>
+            <input id="module-search" type="search" autocomplete="off" spellcheck="false"
+              placeholder="搜索看板：房价 / 失业率 / CPI / 存款 / 分省 GDP …" />
+            <p class="hero-search-hint" aria-live="polite"></p>
           </div>
-          <h3>宏观经济指标</h3>
-          <p>
-            CPI / 核心 CPI / PPI 与八大类、制造业 PMI、社零、M1 / M2：
-            通胀走势、环比柱状、荣枯线、消费与货币对比。首次打开把全部历史拉全并缓存，之后只在有新一期时补充。
-          </p>
-          <span class="module-go">进入宏观看板 →</span>
-        </a>
+        </div>
+      </header>
 
-        <a class="module" href="lpr/">
-          <div class="module-top">
-            <span class="module-mark">LPR</span>
-            <span class="module-tag">月度 · 2019 年起</span>
+      <main class="home-main">
+        <section class="home-group">
+          <div class="group-head">
+            <h2>宏观与楼市</h2>
+            <span class="group-note">价格、货币与利率的月度主线</span>
+            <span class="group-count" data-count>3 个看板</span>
           </div>
-          <h3>房贷利率 LPR</h3>
-          <p>
-            贷款市场报价利率（1 年期 / 5 年期以上）：走势阶梯线、每次调整幅度、期限利差与明细。
-            数据来自中国货币网（LPR 官方发布平台），首次打开一次拉全并缓存，之后只核对应发布期别。
-          </p>
-          <span class="module-go">进入 LPR 看板 →</span>
-        </a>
+          <div class="modules">
+            <a class="module" href="housing/" data-freq="月度"
+              data-keywords="房价 住宅 新房 二手房 70城 环比 同比 定基 热力图 城市 楼市">
+              <div class="module-top">
+                <span class="module-mark">70</span>
+                <div class="module-meta">
+                  <span class="chip chip--freq">月度</span>
+                  <span class="chip">2011 年起</span>
+                  <span class="chip">已内置</span>
+                </div>
+              </div>
+              <h3>70 个大中城市房价指数</h3>
+              <p>商品住宅销售价格变动：新房 / 二手房环比与同比、城市排行、涨跌城市数、城市 × 月份热力图、单城详情与定基指数。</p>
+              <span class="module-go">进入房价看板<span class="arrow">→</span></span>
+            </a>
 
-        <a class="module" href="livelihood/">
-          <div class="module-top">
-            <span class="module-mark">民</span>
-            <span class="module-tag">年度 · 1978 年起</span>
+            <a class="module" href="macro/" data-freq="月度"
+              data-keywords="CPI PPI PMI 核心CPI 社零 M1 M2 通胀 货币 荣枯线 八大类 宏观">
+              <div class="module-top">
+                <span class="module-mark">宏</span>
+                <div class="module-meta">
+                  <span class="chip chip--freq">月度</span>
+                  <span class="chip">2021 年起</span>
+                </div>
+              </div>
+              <h3>宏观经济指标</h3>
+              <p>CPI / 核心 CPI / PPI 与八大类、制造业 PMI、社零、M1 / M2：通胀走势、环比柱状、荣枯线、消费与货币对比。</p>
+              <span class="module-go">进入宏观看板<span class="arrow">→</span></span>
+            </a>
+
+            <a class="module" href="lpr/" data-freq="月度"
+              data-keywords="房贷 利率 LPR 贷款 报价 5年期 1年期 货币网 利差">
+              <div class="module-top">
+                <span class="module-mark">LPR</span>
+                <div class="module-meta">
+                  <span class="chip chip--freq">月度</span>
+                  <span class="chip">2019 年起</span>
+                </div>
+              </div>
+              <h3>房贷利率 LPR</h3>
+              <p>贷款市场报价利率（1 年期 / 5 年期以上）：走势阶梯线、每次调整幅度、期限利差与明细。</p>
+              <span class="module-go">进入 LPR 看板<span class="arrow">→</span></span>
+            </a>
           </div>
-          <h3>人口与婚育</h3>
-          <p>
-            人口年龄结构、抚养比与老龄化、平均预期寿命，加上结婚 / 离婚登记、初婚人数与人口出生率、死亡率、自然增长率：
-            人口与婚姻的长期趋势、逐年变化、千分率对比。首次打开一次拉全并缓存，之后只在有新年份时补充。
-          </p>
-          <span class="module-go">进入人口与婚育看板 →</span>
-        </a>
+        </section>
 
-        <a class="module" href="livelihood/income/">
-          <div class="module-top">
-            <span class="module-mark">收</span>
-            <span class="module-tag">年度 · 2013 年起</span>
+        <section class="home-group">
+          <div class="group-head">
+            <h2>民生</h2>
+            <span class="group-note">收入、存款、消费、就业与社会保障</span>
+            <span class="group-count" data-count>6 个看板</span>
           </div>
-          <h3>人均收入与支出</h3>
-          <p>
-            全国居民人均可支配收入（含名义增速、中位数）、四项收入分项、人均消费支出与八项消费分项：
-            时序走势、消费结构饼图、城乡收支对比。首次打开一次拉全并缓存，之后只在有新年份时补充。
-          </p>
-          <span class="module-go">进入收支看板 →</span>
-        </a>
+          <div class="modules">
+            <a class="module" href="livelihood/" data-freq="年度"
+              data-keywords="人口 年龄结构 老龄化 抚养比 预期寿命 结婚 离婚 初婚 出生率 死亡率 婚育">
+              <div class="module-top">
+                <span class="module-mark">民</span>
+                <div class="module-meta">
+                  <span class="chip chip--freq">年度</span>
+                  <span class="chip">1978 年起</span>
+                </div>
+              </div>
+              <h3>人口与婚育</h3>
+              <p>人口年龄结构、抚养比与老龄化、平均预期寿命，加上结婚 / 离婚登记、初婚人数与出生率、死亡率、自然增长率。</p>
+              <span class="module-go">进入人口与婚育看板<span class="arrow">→</span></span>
+            </a>
 
-        <a class="module" href="livelihood/deposit/">
-          <div class="module-top">
-            <span class="module-mark">存</span>
-            <span class="module-tag">月度 · 2015 年起</span>
+            <a class="module" href="livelihood/income/" data-freq="年度"
+              data-keywords="收入 可支配 支出 消费 中位数 城乡 收支 分项 饼图 名义增速">
+              <div class="module-top">
+                <span class="module-mark">收</span>
+                <div class="module-meta">
+                  <span class="chip chip--freq">年度</span>
+                  <span class="chip">2013 年起</span>
+                </div>
+              </div>
+              <h3>人均收入与支出</h3>
+              <p>居民人均可支配收入（含名义增速、中位数）、四项收入分项、人均消费支出与八项消费分项：时序走势、消费结构、城乡对比。</p>
+              <span class="module-go">进入收支看板<span class="arrow">→</span></span>
+            </a>
+
+            <a class="module" href="livelihood/deposit/" data-freq="月度"
+              data-keywords="存款 储蓄 活期 定期 人均存款 住户 余额 新增 信贷收支">
+              <div class="module-top">
+                <span class="module-mark">存</span>
+                <div class="module-meta">
+                  <span class="chip chip--freq">月度</span>
+                  <span class="chip">2015 年起</span>
+                </div>
+              </div>
+              <h3>居民存款与人均存款</h3>
+              <p>住户存款余额、当月新增与年初至今累计、活期 / 定期结构、余额同比与年末人均存款（新增与人均为余额差分计算值）。</p>
+              <span class="module-go">进入存款看板<span class="arrow">→</span></span>
+            </a>
+
+            <a class="module" href="livelihood/retail/" data-freq="月度"
+              data-keywords="社零 零售 消费 餐饮 网上零售 汽车 家电 城乡 限额以上">
+              <div class="module-top">
+                <span class="module-mark">社</span>
+                <div class="module-meta">
+                  <span class="chip chip--freq">月度</span>
+                  <span class="chip">2015 年起</span>
+                </div>
+              </div>
+              <h3>社会消费品零售</h3>
+              <p>社零总额当月与累计、同比增速、餐饮收入与商品零售、城镇 / 乡村、实物网上零售规模与占比，以及剔除汽车后的社零与限额以上重点品类。</p>
+              <span class="module-go">进入社零看板<span class="arrow">→</span></span>
+            </a>
+
+            <a class="module" href="livelihood/employment/" data-freq="月度"
+              data-keywords="就业 失业率 调查失业 工时 农民工 青年 登记失业 户籍 大城市">
+              <div class="module-top">
+                <span class="module-mark">就</span>
+                <div class="module-meta">
+                  <span class="chip chip--freq">月度</span>
+                  <span class="chip">2018 年起</span>
+                </div>
+              </div>
+              <h3>就业形势</h3>
+              <p>全国与 31 个大城市城镇调查失业率、分户籍与分年龄（16—24 岁青年 / 25—29 岁 / 30—59 岁）、周平均工时，以及农民工规模与月均收入、城镇登记失业。</p>
+              <span class="module-go">进入就业看板<span class="arrow">→</span></span>
+            </a>
+
+            <a class="module" href="livelihood/security/" data-freq="年度"
+              data-keywords="养老 医保 社保 五险 养老金 参保 基金 结余 失业 工伤 生育 可支付月数">
+              <div class="module-top">
+                <span class="module-mark">保</span>
+                <div class="module-meta">
+                  <span class="chip chip--freq">年度</span>
+                  <span class="chip">1990 年起</span>
+                </div>
+              </div>
+              <h3>养老医保</h3>
+              <p>五险基金当年收支与累计结余、职工与城乡居民养老、基本医保职工 / 居民两张表，以及人均养老金支出、基金可支付月数、五个参保率（计算值）。</p>
+              <span class="module-go">进入养老医保看板<span class="arrow">→</span></span>
+            </a>
           </div>
-          <h3>居民存款与人均存款</h3>
-          <p>
-            住户存款余额、当月新增与年初至今累计、活期 / 定期结构、余额同比与年末人均存款：
-            数据来自央行《金融机构人民币信贷收支表》，新增与人均为余额差分计算值。首次打开一次拉全并缓存，之后按月核对。
-          </p>
-          <span class="module-go">进入存款看板 →</span>
-        </a>
+        </section>
 
-        <a class="module" href="livelihood/retail/">
-          <div class="module-top">
-            <span class="module-mark">社</span>
-            <span class="module-tag">月度 · 2015 年起</span>
+        <section class="home-group">
+          <div class="group-head">
+            <h2>行业与区域</h2>
+            <span class="group-note">行业冷暖与分省经济体量</span>
+            <span class="group-count" data-count>2 个看板</span>
           </div>
-          <h3>社会消费品零售</h3>
-          <p>
-            社零总额当月与累计、同比增速、餐饮收入与商品零售、城镇 / 乡村、实物网上零售规模与占比，
-            以及剔除汽车后的社零与限额以上重点品类（粮油食品、家电、汽车）：月度时序、结构对比与明细。
-            首次打开一次拉全并缓存，之后按月核对。
-          </p>
-          <span class="module-go">进入社零看板 →</span>
-        </a>
+          <div class="modules modules--duo">
+            <a class="module" href="industry/" data-freq="月度"
+              data-keywords="工业 行业 制造业 增加值 营收 利润 PMI 热力图 四象限 41个大类">
+              <div class="module-top">
+                <span class="module-mark">业</span>
+                <div class="module-meta">
+                  <span class="chip chip--freq">月度</span>
+                  <span class="chip">2018 年起</span>
+                </div>
+              </div>
+              <h3>工业行业运行</h3>
+              <p>41 个大类行业增加值当月同比热力图与排行、营业收入 / 利润总额累计同比四象限，加上制造业与非制造业 PMI 分项（50 = 荣枯线）：四个口径并列展示，不合成指数。</p>
+              <span class="module-go">进入行业运行看板<span class="arrow">→</span></span>
+            </a>
 
-        <a class="module" href="livelihood/employment/">
-          <div class="module-top">
-            <span class="module-mark">就</span>
-            <span class="module-tag">月度 · 2018 年起</span>
+            <a class="module" href="region/" data-freq="年度"
+              data-keywords="区域 省份 省 GDP 人均 三次产业 排行 31省 名义增速 实际增速">
+              <div class="module-top">
+                <span class="module-mark">省</span>
+                <div class="module-meta">
+                  <span class="chip chip--freq">年度</span>
+                  <span class="chip">1992 年起</span>
+                </div>
+              </div>
+              <h3>区域经济 · 分省 GDP</h3>
+              <p>31 个省级行政区的地区生产总值排行与单省走势、三次产业构成、人均 GDP 对比；实际增速只取统计局发布的官方指数，名义增速与产业占比为本页计算值，不做全国合计。</p>
+              <span class="module-go">进入区域经济看板<span class="arrow">→</span></span>
+            </a>
           </div>
-          <h3>就业形势</h3>
-          <p>
-            全国与 31 个大城市城镇调查失业率、分户籍（本地 / 外来）、分年龄（16—24 岁青年 / 25—29 岁 / 30—59 岁）、
-            企业就业人员周平均工时，以及农民工规模与月均收入、1978 年以来的城镇登记失业：
-            失业率时序曲线、青年与整体的差距、加班工时与农民工收入走势。首次打开一次拉全并缓存，之后按月核对。
-          </p>
-          <span class="module-go">进入就业看板 →</span>
-        </a>
+        </section>
 
-        <a class="module" href="livelihood/security/">
-          <div class="module-top">
-            <span class="module-mark">保</span>
-            <span class="module-tag">年度 · 1990 年起</span>
+        <p class="search-empty" id="search-empty" hidden>没有匹配的看板，换个关键词试试。</p>
+
+        <details class="home-note">
+          <summary>说明 · 数据来源与缓存机制</summary>
+          <div class="home-note-body">
+            <p>
+              页面上的按钮只在本机运行，不会把数据上传到任何地方。房价数据随项目分发；
+              宏观经济、LPR、民生、收支、存款、社零、就业、养老医保、行业运行与分省 GDP 数据首次打开时会拉全历史并存在本地（便携包已带上打包时的历史数据，只需补最新几期），
+              之后每次打开只核对是否已发布新一期：有新的就补进去，没发布就直接读缓存。分省 GDP 首次打开需逐省拉取（约 40 秒），其余看板首次打开后即为秒开。
+            </p>
+            <p class="muted">
+              数据版权归国家统计局、中国人民银行与全国银行间同业拆借中心所有，本项目只做本地可视化；接口均为站点页面所用接口，
+              非官方开放 API，无稳定性承诺，出现「待更新」属正常现象。
+            </p>
           </div>
-          <h3>养老医保</h3>
-          <p>
-            五险基金当年收支与累计结余、职工与城乡居民养老、基本医保职工 / 居民两张表、失业工伤生育配套指标，
-            以及人均养老金支出、基金可支付月数、五个参保率（计算值）：
-            养老医保的盘口、参保面与基金可持续性。首次打开一次拉全并缓存，之后按年核对。
-          </p>
-          <span class="module-go">进入养老医保看板 →</span>
-        </a>
+        </details>
+      </main>
 
-        <a class="module" href="industry/">
-          <div class="module-top">
-            <span class="module-mark">业</span>
-            <span class="module-tag">月度 · 2018 年起</span>
-          </div>
-          <h3>工业行业运行</h3>
-          <p>
-            41 个大类行业的规模以上工业增加值当月同比热力图与排行，营业收入 / 利润总额累计同比四象限，
-            加上制造业与非制造业 PMI 分项（50 = 荣枯线）：哪些行业在扩张、哪些在收缩，增收是否增利。
-            四个口径并列展示、不合成指数。首次打开一次拉全并缓存，之后按月核对。
-          </p>
-          <span class="module-go">进入行业运行看板 →</span>
-        </a>
+      <footer class="home-foot">
+        <p>中国经济统计数据看板 · 70 城房价 / 宏观经济 / 房贷利率 LPR / 人口与婚育 / 人均收入与支出 / 居民存款 / 社会消费品零售 / 就业形势 / 养老医保 / 工业行业运行 / 区域经济 · 仅供数据观察，不构成任何投资建议</p>
+      </footer>
+    </div>
 
-        <a class="module" href="region/">
-          <div class="module-top">
-            <span class="module-mark">省</span>
-            <span class="module-tag">年度 · 1992 年起</span>
-          </div>
-          <h3>区域经济 · 分省 GDP</h3>
-          <p>
-            31 个省级行政区的地区生产总值排行与单省走势、三次产业构成、人均 GDP 对比，
-            实际增速只取统计局发布的官方指数，名义增速与产业占比为本页计算值。
-            不做全国合计（各省相加不等于全国），不做港澳台。首次打开逐省拉取（约 40 秒），之后按年核对。
-          </p>
-          <span class="module-go">进入区域经济看板 →</span>
-        </a>
-      </div>
+    <script>
+      // 首页只做两件事：按关键词过滤卡片、按卡片上的 data-freq 统计月度 / 年度数量。
+      (function () {
+        var cards = Array.prototype.slice.call(document.querySelectorAll(".module"));
+        var groups = Array.prototype.slice.call(document.querySelectorAll(".home-group"));
+        var input = document.getElementById("module-search");
+        var hint = document.querySelector(".hero-search-hint");
+        var empty = document.getElementById("search-empty");
 
-      <section class="home-note">
-        <h4>说明</h4>
-        <p>
-          页面上的按钮只在本机运行，不会把数据上传到任何地方。房价数据随项目分发；
-          宏观经济、LPR、民生、收支、存款、社零、就业、养老医保、行业运行与分省 GDP 数据首次打开时会拉全历史并存在本地（便携包已带上打包时的历史数据，只需补最新几期），
-          之后每次打开只核对是否已发布新一期：有新的就补进去，没发布就直接读缓存。
-        </p>
-        <p class="muted">
-          数据版权归国家统计局、中国人民银行与全国银行间同业拆借中心所有，本项目只做本地可视化；接口均为站点页面所用接口，
-          非官方开放 API，无稳定性承诺，出现「待更新」属正常现象。
-        </p>
-      </section>
-    </main>
+        var counts = { total: 0, monthly: 0, yearly: 0 };
+        cards.forEach(function (card) {
+          counts.total++;
+          if (card.dataset.freq === "月度") counts.monthly++;
+          if (card.dataset.freq === "年度") counts.yearly++;
+          card.dataset.haystack = (card.textContent + " " + (card.dataset.keywords || "")).toLowerCase();
+        });
+        Object.keys(counts).forEach(function (key) {
+          var node = document.querySelector('[data-stat="' + key + '"]');
+          if (node) node.textContent = counts[key];
+        });
 
-    <footer class="home-foot">
-      <p>中国经济统计数据看板 · 70 城房价 / 宏观经济 / 房贷利率 LPR / 人口与婚育 / 人均收入与支出 / 居民存款与人均存款 / 社会消费品零售 / 就业形势 / 养老医保 / 工业行业运行 / 区域经济 十一个看板 · 仅供数据观察，不构成任何投资建议</p>
-    </footer>
+        groups.forEach(function (group) {
+          group.dataset.total = Array.prototype.slice.call(group.querySelectorAll(".module")).length;
+        });
+
+        function apply() {
+          var terms = input.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+          var visible = 0;
+
+          cards.forEach(function (card) {
+            var hit = terms.every(function (term) {
+              return card.dataset.haystack.indexOf(term) !== -1;
+            });
+            card.hidden = !hit;
+            if (hit) visible++;
+          });
+
+          groups.forEach(function (group) {
+            var shown = group.querySelectorAll(".module:not([hidden])").length;
+            group.hidden = shown === 0;
+            var counter = group.querySelector("[data-count]");
+            if (counter) {
+              counter.textContent = terms.length
+                ? shown + " / " + group.dataset.total + " 个看板"
+                : group.dataset.total + " 个看板";
+            }
+          });
+
+          empty.hidden = visible > 0;
+          hint.textContent = terms.length && visible ? "匹配 " + visible + " 个看板" : "";
+        }
+
+        input.addEventListener("input", apply);
+        input.addEventListener("keydown", function (event) {
+          if (event.key === "Escape" && input.value) {
+            input.value = "";
+            apply();
+          }
+        });
+      })();
+    </script>
   </body>
 </html>
