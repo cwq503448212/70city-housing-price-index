@@ -379,6 +379,21 @@ body {
   font-weight: 600;
 }
 
+/* 数据新鲜度：绿 = 已跟上上游，橙 = 落后 / 上游不可达（由 /api/health 注入） */
+.chip--fresh {
+  font-variant-numeric: tabular-nums;
+}
+
+.chip--fresh.is-ok {
+  background: #e7f6ee;
+  color: #14603a;
+}
+
+.chip--fresh.is-warn {
+  background: #fff3e0;
+  color: #8a4b00;
+}
+
 .module h3 {
   margin: 2px 0 0;
   font-size: 16.5px;

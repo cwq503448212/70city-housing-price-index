@@ -81,10 +81,28 @@ function sendJson(res, code, data) {
   res.end(body);
 }
 
+let housingMeta = null; // periods.json 的顶层 meta，只在文件变更时重读
+
 function housingDatasetInfo() {
   try {
     const st = fs.statSync(HOUSING_DATASET);
-    return { file: 'data/periods.json', size: st.size, updatedAt: st.mtime.toISOString() };
+    if (!housingMeta || housingMeta.mtime !== st.mtimeMs) {
+      const data = JSON.parse(fs.readFileSync(HOUSING_DATASET, 'utf8'));
+      housingMeta = {
+        mtime: st.mtimeMs,
+        firstMonth: data.firstMonth,
+        lastMonth: data.lastMonth,
+        count: data.count,
+      };
+    }
+    return {
+      file: 'data/periods.json',
+      size: st.size,
+      updatedAt: st.mtime.toISOString(),
+      firstMonth: housingMeta.firstMonth,
+      lastMonth: housingMeta.lastMonth,
+      count: housingMeta.count,
+    };
   } catch (e) {
     return null;
   }
@@ -137,24 +155,30 @@ function serveStatic(req, res, pathname) {
 }
 
 /** 健康检查：各看板的概况（start.bat 也靠它确认端口上确实是本服务） */
+/**
+ * 首页卡片用的新鲜度摘要。各模块 health 的字段口径不一（latest / latestMonth /
+ * latestYear / lastDate，behind 有的是期数、有的是布尔），在这里收成一套：
+ * { latest, period: 'day'|'month'|'year'|null, behind: 期数|null, stale }
+ * behind 为 null 表示只知道落后、期数未定；stale 为 true 表示上游不可达、用的是旧缓存。
+ */
+function freshness(h) {
+  const ds = (h && h.dataset) || {};
+  const cache = (h && h.cache) || {};
+  const latest = ds.latest || ds.latestMonth || ds.latestYear || ds.lastMonth || cache.lastDate || null;
+  let period = null;
+  if (latest) {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(latest)) period = 'day';
+    else if (/^\d{4}-\d{2}$/.test(latest)) period = 'month';
+    else if (/^\d{4}$/.test(latest)) period = 'year';
+  }
+  let behind = ds.behind;
+  if (behind === true) behind = null;
+  else if (!behind) behind = 0;
+  return { latest: latest, period: period, behind: behind, stale: !!(h && h.stale) };
+}
+
 function health() {
-  return {
-    ok: true,
-    uptime: process.uptime(),
-    now: new Date().toISOString(),
-    modules: [
-      'housing',
-      'macro',
-      'lpr',
-      'livelihood',
-      'livelihood-income',
-      'livelihood-deposit',
-      'livelihood-retail',
-      'livelihood-employment',
-      'livelihood-security',
-      'industry',
-      'region',
-    ],
+  const modules = {
     housing: { dataset: housingDatasetInfo() },
     macro: { cache: macroStore.stats(), dataset: macroSeries.datasetStatus() },
     lpr: lprApi.health(),
@@ -167,6 +191,32 @@ function health() {
     industry: industryApi.health(),
     region: regionApi.health(),
   };
+  const fresh = {};
+  Object.keys(modules).forEach((k) => {
+    fresh[k] = freshness(modules[k]);
+  });
+  return Object.assign(
+    {
+      ok: true,
+      uptime: process.uptime(),
+      now: new Date().toISOString(),
+      modules: [
+        'housing',
+        'macro',
+        'lpr',
+        'livelihood',
+        'livelihood-income',
+        'livelihood-deposit',
+        'livelihood-retail',
+        'livelihood-employment',
+        'livelihood-security',
+        'industry',
+        'region',
+      ],
+      fresh: fresh,
+    },
+    modules
+  );
 }
 
 const server = http.createServer((req, res) => {

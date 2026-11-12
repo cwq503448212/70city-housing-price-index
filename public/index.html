@@ -49,14 +49,13 @@
             <span class="group-count" data-count>3 个看板</span>
           </div>
           <div class="modules">
-            <a class="module" href="housing/" data-freq="月度"
+            <a class="module" href="housing/" data-health="housing" data-freq="月度"
               data-keywords="房价 住宅 新房 二手房 70城 环比 同比 定基 热力图 城市 楼市">
               <div class="module-top">
                 <span class="module-mark">70</span>
                 <div class="module-meta">
                   <span class="chip chip--freq">月度</span>
                   <span class="chip">2011 年起</span>
-                  <span class="chip">已内置</span>
                 </div>
               </div>
               <h3>70 个大中城市房价指数</h3>
@@ -64,7 +63,7 @@
               <span class="module-go">进入房价看板<span class="arrow">→</span></span>
             </a>
 
-            <a class="module" href="macro/" data-freq="月度"
+            <a class="module" href="macro/" data-health="macro" data-freq="月度"
               data-keywords="CPI PPI PMI 核心CPI 社零 M1 M2 通胀 货币 荣枯线 八大类 宏观">
               <div class="module-top">
                 <span class="module-mark">宏</span>
@@ -78,7 +77,7 @@
               <span class="module-go">进入宏观看板<span class="arrow">→</span></span>
             </a>
 
-            <a class="module" href="lpr/" data-freq="月度"
+            <a class="module" href="lpr/" data-health="lpr" data-freq="月度"
               data-keywords="房贷 利率 LPR 贷款 报价 5年期 1年期 货币网 利差">
               <div class="module-top">
                 <span class="module-mark">LPR</span>
@@ -101,7 +100,7 @@
             <span class="group-count" data-count>6 个看板</span>
           </div>
           <div class="modules">
-            <a class="module" href="livelihood/" data-freq="年度"
+            <a class="module" href="livelihood/" data-health="livelihood" data-freq="年度"
               data-keywords="人口 年龄结构 老龄化 抚养比 预期寿命 结婚 离婚 初婚 出生率 死亡率 婚育">
               <div class="module-top">
                 <span class="module-mark">民</span>
@@ -115,7 +114,7 @@
               <span class="module-go">进入人口与婚育看板<span class="arrow">→</span></span>
             </a>
 
-            <a class="module" href="livelihood/income/" data-freq="年度"
+            <a class="module" href="livelihood/income/" data-health="livelihoodIncome" data-freq="年度"
               data-keywords="收入 可支配 支出 消费 中位数 城乡 收支 分项 饼图 名义增速">
               <div class="module-top">
                 <span class="module-mark">收</span>
@@ -129,7 +128,7 @@
               <span class="module-go">进入收支看板<span class="arrow">→</span></span>
             </a>
 
-            <a class="module" href="livelihood/deposit/" data-freq="月度"
+            <a class="module" href="livelihood/deposit/" data-health="livelihoodDeposit" data-freq="月度"
               data-keywords="存款 储蓄 活期 定期 人均存款 住户 余额 新增 信贷收支">
               <div class="module-top">
                 <span class="module-mark">存</span>
@@ -143,7 +142,7 @@
               <span class="module-go">进入存款看板<span class="arrow">→</span></span>
             </a>
 
-            <a class="module" href="livelihood/retail/" data-freq="月度"
+            <a class="module" href="livelihood/retail/" data-health="livelihoodRetail" data-freq="月度"
               data-keywords="社零 零售 消费 餐饮 网上零售 汽车 家电 城乡 限额以上">
               <div class="module-top">
                 <span class="module-mark">社</span>
@@ -157,7 +156,7 @@
               <span class="module-go">进入社零看板<span class="arrow">→</span></span>
             </a>
 
-            <a class="module" href="livelihood/employment/" data-freq="月度"
+            <a class="module" href="livelihood/employment/" data-health="livelihoodEmployment" data-freq="月度"
               data-keywords="就业 失业率 调查失业 工时 农民工 青年 登记失业 户籍 大城市">
               <div class="module-top">
                 <span class="module-mark">就</span>
@@ -171,7 +170,7 @@
               <span class="module-go">进入就业看板<span class="arrow">→</span></span>
             </a>
 
-            <a class="module" href="livelihood/security/" data-freq="年度"
+            <a class="module" href="livelihood/security/" data-health="livelihoodSecurity" data-freq="年度"
               data-keywords="养老 医保 社保 五险 养老金 参保 基金 结余 失业 工伤 生育 可支付月数">
               <div class="module-top">
                 <span class="module-mark">保</span>
@@ -194,7 +193,7 @@
             <span class="group-count" data-count>2 个看板</span>
           </div>
           <div class="modules modules--duo">
-            <a class="module" href="industry/" data-freq="月度"
+            <a class="module" href="industry/" data-health="industry" data-freq="月度"
               data-keywords="工业 行业 制造业 增加值 营收 利润 PMI 热力图 四象限 41个大类">
               <div class="module-top">
                 <span class="module-mark">业</span>
@@ -208,7 +207,7 @@
               <span class="module-go">进入行业运行看板<span class="arrow">→</span></span>
             </a>
 
-            <a class="module" href="region/" data-freq="年度"
+            <a class="module" href="region/" data-health="region" data-freq="年度"
               data-keywords="区域 省份 省 GDP 人均 三次产业 排行 31省 名义增速 实际增速">
               <div class="module-top">
                 <span class="module-mark">省</span>
@@ -306,6 +305,47 @@
             apply();
           }
         });
+
+        // 数据新鲜度：一次 /api/health，给每张卡片补「最新 2026-10 / 待更新 · 落后 3 期」的标签。
+        // 拉不到就什么都不显示（不离线不可用），失败的卡片保留原有徽章。
+        fetch("/api/health")
+          .then(function (res) {
+            return res.ok ? res.json() : null;
+          })
+          .then(function (json) {
+            var fresh = json && json.fresh;
+            if (!fresh) return;
+
+            cards.forEach(function (card) {
+              var info = fresh[card.dataset.health];
+              var meta = card.querySelector(".module-meta");
+              if (!info || !meta) return;
+
+              var chip = document.createElement("span");
+              chip.className = "chip chip--fresh";
+
+              if (typeof info.behind === "number" && info.behind > 0) {
+                chip.textContent = "落后 " + info.behind + " 期";
+                chip.classList.add("is-warn");
+                chip.title = "最新一期 " + info.latest + "，上游已发布到更晚的期别";
+              } else if (info.stale) {
+                chip.textContent = "待核对";
+                chip.classList.add("is-warn");
+                chip.title = "本地缓存未全部覆盖最新应发布期别（截至 " + info.latest + "），下次打开页面会自动核对上游";
+              } else if (info.latest) {
+                chip.textContent = "最新 " + info.latest;
+                chip.classList.add("is-ok");
+                chip.title = "本地缓存已覆盖到上游最新期别";
+              } else {
+                return;
+              }
+
+              meta.appendChild(chip);
+            });
+          })
+          .catch(function () {
+            /* 服务不在时首页仍可用，只是不显示新鲜度 */
+          });
       })();
     </script>
   </body>
