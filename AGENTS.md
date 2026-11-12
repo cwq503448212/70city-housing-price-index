@@ -88,6 +88,29 @@
 - 公开仓库：仓库级 git 身份为 `cwq503448212` + GitHub noreply 邮箱；提交前确认不含公司邮箱/真名拼音。
 - README 必写：两种用法（源码版 / 一键包版）、数据来源与稳定性声明、缓存目录说明。
 
+### 5.1 推送通路（本机网络特殊，务必照此执行）
+
+本机到 GitHub 的 SSH 通路（远端配置为 `ssh://git@ssh.github.com:443`）**连不通**，`git push origin main` 必然超时：`ssh: connect to host ssh.github.com port 443: Connection timed out`。这是网络环境限制，不是仓库权限或远端配置问题，**不要改远端、不要重配 SSH key、不要反复重试**。
+
+固定走「HTTPS + 本地 SOCKS5 + HTTP/1.1」这条通路：
+
+```powershell
+$env:GIT_TERMINAL_PROMPT="0"
+git -c http.proxy=socks5://127.0.0.1:1080 -c http.version=HTTP/1.1 push https://github.com/cwq503448212/china-economic-stats-dashboard.git main
+```
+
+要点：
+
+- **代理端口不能写死**：`1080` 只是当前值，代理客户端重启后端口会漂移。先读系统代理 `HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings` 的 `ProxyServer`，或用 `Get-NetTCPConnection -State Listen` 核对实际监听端口再填。
+- 必须用 `socks5://`（本地 DNS），不要用 `socks5h://`（远端 DNS 常超时）。
+- 必须加 `-c http.version=HTTP/1.1`；沿用默认 HTTP/2 会在握手阶段报 `OpenSSL SSL_connect: SSL_ERROR_SYSCALL`，该报错与证书、权限无关。
+- 推送前设 `GIT_TERMINAL_PROMPT=0`，凭据缺失时快速失败而不是挂起等输入；凭据由 Windows 凭据管理器提供，**不要把 token 写进任何文件或命令行**。
+- 连通性只验证一次：`curl.exe -s -o NUL -w "%{http_code}" --proxy socks5://127.0.0.1:<port> "https://github.com/cwq503448212/china-economic-stats-dashboard.git/info/refs?service=git-receive-pack"` 返回 `401` 即说明代理能转发 git 协议（未带凭据的正常响应）。**严禁循环重试本地 SOCKS 端口**，短时间反复建连断开会把桌面代理客户端打崩，端口随即漂移，后续失败全是自造的。
+- 用裸 URL 推送不会更新远端跟踪引用：push 成功后再执行 `git update-ref refs/remotes/origin/main <新 commit>`，并用 `curl.exe` 经同一代理查 `https://api.github.com/repos/cwq503448212/china-economic-stats-dashboard/commits/main` 核对远端 sha。
+- 在受限沙箱内执行 `git push` 会报 `Access denied`，那是沙箱限制，需在沙箱外执行，不要当成网络故障。
+- PowerShell 里 git 的进度输出走 stderr，`2>&1 | Out-String` 会让 `ExitCode` 变成 1；只要输出里有 `aef1501..3b675a3  main -> main` 就是推送成功，不要误判后重复推送。
+- 推 tag 与创建 Release 的附件上传同样受此通路限制，tag 用同一条命令推（把末尾 `main` 换成 `vX.Y.Z`），Release 附件上传仍走 HTTPS + 同一代理。
+
 ## 6. 禁止
 
 - 把统计局站点内部接口说成官方开放 API
