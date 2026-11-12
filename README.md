@@ -33,6 +33,7 @@ node server.js
 - 需要 Node >= 20，**不需要 `npm install`**（ECharts 已内置在 `public/vendor/`，十一个看板共用一份）。
 - 必须经这个本地服务访问：直接双击 `public/**/index.html` 不行——`file://` 下 `fetch('/api/...')` 会被浏览器拦下；统计局 / 央行站点还有 WAF，浏览器直连会 403，数据只能由服务端代取。
 - 换端口：`$env:PORT=8080; node server.js`；用 `start.bat` 时可以先 `set DASH_PORT=5180`（旧的 `NBS_PORT` 仍兼容）。
+- **改完后端要重启**：`start.bat` 发现端口已在监听就只打开浏览器、不再启动 node，而 Node 没有热重载。改过 `server.js` 或 `lib/` 后不重启，新接口会一直返回 404，页面显示「接口返回失败」；判据是进程启动时间早于文件修改时间。
 
 ## 目录结构
 
@@ -40,7 +41,7 @@ node server.js
 server.js                    本地 HTTP 服务：静态托管 + 路由分发
 start.bat / build.bat        Windows 一键启动 / 一键打包（转发给 packaging/build.ps1）
 probe.js                     指标编码探测（月度库 / 年度库）+ 官方与 DBnomics 交叉校验
-AGENTS.md                    各看板共用的开发规范
+AGENTS.md                    开发约束与红线（改代码前先读）
 
 lib/housing/nbs70.js         房价：站内搜索建索引 → 月报正文表格解析 → 数据集读写
 lib/macro/                   宏观：config / cache（policy 唯一回源判定 + store）/ services / sources（nbs + dbnomics）
@@ -62,6 +63,8 @@ packaging/                   便携包的 build.ps1 / start.bat / 使用说明.t
 .cache/                      运行时缓存（macro / lpr / livelihood* / industry / region / raw），可随时删除
 .temp/                       临时脚本与截图（已被 git 忽略，可随时删除）
 ```
+
+模块之间**不互相 require**：每个模块只依赖自己的 `lib/<module>/`，共用能力下沉到模块内或新建 `lib/shared/`；同一模块的子页面可以复用父目录的公共件（如 `lib/livelihood/{income,deposit,retail,employment,security}` 复用父目录的 `queue`）。HTTP 只由 `server.js` 一个进程分发，新增的子前缀路由必须排在更宽前缀（如 `/api/livelihood/`）的分支之前。
 
 ## 十一个看板共用的机制
 
