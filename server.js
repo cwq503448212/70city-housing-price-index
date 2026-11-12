@@ -776,4 +776,11 @@ server.listen(PORT, HOST, () => {
   } catch (e) {
     console.error('  [行业运行] 配置有误：' + e.message);
   }
+
+  // 区域经济模块：配置独立（config/region.json），31 省 GDP 走国家数据分省年度库
+  try {
+    require('./lib/region/config').load();
+  } catch (e) {
+    console.error('  [区域经济] 配置有误：' + e.message);
+  }
 });
