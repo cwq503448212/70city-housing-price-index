@@ -176,6 +176,7 @@
     from: $('from'),
     to: $('to'),
     customBox: $('custom-box'),
+    exportBtn: $('export-csv'),
     refresh: $('refresh'),
     status: $('status'),
     rangeHint: $('range-hint'),
@@ -190,6 +191,20 @@
   }
 
   function loadPref() {
+    // 地址栏优先：别人发来的链接要打开成他看到的那一屏
+    const qsFrom = Board.qs('from');
+    const qsTo = Board.qs('to');
+    if (isYear(qsFrom) && isYear(qsTo)) {
+      state.range = 'custom';
+      state.from = qsFrom;
+      state.to = qsTo;
+      return;
+    }
+    const qsRange = Board.qs('range');
+    if (qsRange === 'all' || /^\d+$/.test(qsRange || '')) {
+      state.range = qsRange;
+      return;
+    }
     try {
       const raw = localStorage.getItem(RANGE_KEY);
       if (!raw) return;
@@ -215,6 +230,16 @@
     } catch (e) {
       // 隐私模式下写不了，不影响使用
     }
+  }
+
+  /** 视图写回地址栏（不刷新、不新增历史）；自定义区间才会带 from/to */
+  function syncQuery() {
+    const custom = state.range === 'custom';
+    Board.setQs({
+      range: custom ? null : state.range,
+      from: custom ? state.from : null,
+      to: custom ? state.to : null,
+    });
   }
 
   /* ---------------- 数值格式 ---------------- */
@@ -772,6 +797,77 @@
     table.appendChild(tbody);
   }
 
+  /* ---------------- 导出 ---------------- */
+
+  const CSV_TITLES = {
+    't-fund': '明细一：五险基金收支与累计结余',
+    't-pension': '明细二：城镇职工基本养老保险',
+    't-resident': '明细三：城乡居民基本养老保险',
+    't-medical': '明细四：基本医疗保险',
+    't-others': '明细五：失业保险、工伤保险、生育保险',
+  };
+
+  /**
+   * 导出：五张明细表按当前年份区间各成一段，列名用指标短名 + 单位，计算列带「本页计算」。
+   * 列的顺序与单位直接读接口返回的指标声明，不在这里再抄一份。
+   */
+  function buildCsv() {
+    if (!state.data) {
+      window.alert('数据还没加载完成，稍后再导出。');
+      return;
+    }
+    const blocks = TABLES.map((def) => {
+      const cols = def.ids.map((id) => byId(id)).filter(Boolean);
+      if (!cols.length) return null;
+      const columns = [{ key: 'period', label: '年份' }].concat(
+        cols.map((ind) => ({
+          key: ind.id,
+          label: ind.shortLabel || ind.label,
+          unit: ind.unit,
+          calc: !!ind.computed,
+        }))
+      );
+      const years = yearsOf(cols.map((x) => x.id));
+      const rows = years.map((y) => {
+        const row = { period: y };
+        cols.forEach((ind) => {
+          const v = pointAt(ind.id, y);
+          row[ind.id] = v === null ? '' : v;
+        });
+        return row;
+      });
+      return { title: CSV_TITLES[def.id] || def.id, columns: columns, rows: rows };
+    }).filter((b) => b && b.rows.length);
+
+    if (!blocks.length) {
+      window.alert('当前区间还没有数据可导出。');
+      return;
+    }
+    const first = blocks[0].rows[0].period;
+    const last = blocks[0].rows[blocks[0].rows.length - 1].period;
+
+    Board.csv(
+      {
+        file: 'livelihood-security',
+        fileSuffix: first + '_' + last,
+        module: '中国社会保障看板 · 养老医保',
+        source: '国家统计局 · 国家数据（年度库 · 社会保险基金收支、各险种参保与待遇人数）',
+        interface: '/api/livelihood/security',
+        range: first + ' ~ ' + last + '（年度）',
+        note: [
+          '所有序列均为年度数据（年末数或当年发生额），没有月度、季度版本',
+          '当期结余、人均养老金支出、可支付月数、参保率、领取人数占比均为本页计算值',
+          '当年收支是流量、累计结余是存量，两者含义不同，不可相加或相互替代',
+          '生育保险基金止于 2018 年（2019 年并入职工医保），待遇人数止于 2021 年；医保全口径参保人数 2017 年起才有',
+          '空单元格表示官方未发布或该年无此口径，不插值、不补 0',
+        ],
+      },
+      blocks
+    );
+  }
+
+  Board.onExport(el.exportBtn, buildCsv);
+
   /* ---------------- 状态栏 ---------------- */
 
   function setStatus(text, kind) {
@@ -982,24 +1078,28 @@
       state.from = el.from.value;
       state.to = el.to.value;
       savePref();
+      syncQuery();
       if (isYear(state.from) && isYear(state.to)) load(false);
       return;
     }
     state.from = '';
     state.to = '';
     savePref();
+    syncQuery();
     load(false);
   });
 
   el.from.addEventListener('change', () => {
     state.from = el.from.value;
     savePref();
+    syncQuery();
     if (state.range === 'custom' && isYear(state.from) && isYear(state.to)) load(false);
   });
 
   el.to.addEventListener('change', () => {
     state.to = el.to.value;
     savePref();
+    syncQuery();
     if (state.range === 'custom' && isYear(state.from) && isYear(state.to)) load(false);
   });
 
@@ -1055,6 +1155,7 @@
     try {
       const json = await fetchData(false);
       buildRangeSelect(json.presets);
+      syncQuery();
       state.data = json;
       renderAll();
       applyStatus(json);

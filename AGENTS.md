@@ -30,6 +30,7 @@
 
 - 新增模块落 `lib/<module>/` + `public/<module>/`，API 用 `/api/<module>/*`，并在 `public/index.html` 加入口卡片。
 - 模块之间**不互相 require**；共用能力下沉到本模块内，或新建 `lib/shared/`。
+- 前端共用能力只在 `public/shared.js`（URL 视图 / CSV 导出 / 口径气泡），新页面必须在自己的 `app.js` 之前引入（子目录 `../../shared.js`），不要再复制一套实现。
 - 同一模块的子页面可以 require 父目录的公共件（现有复用关系见 README「目录结构」，新增复用就同步补那里）。
 - HTTP 只由 `server.js` 一个进程分发，不新开监听端口。新增的子前缀路由（如 `/api/livelihood/xxx`）**必须排在 `/api/livelihood/` 这类更宽前缀的分支之前**，否则会被吞掉；`server.js` 对应路由段上已有注释提醒。
 
@@ -42,6 +43,7 @@
 - `.bat` 必须 **UTF-8 无 BOM + CRLF**、首行 `chcp 65001 >nul`；`.ps1` 必须 **UTF-8 with BOM**（PS 5.1 会按 GBK 解码无 BOM 文件）。长逻辑写在 `.ps1`，`.bat` 只做转发。
 - 临时探测脚本、截图、中间产物一律放 `.temp/`（已 git 忽略），用完即删；不要落在根目录、`.cache/`、`docs/`、`public/`。
 - 前端请求一律相对根路径 `/api/...`，不硬编码端口或 `127.0.0.1`；`localStorage` 里的筛选默认值改动时必须同步升级键名（如 `.v2` → `.v3`）。
+- 计算值、口径变更、易误读的备注都要挂 `.q` 气泡（`data-tip` 写清「怎么算的 + 不能怎么读」）；页面当前筛选必须能由 URL 复现（地址栏优先于 `localStorage`）；导出按钮只导当前视图，计算列标「本页计算」。
 
 ## 4. 数据红线
 

@@ -67,6 +67,7 @@
   const el = {
     year: $('year'),
     range: $('range'),
+    exportBtn: $('export-csv'),
     refresh: $('refresh'),
     status: $('status'),
     rangeHint: $('range-hint'),
@@ -84,6 +85,17 @@
   /* ---------------- 本地偏好 ---------------- */
 
   function loadPref() {
+    // 地址栏优先：别人发来的链接要打开成他看到的那一屏
+    const qsRange = Board.qs('range');
+    if (['10', '20', 'all'].indexOf(qsRange) >= 0) state.range = qsRange;
+    const qsMetric = Board.qs('metric');
+    if (METRICS.some((m) => m.id === qsMetric)) state.metric = qsMetric;
+    const qsProvince = Board.qs('province');
+    if (/^\d{12}$/.test(qsProvince || '')) state.province = qsProvince;
+    const qsYear = Board.qs('year');
+    if (/^\d{4}$/.test(qsYear || '')) state.year = qsYear;
+    if (qsRange || qsMetric || qsProvince) return; // 链接已给出视图，不再被本地偏好覆盖
+
     try {
       const range = localStorage.getItem(PREF.range);
       // 只认页面上真的存在的选项：旧版本残留的键值不把请求打到不存在的区间
@@ -106,6 +118,16 @@
     } catch (e) {
       // 隐私模式下写不了，不影响使用
     }
+  }
+
+  /** 视图写回地址栏（不刷新、不新增历史）：区间、指标、选中省、年份都能分享 */
+  function syncQuery() {
+    Board.setQs({
+      range: state.range,
+      metric: state.metric,
+      province: state.province,
+      year: state.year,
+    });
   }
 
   /* ---------------- 数值格式 ---------------- */
@@ -746,6 +768,7 @@
   function selectProvince(code) {
     state.province = code;
     savePref();
+    syncQuery();
     syncChips();
     renderKpi();
     renderRank();
@@ -786,6 +809,8 @@
     const keep = years.indexOf(state.year) >= 0 ? state.year : '';
     state.year = keep || defaultYear();
     el.year.value = state.year;
+    // 年份已定下来（可能会被兜底成默认年）后再写回地址栏
+    syncQuery();
   }
 
   function renderMetricSeg() {
@@ -799,6 +824,7 @@
           if (m.id === state.metric) return;
           state.metric = m.id;
           savePref();
+          syncQuery();
           syncMetricSeg();
           renderRank();
         });
@@ -818,6 +844,7 @@
     // 选项还没就绪（或被人为置空）时 value 会是空串，这时不能拿空年份去重画，否则整页变成「该年缺数」
     if (!/^\d{4}$/.test(el.year.value)) return;
     state.year = el.year.value;
+    syncQuery();
     renderKpi();
     renderRank();
     renderIndustry();
@@ -827,6 +854,7 @@
   el.range.addEventListener('change', () => {
     state.range = el.range.value;
     savePref();
+    syncQuery();
     load(false);
   });
 
@@ -1020,6 +1048,108 @@
       // 轮询失败不打扰用户，下次操作会重新取数
     }
   }
+
+  function buildCsv() {
+    if (!state.data) {
+      window.alert('数据还没加载完成，稍后再导出。');
+      return;
+    }
+    const metric = metricOf(state.metric);
+    const year = state.year;
+    const rows = crossSection(metric.id, year, metric.offset);
+    const blocks = [];
+
+    // 一块：选中年份的省份横截面（全部四项指标 + 当前指标排名）
+    const snapCols = [
+      { key: 'code', label: '行政区划代码' },
+      { key: 'name', label: '省份' },
+      { key: 'gdp', label: '地区生产总值', unit: '亿元' },
+      { key: 'gdp_yoy', label: '名义增速', unit: '%', calc: true },
+      { key: 'gdp_index', label: '实际增速（官方指数−100）', unit: '%' },
+      { key: 'gdp_tertiary_share', label: '第三产业占 GDP 比重', unit: '%', calc: true },
+      { key: 'gdp_per_capita', label: '人均地区生产总值', unit: '元/人' },
+      { key: 'rank', label: '排名（' + metric.label + '）' },
+    ];
+    const snapRows = state.data.provinces.map((p) => {
+      const raw = valueAt(p.code, 'gdp_index', year);
+      return {
+        code: p.code,
+        name: p.name,
+        gdp: valueAt(p.code, 'gdp', year),
+        gdp_yoy: valueAt(p.code, 'gdp_yoy', year),
+        gdp_index: raw === null ? '' : raw - 100,
+        gdp_tertiary_share: valueAt(p.code, 'gdp_tertiary_share', year),
+        gdp_per_capita: valueAt(p.code, 'gdp_per_capita', year),
+        rank: rankOf(rows, p.code) || '',
+      };
+    });
+    snapRows.forEach((r) => {
+      Object.keys(r).forEach((k) => {
+        if (r[k] === null) r[k] = '';
+      });
+    });
+    blocks.push({ title: '省份横截面（' + year + ' 年）', columns: snapCols, rows: snapRows });
+
+    // 二块：选中省在走势区间内的逐年序列
+    const prov = provOf(state.province);
+    const years = spanYears();
+    const trendCols = [
+      { key: 'year', label: '年份' },
+      { key: 'gdp', label: '地区生产总值', unit: '亿元' },
+      { key: 'gdp_yoy', label: '名义增速', unit: '%', calc: true },
+      { key: 'gdp_primary', label: '第一产业增加值', unit: '亿元' },
+      { key: 'gdp_secondary', label: '第二产业增加值', unit: '亿元' },
+      { key: 'gdp_tertiary', label: '第三产业增加值', unit: '亿元' },
+      { key: 'gdp_tertiary_share', label: '第三产业占 GDP 比重', unit: '%', calc: true },
+      { key: 'gdp_index', label: '实际增速（官方指数−100）', unit: '%' },
+      { key: 'gdp_per_capita', label: '人均地区生产总值', unit: '元/人' },
+    ];
+    const trendRows = years.map((y) => {
+      const idx = valueAt(state.province, 'gdp_index', y);
+      return {
+        year: y,
+        gdp: valueAt(state.province, 'gdp', y),
+        gdp_yoy: valueAt(state.province, 'gdp_yoy', y),
+        gdp_primary: valueAt(state.province, 'gdp_primary', y),
+        gdp_secondary: valueAt(state.province, 'gdp_secondary', y),
+        gdp_tertiary: valueAt(state.province, 'gdp_tertiary', y),
+        gdp_tertiary_share: valueAt(state.province, 'gdp_tertiary_share', y),
+        gdp_index: idx === null ? '' : idx - 100,
+        gdp_per_capita: valueAt(state.province, 'gdp_per_capita', y),
+      };
+    });
+    trendRows.forEach((r) => {
+      Object.keys(r).forEach((k) => {
+        if (r[k] === null) r[k] = '';
+      });
+    });
+    blocks.push({
+      title: '单省走势：' + (prov ? prov.name : state.province) + '（' + years[0] + ' ~ ' + years[years.length - 1] + '）',
+      columns: trendCols,
+      rows: trendRows,
+    });
+
+    Board.csv(
+      {
+        file: 'region',
+        fileSuffix: year,
+        module: '中国区域经济看板 · 分省 GDP',
+        source: '国家统计局 · 国家数据（分省年度库 · 地区生产总值与官方指数）',
+        interface: '/api/region',
+        range: '横截面 ' + year + ' 年；走势 ' + years[0] + ' ~ ' + years[years.length - 1],
+        note: [
+          '只包含 31 个省级行政区，不含港澳台；分省 GDP 相加不等于全国总量，本页不提供全国聚合数',
+          'GDP 与三次产业增加值为当年价名义值；实际增速 = 官方「地区生产总值指数（上年=100）」− 100',
+          '名义增速与三次产业占比为列名带「本页计算」的列，均由本页相除 / 相减得到，不是官方发布值',
+          '横截面只含选中年份有值的省份；走势区间内缺某年数据就是空格，不插值、不补 0',
+          '分行业增加值与分产业指数通常比 GDP 滞后一年，最新年为空是正常的发布滞后',
+        ],
+      },
+      blocks
+    );
+  }
+
+  Board.onExport(el.exportBtn, buildCsv);
 
   /* ---------------- 启动 ---------------- */
 

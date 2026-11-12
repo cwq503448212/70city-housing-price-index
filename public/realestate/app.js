@@ -113,6 +113,7 @@
     from: $('from'),
     to: $('to'),
     customBox: $('custom-box'),
+    exportBtn: $('export-csv'),
     refresh: $('refresh'),
     status: $('status'),
     rangeHint: $('range-hint'),
@@ -129,6 +130,21 @@
   }
 
   function loadPref() {
+    // 地址栏优先：别人发来的链接要打开成他看到的那一屏
+    const qsFrom = Board.qs('from');
+    const qsTo = Board.qs('to');
+    if (isMonth(qsFrom) && isMonth(qsTo)) {
+      state.range = 'custom';
+      state.from = qsFrom;
+      state.to = qsTo;
+      return;
+    }
+    const qsRange = Board.qs('range');
+    if (qsRange === 'all' || /^\d+$/.test(qsRange || '')) {
+      state.range = qsRange;
+      return;
+    }
+
     try {
       const raw = localStorage.getItem(RANGE_KEY);
       if (!raw) return;
@@ -154,6 +170,16 @@
     } catch (e) {
       // 隐私模式下写不了，不影响使用
     }
+  }
+
+  /** 视图写回地址栏（不刷新、不新增历史）；自定义区间才会带 from/to */
+  function syncQuery() {
+    const custom = state.range === 'custom';
+    Board.setQs({
+      range: custom ? null : state.range,
+      from: custom ? state.from : null,
+      to: custom ? state.to : null,
+    });
   }
 
   /* ---------------- 数值格式 ---------------- */
@@ -825,6 +851,95 @@
     }
   }
 
+  /* ---------------- CSV 导出 ---------------- */
+
+  // 这三列虽然缺 derive 标记，但确实是本页计算值，导出时必须标出来
+  const CALC_MONTH = ['sales_area_month', 'sales_amount_month', 'avg_price_res'];
+
+  function indOf(id) {
+    return byId(id) || {};
+  }
+
+  function colOf(id, extra) {
+    const ind = indOf(id);
+    return {
+      key: id,
+      label: ind.shortLabel || ind.label || id,
+      unit: ind.unit || '',
+      calc: !!extra,
+    };
+  }
+
+  /** 导出当前视图：月度明细按所选区间，年度明细与页面一致固定全历史 */
+  function buildCsv() {
+    if (!state.data) {
+      window.alert('数据还没加载完成，稍后再导出。');
+      return;
+    }
+    const months = monthsOf();
+    if (!months.length) {
+      window.alert('当前区间还没有数据可导出。');
+      return;
+    }
+
+    const monthCols = [{ key: 'month', label: '月份' }].concat(
+      COLS_MONTH.map((c) => colOf(c.id, CALC_MONTH.indexOf(c.id) >= 0))
+    );
+    const monthRows = months.map((m) => {
+      const row = { month: m };
+      COLS_MONTH.forEach((c) => {
+        const v = pointAt(c.id, m);
+        row[c.id] = v === null ? '' : v;
+      });
+      return row;
+    });
+
+    const yearCols = [{ key: 'year', label: '年份' }].concat(
+      COLS_YEAR.map((c) => colOf(c.id, c.id === 'ann_margin'))
+    );
+    const years = yearsOf(COLS_YEAR.map((c) => c.id));
+    const yearRows = years.map((y) => {
+      const row = { year: y };
+      COLS_YEAR.forEach((c) => {
+        const v = pointAt(c.id, y);
+        row[c.id] = v === null ? '' : v;
+      });
+      return row;
+    });
+
+    Board.csv(
+      {
+        file: 'realestate',
+        fileSuffix: months[0] + '_' + months[months.length - 1],
+        module: '中国房地产开发与销售看板',
+        source: '国家统计局 · 国家数据（月度库 · 房地产；年度库 · 固定资产投资和房地产）',
+        interface: '/api/realestate',
+        range:
+          '月度 ' +
+          months[0] +
+          ' ~ ' +
+          months[months.length - 1] +
+          '（' +
+          months.length +
+          ' 个期别）；年度 ' +
+          (years.length ? years[0] + ' ~ ' + years[years.length - 1] : '无'),
+        note: [
+          '所有数值都是「本年 1 月至本期」累计口径，不是当月值；1 月并入 1—2 月发布，一年只有 11 个期别',
+          '单月销售面积 / 单月销售额 = 本月累计 − 上月累计；1—2 月没有上月可比，直接取累计值，属本页计算值',
+          '成交均价 = 销售额 ÷ 销售面积 × 10000，是成交结构均价，与 70 城房价指数口径不同，不能互相替代',
+          '年度块固定导出全部年份，不受上方时间范围影响；营业利润率 = 营业利润 ÷ 营业收入 × 100，为本页计算值',
+          '空单元格表示官方未发布或该期无值，不插值、不补 0；三类用途之和不等于商品房总量属正常口径，不补差额',
+        ],
+      },
+      [
+        { title: '月度明细', columns: monthCols, rows: monthRows },
+        { title: '年度明细', columns: yearCols, rows: yearRows },
+      ]
+    );
+  }
+
+  Board.onExport(el.exportBtn, buildCsv);
+
   /* ---------------- 状态栏 ---------------- */
 
   function setStatus(text, kind) {
@@ -1044,24 +1159,28 @@
       state.from = el.from.value;
       state.to = el.to.value;
       savePref();
+      syncQuery();
       if (isMonth(state.from) && isMonth(state.to)) load(false);
       return;
     }
     state.from = '';
     state.to = '';
     savePref();
+    syncQuery();
     load(false);
   });
 
   el.from.addEventListener('change', () => {
     state.from = el.from.value;
     savePref();
+    syncQuery();
     if (state.range === 'custom' && isMonth(state.from) && isMonth(state.to)) load(false);
   });
 
   el.to.addEventListener('change', () => {
     state.to = el.to.value;
     savePref();
+    syncQuery();
     if (state.range === 'custom' && isMonth(state.from) && isMonth(state.to)) load(false);
   });
 
@@ -1117,6 +1236,7 @@
     try {
       const json = await fetchData(false);
       buildRangeSelect(json.presets);
+      syncQuery();
       state.data = json;
       renderAll();
       applyStatus(json);

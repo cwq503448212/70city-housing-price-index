@@ -64,6 +64,7 @@
     eduMetric: $('edu-metric'),
     scenario: $('scenario'),
     histFrom: $('hist-from'),
+    exportBtn: $('export-csv'),
     refresh: $('refresh'),
     status: $('status'),
     rangeHint: $('range-hint'),
@@ -83,6 +84,15 @@
   /* ---------------- 本地偏好 ---------------- */
 
   function loadPref() {
+    // 地址栏优先：别人发来的链接要打开成他看到的那一屏
+    const qsEdu = Board.qs('edu');
+    if (qsEdu === 'enroll' || qsEdu === 'admit') state.eduMetric = qsEdu;
+    const qsScenario = Board.qs('scenario');
+    if (['low', 'base', 'high'].indexOf(qsScenario) >= 0) state.scenario = qsScenario;
+    const qsHist = Board.qs('histFrom');
+    if (/^\d{4}$/.test(qsHist || '')) state.histFrom = qsHist;
+    if (qsEdu || qsScenario || qsHist) return; // 链接已给出视图，不再被本地偏好覆盖
+
     try {
       const raw = localStorage.getItem(PREF_KEY);
       if (!raw) return;
@@ -105,6 +115,15 @@
     } catch (e) {
       // 隐私模式下写不了，不影响使用
     }
+  }
+
+  /** 视图写回地址栏（不刷新、不新增历史）：教育口径 / 情景 / 历史起点都能分享 */
+  function syncQuery() {
+    Board.setQs({
+      edu: state.eduMetric,
+      scenario: state.scenario,
+      histFrom: state.histFrom,
+    });
   }
 
   /* ---------------- 数值格式 ---------------- */
@@ -707,6 +726,174 @@
     });
   }
 
+  /* ---------------- CSV 导出 ---------------- */
+
+  // 情景对比表的指标行（与页面上那张表同一套顺序与单位）
+  // 已在上面定义过 SCENARIO_ROWS，这里直接复用，不另拄一份列定义
+
+  function stageShort(key) {
+    const hit = STAGES.filter(function (s) {
+      return s.key === key;
+    })[0];
+    return hit ? hit.short : key;
+  }
+
+  /** 导出当前视图：逐年明细按页面横轴，情景对比 / 回测 / 校准系数按页面表格 */
+  function buildCsv() {
+    const m = model();
+    if (!m) {
+      window.alert('数据还没加载完成，稍后再导出。');
+      return;
+    }
+    const metric = state.eduMetric;
+    const metricCn = metric === 'enroll' ? '在校生' : '招生';
+    const sc = m.scenarios.base;
+    const years = axisYears(); // 历史起点 → 推演终点，与上方图表同一根横轴
+
+    /* 块一：逐年明细（官方 + 基准情景推演） */
+    const detailCols = [
+      { key: 'year', label: '年份' },
+      { key: 'kind', label: '数据性质' },
+      { key: 'birth', label: '出生人口', unit: '万人', calc: true },
+    ];
+    STAGES.forEach(function (stage) {
+      detailCols.push({ key: stage.key, label: stage.short + metricCn, unit: '万人' });
+    });
+    detailCols.push({ key: 'buyer', label: '购房主力人口 25—44 岁', unit: '万人', calc: true });
+    detailCols.push({ key: 'area', label: '销售面积', unit: '万平方米' });
+    detailCols.push({ key: 'price', label: '成交均价', unit: '元/平方米' });
+
+    const detailRows = years.map(function (y) {
+      const isFuture = Number(y) > Number(m.baseYear);
+      const row = { year: y, kind: isFuture ? '推演' : '官方' };
+      // 出生人口：历史用官方还原值，推演段用基准情景
+      row.birth = pick(isFuture ? sc && sc.birth : m.actual.birth, y);
+      STAGES.forEach(function (stage) {
+        const src = isFuture
+          ? sc && sc.stages[stage.key]
+            ? sc.stages[stage.key][metric]
+            : []
+          : m.actual.stages[stage.key][metric];
+        row[stage.key] = pick(src, y);
+      });
+      row.buyer = pick(isFuture ? sc && sc.buyerPop : m.actual.buyerPop, y);
+      row.area = pick(isFuture ? sc && sc.salesArea : m.actual.salesArea, y);
+      row.price = pick(isFuture ? sc && sc.price : m.actual.price, y);
+      return row;
+    });
+
+    /* 块二：情景对比（三情景 × 2030 / 2040 / 推演终点） */
+    const nodes = ['2030', '2040', String(m.horizon)];
+    const scCols = [
+      { key: 'scenario', label: '情景' },
+      { key: 'indicator', label: '指标' },
+      { key: 'unit', label: '单位' },
+      { key: 'y1', label: '2030' },
+      { key: 'y2', label: '2040' },
+      { key: 'y3', label: m.horizon + '（推演终点）' },
+    ];
+    const scRows = [];
+    ['low', 'base', 'high'].forEach(function (key) {
+      const scen = m.scenarios[key];
+      if (!scen) return;
+      SCENARIO_ROWS.forEach(function (row) {
+        scRows.push({
+          scenario: scen.label,
+          indicator: row.label,
+          unit: row.unit,
+          y1: row.get(scen, nodes[0]),
+          y2: row.get(scen, nodes[1]),
+          y3: row.get(scen, nodes[2]),
+        });
+      });
+    });
+
+    /* 块三：回测（2015—2019 校准 → 2020 以后检验） */
+    const btCols = [
+      { key: 'stage', label: '学段' },
+      { key: 'year', label: '年份' },
+      { key: 'actual', label: '实际值', unit: '万人' },
+      { key: 'forecast', label: '模型预测', unit: '万人', calc: true },
+      { key: 'error', label: '偏差', unit: '%', calc: true },
+      { key: 'mape', label: 'MAPE', unit: '%', calc: true },
+      { key: 'ratio', label: '校准系数' },
+    ];
+    const btRows = [];
+    const bt = m.backtest;
+    if (bt) {
+      Object.keys(bt.stages).forEach(function (key) {
+        const st = bt.stages[key];
+        (st.points || []).forEach(function (pt) {
+          btRows.push({
+            stage: st.label || stageShort(key),
+            year: pt.year,
+            actual: pt.actual,
+            forecast: pt.forecast,
+            error: pt.error === null || pt.error === undefined ? null : Math.round(pt.error * 1000) / 10,
+            mape: st.mape === null || st.mape === undefined ? null : Math.round(st.mape * 1000) / 10,
+            ratio: st.ratio,
+          });
+        });
+      });
+    }
+
+    /* 块四：校准系数（模型参数，不是发布值） */
+    const calibCols = [
+      { key: 'stage', label: '学段' },
+      { key: 'lag', label: '滞后', unit: '年' },
+      { key: 'ratio', label: '传导系数' },
+      { key: 'n', label: '样本年数' },
+      { key: 'samples', label: '逐年系数（年：值）' },
+    ];
+    const calibRows = (m.calibration || []).map(function (c) {
+      return {
+        stage: c.label,
+        lag: c.lag === undefined ? null : c.lag,
+        ratio: c.ratio,
+        n: c.n,
+        samples: (c.samples || [])
+          .map(function (s) {
+            return s.year + '：' + s.ratio;
+          })
+          .join('；'),
+      };
+    });
+
+    const scenLabel = (m.scenarios[state.scenario] || {}).label || state.scenario;
+    const bw = m.backtestWindow || {};
+    const btTitle = bt
+      ? '回测（' + (bw.calibrateFrom || '—') + '—' + (bw.calibrateTo || '—') + ' 校准，' + bt.from + '—' + bt.to + ' 检验）'
+      : '回测';
+    Board.csv(
+      {
+        file: 'forecast',
+        fileSuffix: m.baseYear + '_' + m.horizon,
+        module: '人口与住房推演 · 未来 30 年',
+        source: '国家统计局 · 国家数据年度库（教育、人口、房地产）；' + (Number(m.baseYear) + 1) + ' 年及以后为本页队列法推演',
+        interface: '/api/forecast',
+        range:
+          '历史 ' + state.histFrom + ' ~ ' + m.baseYear + '（官方）＋推演 ' +
+          (Number(m.baseYear) + 1) + ' ~ ' + m.horizon + '（逐年明细用' + scenLabel + '情景）',
+        note: [
+          '推演段由本页按队列法算出，不是官方预测，也不覆盖官方历史值；逐年明细块 ' + (Number(m.baseYear) + 1) + ' 年起为' + scenLabel + '情景',
+          '出生人口 = 出生率 ÷ 1000 × 年平均人口，为本页还原值；统计局年度库只发布出生率（‰）',
+          '购房主力人口 = 25—44 岁队列 × 0.98 存活率，队列近似，未含分年龄死亡率与迁移',
+          '成交均价为成交结构均价的名义外推，不扣通胀，不是同质可比的价格指数',
+          '情景对比块固定为三情景 × 2030 / 2040 / 推演终点；回测与校准系数是模型参数，不是发布值',
+          '空单元格表示该年无数据，不插值、不补 0',
+        ],
+      },
+      [
+        { title: '逐年明细（官方 + 基准情景推演）', columns: detailCols, rows: detailRows },
+        { title: '情景对比（2030 / 2040 / 推演终点）', columns: scCols, rows: scRows },
+        { title: btTitle, columns: btCols, rows: btRows },
+        { title: '校准系数', columns: calibCols, rows: calibRows },
+      ]
+    );
+  }
+
+  Board.onExport(el.exportBtn, buildCsv);
+
   /* ---------------- 状态与页脚 ---------------- */
 
   function setStatus(text, kind) {
@@ -855,6 +1042,7 @@
     state.eduMetric = el.eduMetric.value;
     state.hidden = {};
     savePref();
+    syncQuery();
     renderEdu();
     renderDetailTable();
   });
@@ -863,12 +1051,14 @@
     state.scenario = el.scenario.value;
     state.hidden = {};
     savePref();
+    syncQuery();
     renderEdu();
   });
 
   el.histFrom.addEventListener('change', function () {
     state.histFrom = el.histFrom.value;
     savePref();
+    syncQuery();
     load(false); // 横轴要重新裁，历史起点不同取的历史长度也不同
   });
 
@@ -893,6 +1083,7 @@
     el.eduMetric.value = state.eduMetric;
     el.scenario.value = state.scenario;
     el.histFrom.value = state.histFrom;
+    syncQuery();
     setStatus('正在连接本地服务…（首次打开要拉全历史，约 10 秒）');
     await load(false);
   })();

@@ -87,11 +87,26 @@
     table: $('detail-table').querySelector('tbody'),
     footMeta: $('foot-meta'),
     pieSub: $('pie-sub'),
+    exportBtn: $('export-csv'),
   };
 
   /* ---------------- 本地偏好 ---------------- */
 
   function loadPref() {
+    // 地址栏优先：?range=10 或 ?from=2015&to=2024
+    const qsFrom = Board.qs('from');
+    const qsTo = Board.qs('to');
+    const qsRange = Board.qs('range');
+    if (/^\d{4}$/.test(qsFrom || '') && /^\d{4}$/.test(qsTo || '')) {
+      state.range = 'custom';
+      state.from = qsFrom;
+      state.to = qsTo;
+      return;
+    }
+    if (qsRange === 'all' || /^\d+$/.test(qsRange || '')) {
+      state.range = qsRange;
+      return;
+    }
     try {
       const raw = localStorage.getItem(RANGE_KEY);
       if (!raw) return;
@@ -715,6 +730,16 @@
     return q.join('&');
   }
 
+  /** 把当前年份区间写回地址栏 */
+  function syncQuery() {
+    const custom = state.range === 'custom';
+    Board.setQs({
+      range: custom ? null : state.range,
+      from: custom ? state.from : null,
+      to: custom ? state.to : null,
+    });
+  }
+
   const CHART_IDS = [
     'chart-income-spend',
     'chart-yoy',
@@ -723,6 +748,65 @@
     'chart-spend-parts',
     'chart-urban-rural',
   ];
+
+  /* ---------------- 导出 CSV ---------------- */
+
+  function csvUnit(ind) {
+    return isGrowth(ind) ? '%' : ind.unit || '';
+  }
+
+  /**
+   * 按表格的分组拆成多张表：每组一年一行、一列一个指标，避免收入（元）与增速（%）混在一起看不出量纲。
+   */
+  function buildCsv() {
+    const d = state.data;
+    if (!d) {
+      window.alert('还没有数据可导出。');
+      return;
+    }
+    const years = yearsOf();
+    const groups = d.groups || [];
+    const blocks = (groups.length ? groups : [{ key: '', label: '指标年度序列' }]).map((group) => {
+      const list = d.indicators.filter((ind) => (group.key ? ind.group === group.key : true));
+      if (!list.length) return null;
+      const columns = [{ key: 'year', label: '年份' }].concat(
+        list.map((ind) => ({ key: ind.id, label: ind.shortLabel || ind.label, unit: csvUnit(ind) }))
+      );
+      const rows = years.map((year) => {
+        const row = { year: year };
+        list.forEach((ind) => {
+          const pt = ind.points.filter((p) => p.year === year)[0];
+          row[ind.id] = pt && pt.value !== null ? pt.value : '';
+        });
+        return row;
+      });
+      return { title: group.label + (group.note ? '　' + group.note : ''), columns: columns, rows: rows };
+    }).filter(Boolean);
+
+    if (!blocks.length) {
+      window.alert('当前区间还没有数据可导出。');
+      return;
+    }
+
+    Board.csv(
+      {
+        file: 'livelihood-income',
+        fileSuffix: d.range.from + '_' + d.range.to,
+        module: '中国居民人均收入与支出看板',
+        source: '国家统计局 · 国家数据（年度，人民生活）',
+        interface: '/api/livelihood/income-expenditure',
+        range: yearCn(d.range.from) + ' ~ ' + yearCn(d.range.to) + '（' + d.range.label + '）',
+        note: [
+          '人均可支配收入 / 人均消费支出为全体居民口径，单位元 / 人·年；城乡为分户口径，不可取算术平均',
+          '增速为官方发布的「比上年增长」（名义、未扣价格因素）；年度库不发布实际增速，本页也不做 CPI 折算',
+          '消费分项中「服务性消费支出」是跨八项交叉口径，不计入八项之和',
+        ],
+      },
+      blocks
+    );
+  }
+
+  Board.onExport(el.exportBtn, buildCsv);
 
   async function load(force) {
     if (state.loading) return;
@@ -745,6 +829,7 @@
       applyStatus(json);
       schedulePoll(json);
       syncInputs(json);
+      syncQuery();
     } catch (e) {
       setStatus('加载失败：' + (e.message || e), 'error');
       if (!state.data) CHART_IDS.forEach((id) => emptyChart(id, '加载失败'));
@@ -812,24 +897,28 @@
       state.from = el.from.value;
       state.to = el.to.value;
       savePref();
+      syncQuery();
       if (yearOk(state.from) && yearOk(state.to)) load(false);
       return;
     }
     state.from = '';
     state.to = '';
     savePref();
+    syncQuery();
     load(false);
   });
 
   el.from.addEventListener('change', () => {
     state.from = el.from.value;
     savePref();
+    syncQuery();
     if (state.range === 'custom' && yearOk(state.from) && yearOk(state.to)) load(false);
   });
 
   el.to.addEventListener('change', () => {
     state.to = el.to.value;
     savePref();
+    syncQuery();
     if (state.range === 'custom' && yearOk(state.from) && yearOk(state.to)) load(false);
   });
 

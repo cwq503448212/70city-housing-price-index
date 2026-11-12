@@ -41,6 +41,7 @@
         </label>
       </div>
 
+      <button id="export-csv" class="btn btn-export" type="button" title="导出当前区间的全部指标（CSV，可在 Excel 中直接打开）">导出 CSV</button>
       <button id="refresh" class="btn" type="button" title="跳过缓存，重新向统计局请求一次">刷新数据</button>
       <span id="status" class="status">正在加载…</span>
     </div>
@@ -55,7 +56,7 @@
     <article class="card card-wide">
       <header class="card-head">
         <h2>通胀走势：CPI / 核心 CPI / PPI</h2>
-        <p class="card-sub">同比涨跌幅（%），三条线同为「上年同月 = 100」口径；0 线表示持平</p>
+        <p class="card-sub">同比涨跌幅（%），三条线同为「上年同月 = 100」口径；0 线表示持平<span class="q" data-tip="同比＝与上年同月比。统计局发布的是「上年同月 = 100」的指数（如 101.3），页面换算成涨跌幅 +1.3%；100 即持平。" tabindex="0" role="button" aria-label="口径说明">?</span></p>
       </header>
       <div class="chart" id="chart-inflation"></div>
     </article>
@@ -63,7 +64,7 @@
     <article class="card">
       <header class="card-head">
         <h2>CPI 环比</h2>
-        <p class="card-sub">% ，上月 = 100；环比波动大，单独成图，不与同比混画</p>
+        <p class="card-sub">% ，上月 = 100；环比波动大，单独成图，不与同比混画<span class="q" data-tip="环比＝与上月比（上月 = 100），反映短期波动；和同比是两种口径，不能画在一条线上对比。" tabindex="0" role="button" aria-label="口径说明">?</span></p>
       </header>
       <div class="chart" id="chart-mom"></div>
     </article>
@@ -71,7 +72,7 @@
     <article class="card">
       <header class="card-head">
         <h2>制造业 PMI</h2>
-        <p class="card-sub">扩散指数，50 为荣枯线，高于 50 表示扩张</p>
+        <p class="card-sub">扩散指数，50 为荣枯线，高于 50 表示扩张<span class="q" data-tip="PMI 是扩散指数，不是增速：50 = 荣枯线，高于 50 表示扩张、低于 50 表示收缩；51 与 1% 不是一回事。" tabindex="0" role="button" aria-label="口径说明">?</span></p>
       </header>
       <div class="chart" id="chart-pmi"></div>
     </article>
@@ -79,7 +80,7 @@
     <article class="card">
       <header class="card-head">
         <h2>消费与货币</h2>
-        <p class="card-sub">社会消费品零售总额同比 vs M2 同比（%）</p>
+        <p class="card-sub">社会消费品零售总额同比 vs M2 同比（%）<span class="q" data-tip="两条线来自两个不同指标（社零＝消费，M2＝货币供应），只作同期对照，不能据此推断因果关系。" tabindex="0" role="button" aria-label="口径说明">?</span></p>
       </header>
       <div class="chart" id="chart-demand"></div>
     </article>
@@ -87,7 +88,7 @@
     <article class="card">
       <header class="card-head">
         <h2>CPI 八大类</h2>
-        <p class="card-sub" id="class-sub">所选区间末月各类同比（%）</p>
+        <p class="card-sub"><span id="class-sub">所选区间末月各类同比（%）</span><span class="q" data-tip="取所选区间内最后一个已发布月份的八大类同比，按涨幅降序排列；不是区间均值。" tabindex="0" role="button" aria-label="口径说明">?</span></p>
       </header>
       <div class="chart" id="chart-class"></div>
     </article>
@@ -96,7 +97,7 @@
   <section class="card">
     <header class="card-head">
       <h2>指标明细</h2>
-      <p class="card-sub">最新一期与上一期对比；「状态」列标出数据是否可能滞后</p>
+      <p class="card-sub">最新一期与上一期对比；「状态」列标出数据是否可能滞后<span class="q" data-tip="「变化」是最新一期与上一期（不一定相邻月份）的差；CPI / PPI 等同比较值用「个百分点」，PMI 用「点」，金额类仍是亿元。" tabindex="0" role="button" aria-label="口径说明">?</span></p>
     </header>
     <div class="table-wrap">
       <table id="detail-table">
@@ -134,6 +135,7 @@
 </main>
 
 <script src="../vendor/echarts.min.js"></script>
+<script src="../shared.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

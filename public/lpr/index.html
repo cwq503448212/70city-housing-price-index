@@ -27,6 +27,7 @@
           <option value="all" selected>全部（2019-08 起）</option>
         </select>
       </label>
+      <button id="export-csv" class="btn btn-export" type="button" title="导出当前区间的 LPR 明细（CSV）">导出 CSV</button>
       <button id="refresh" class="btn" type="button" title="跳过缓存，重新向中国货币网请求一次">刷新数据</button>
       <span id="status" class="status">正在加载…</span>
     </div>
@@ -41,7 +42,7 @@
     <article class="card">
       <header class="card-head">
         <h2>LPR 走势：1 年期与 5 年期以上</h2>
-        <p class="card-sub">%　两个品种各自报价、独立公布，各画各的线；报价维持到下一次调整，故用阶梯线</p>
+        <p class="card-sub">%　两个品种各自报价、独立公布，各画各的线；报价维持到下一次调整，故用阶梯线<span class="q" data-tip="LPR 是「报价维持到下一次调整」的：没有新报价就沿用上一期，所以画成阶梯线，不是每天在变。" tabindex="0" role="button" aria-label="口径说明">?</span></p>
       </header>
       <div class="chart" id="chart-lpr"></div>
     </article>
@@ -49,7 +50,7 @@
     <article class="card">
       <header class="card-head">
         <h2>报价调整幅度</h2>
-        <p class="card-sub">bp（1bp = 0.01 个百分点）　较上期变动，红升绿降，维持不变的期次不画柱</p>
+        <p class="card-sub">bp（1bp = 0.01 个百分点）　较上期变动，红升绿降，维持不变的期次不画柱<span class="q" data-tip="只有真正发生调整的期次才画柱；未调整的期次画 0 会让图看起来像「一直在降」。变化与上一期报价比，间隔不一定是一个月。" tabindex="0" role="button" aria-label="口径说明">?</span></p>
       </header>
       <div class="chart" id="chart-change"></div>
     </article>
@@ -57,7 +58,7 @@
     <article class="card">
       <header class="card-head">
         <h2>期限利差：5 年期以上 − 1 年期</h2>
-        <p class="card-sub">百分点　反映中长期（按揭定价基准）与短期资金成本的相对水平</p>
+        <p class="card-sub">百分点　反映中长期（按揭定价基准）与短期资金成本的相对水平<span class="q" data-tip="利差 = 5 年期以上 − 1 年期，由本页相减得出（本页计算），不是官方发布值。" tabindex="0" role="button" aria-label="口径说明">?</span></p>
       </header>
       <div class="chart" id="chart-spread"></div>
     </article>
@@ -66,7 +67,7 @@
   <section class="card">
     <header class="card-head">
       <h2>明细数据</h2>
-      <p class="card-sub">按发布日期倒序；「变化」为较上期变动（bp）</p>
+      <p class="card-sub">按发布日期倒序；「变化」为较上期变动（bp）<span class="q" data-tip="「变化」与上一期报价比（不一定是一个月前）；上期缺失时显示 —，不插值、不补 0。" tabindex="0" role="button" aria-label="口径说明">?</span></p>
     </header>
     <div class="table-wrap">
       <table id="detail-table">
@@ -100,6 +101,7 @@
 </main>
 
 <script src="../vendor/echarts.min.js"></script>
+<script src="../shared.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

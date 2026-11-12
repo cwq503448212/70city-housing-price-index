@@ -39,6 +39,7 @@
         </label>
       </div>
 
+<button id="export-csv" class="btn btn-export" type="button" title="导出当前月份区间的月度明细 + 全历史年度明细（CSV）">导出 CSV</button>
       <button id="refresh" class="btn" type="button" title="跳过缓存，重新向统计局请求一次">刷新数据</button>
       <span id="status" class="status">正在加载…</span>
     </div>
@@ -56,6 +57,7 @@
         <p class="card-sub">
           柱为销售面积（万平方米，左轴），线为销售额（亿元，右轴）。两者都是<strong>本年累计</strong>口径，
           每年 1 月并入 1—2 月发布，所以一年只有 11 个期别；累计值一路上行，12 月点就是全年
+          <span class="q" data-tip="销售面积与销售额都是「本年 1 月至本期」的累计数，不是当月值。1 月并入「1—2 月」发布，横轴保留 1 月刻度但永远为空；每年 12 月那一点才等于全年总量。" tabindex="0" role="button" aria-label="口径说明">?</span>
         </p>
       </header>
       <div class="chart chart-lg" id="chart-sales"></div>
@@ -68,6 +70,7 @@
           柱为<strong>单月销售面积</strong>（万平方米，左轴，本页计算：本月累计 − 上月累计），虚线为统计局发布的
           <strong>累计同比</strong>（%，右轴）。<strong>2 月点是 1—2 月合计数</strong>，天然比其它月份高一倍左右，
           不能当成单月反弹；累计同比 0 为持平
+          <span class="q" data-tip="统计局不发布单月房地产销售数据：单月面积由本页用「本月累计 − 上月累计」算出，1—2 月没有上月可比，直接取累计值（因此 2 月柱约等于两个月的量）。虚线是统计局发布的累计同比，0 = 持平。" tabindex="0" role="button" aria-label="口径说明">?</span>
         </p>
       </header>
       <div class="chart" id="chart-month"></div>
@@ -80,6 +83,7 @@
           住宅画在左轴，办公楼与商业营业用房画在右轴（都是万平方米，但<strong>两轴刻度不同</strong>，
           只比走势、不比高低）；<strong>住宅占商品房销售面积的比重</strong>在提示框里给出（本页计算：住宅 ÷ 全部用途）。
           三类之和<strong>不等于</strong>总销售面积——商品房还含车位、厂房等其他用途，本页不补差额
+          <span class="q" data-tip="统计局只单列住宅、办公楼、商业营业用房三类，商品房总量还含车位、厂房、仓库等，所以三类之和小于总量是正常的；差额部分没有公开拆分，本页不估算、不补齐。住宅占比 = 住宅 ÷ 全部用途，为本页计算值。" tabindex="0" role="button" aria-label="口径说明">?</span>
         </p>
       </header>
       <div class="chart" id="chart-mix"></div>
@@ -91,6 +95,7 @@
         <p class="card-sub">
           柱为开发投资总额（亿元，左轴），实线为其中住宅投资，虚线为统计局发布的<strong>累计同比</strong>（%，右轴）。
           投资额含土地购置费，与后面的「房屋新开工面积」不同步是正常的——钱可以先花在买地上
+          <span class="q" data-tip="开发投资额是本年累计完成投资，含土地购置费，因此与「房屋新开工面积」不同步是正常的——钱可以先付在买地上。虚线的累计同比为统计局发布值（按可比口径计算），不是本页计算。" tabindex="0" role="button" aria-label="口径说明">?</span>
         </p>
       </header>
       <div class="chart" id="chart-invest"></div>
@@ -104,6 +109,7 @@
           <strong>新开工与竣工画在右轴</strong>（两轴刻度不同，只比走势不比高低）；
           新开工领先、竣工滞后，两者的相对位置决定未来一两年的供应节奏。
           本图不画同比，施工 / 新开工 / 竣工的累计值另见下方月度明细表
+          <span class="q" data-tip="施工面积含上年结转，是「存量在建规模」，不是当期新开工；新开工领先、竣工滞后，先后关系决定未来一两年的供应节奏。三者都是本年累计值，单位万平方米，左右轴刻度不同，只比走势不比高低。" tabindex="0" role="button" aria-label="口径说明">?</span>
         </p>
       </header>
       <div class="chart" id="chart-build"></div>
@@ -115,6 +121,7 @@
         <p class="card-sub">
           亿元，左轴。<strong>月度库只拆到国内贷款、利用外资、自筹资金三项</strong>，
           定金及预收款与个人按揭贷款只在年度库发布（见下方年度图），所以三项之和小于小计，本页不补差额
+          <span class="q" data-tip="国家数据库月度库的到位资金只拆到国内贷款、利用外资、自筹资金三项，定金及预收款与个人按揭贷款只在年度库发布。所以三项之和小于小计是口径决定的，本页不补差额、不按比例估算。" tabindex="0" role="button" aria-label="口径说明">?</span>
         </p>
       </header>
       <div class="chart" id="chart-fund"></div>
@@ -127,6 +134,7 @@
           元/平方米，左轴，两条都是本页计算值：<strong>销售额 ÷ 销售面积 × 10000</strong>。
           全部用途均价含办公楼与商业，住宅均价单列。这是<strong>成交结构性均价</strong>，
           与「70 个大中城市新建商品住宅销售价格指数」的口径、方法都不同，不能互相替代
+          <span class="q" data-tip="统计局月度只发布销售额与销售面积，不发布月度均价：本页按「销售额(亿元) ÷ 销售面积(万㎡) × 10000」折算成元/㎡，得到的是成交结构均价——高价城市、高端项目占比上升就会推高它，不剔除结构变化，也不是房价指数。年度库的官方均价可在年度明细对照。" tabindex="0" role="button" aria-label="口径说明">?</span>
         </p>
       </header>
       <div class="chart" id="chart-price"></div>
@@ -138,6 +146,7 @@
         <p class="card-sub">
           柱为全年销售面积（万平方米，左轴），线为全年销售额（亿元，右轴）。年度序列固定画全历史，
           不受上方时间范围影响；年度值应与当年 12 月的累计值一致
+          <span class="q" data-tip="年度序列取自年度库，固定画全历史，不受上方时间范围影响（导出 CSV 时同样按全历史导出）。年度值应与当年 12 月的月累计值一致，个别年份两边口径有微调时以年度库为准。" tabindex="0" role="button" aria-label="口径说明">?</span>
         </p>
       </header>
       <div class="chart" id="chart-annual-sales"></div>
@@ -150,6 +159,7 @@
           柱为全年开发投资（亿元，右轴），两条线为新开工 / 竣工面积（万平方米，左轴），
           都是当年全年值。注意左右轴单位不同，只用来对照节奏，不做比例解读；
           年末施工面积量级大一个数量级，放在下方年度明细表
+          <span class="q" data-tip="柱为全年开发投资（亿元，右轴），线为新开工 / 竣工面积（万㎡，左轴），左右轴单位不同，只用来对照节奏，不做比例解读。年末施工面积比新开工、竣工大一个数量级，放进来会把两条线压平，所以只在年度明细表里给。" tabindex="0" role="button" aria-label="口径说明">?</span>
         </p>
       </header>
       <div class="chart" id="chart-annual-build"></div>
@@ -162,6 +172,7 @@
           亿元，左轴。堆叠柱为六项资金来源，虚线上为小计。年度口径才有
           <strong>定金及预收款</strong>与<strong>个人按揭贷款</strong>这两项——它们是购房者直接付进来的钱，
           比「国内贷款」更能反映销售端回款
+          <span class="q" data-tip="只有年度口径才把到位资金拆到定金及预收款与个人按揭贷款，年度库里六项之和等于小计，所以这里可以堆叠对照月度的三项；月度图里的缺口正是这两项（以及其它小项）造成的。" tabindex="0" role="button" aria-label="口径说明">?</span>
         </p>
       </header>
       <div class="chart" id="chart-annual-fund"></div>
@@ -174,6 +185,7 @@
           柱为主营业务收入（亿元，左轴），实线为营业利润（亿元，左轴），两条虚线在右轴（%）：
           营业利润率（<strong>本页计算</strong>：营业利润 ÷ 营业收入 × 100）与统计局发布的资产负债率。
           财务数据比销售晚一年入库，最新只到上上年
+          <span class="q" data-tip="营业利润率 = 营业利润 ÷ 营业收入 × 100，是本页计算值；资产负债率为统计局发布的官方口径（负债合计 ÷ 资产总计）。房企财务数据比销售数据晚一年入库，所以最新只到上上年，与销售列不同步是正常的。" tabindex="0" role="button" aria-label="口径说明">?</span>
         </p>
       </header>
       <div class="chart" id="chart-annual-ops"></div>
@@ -186,6 +198,7 @@
       <p class="card-sub">
         按年分组，年份倒序、同一年内月份升序；— 表示该期没有数据（尚未发布或上游缺项），不插值、不补 0。
         所有数值都是<strong>本年累计</strong>，只有标注「计算」的三列是单月值 / 均价
+        <span class="q" data-tip="表内所有数值都是本年累计，只有标注「计算」的三列例外：单月面积、单月金额（本月累计 − 上月累计）与住宅均价（住宅销售额 ÷ 住宅销售面积）。— 表示该期没有数据（尚未发布或上游缺项），不插值、不补 0。" tabindex="0" role="button" aria-label="口径说明">?</span>
       </p>
     </header>
     <div class="table-wrap">
@@ -221,6 +234,7 @@
       <p class="card-sub">
         年份倒序。销售 / 投资 / 面积 / 资金为当年全年值，最新到上一年；官方均价、竣工套数、经营与资产负债
         <strong>滞后一年</strong>，所以同一行里这几列比销售列少一年。营业利润率为本页计算值，其余为发布值
+        <span class="q" data-tip="销售 / 投资 / 面积 / 资金为当年全年值，最新到上一年；官方均价、竣工套数、经营与资产负债再滞后一年，所以同一行里这几列为空是正常的（— 不补 0）。营业利润率 = 营业利润 ÷ 营业收入 × 100，是本页计算值，其余都是发布值。" tabindex="0" role="button" aria-label="口径说明">?</span>
       </p>
     </header>
     <div class="table-wrap">
@@ -309,6 +323,7 @@
 </main>
 
 <script src="../vendor/echarts.min.js"></script>
+<script src="../shared.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

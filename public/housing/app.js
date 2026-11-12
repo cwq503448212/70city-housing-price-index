@@ -15,6 +15,12 @@
   var RANGE_DEFAULT = { preset: '60', from: '', to: '' };
 
   function readRange() {
+    // 地址栏优先：?range=36 或 ?from=2022-01&to=2024-12，方便直接把当前区间发给别人
+    var qsFrom = Board.qs('from');
+    var qsTo = Board.qs('to');
+    var qsPreset = Board.qs('range');
+    if (qsFrom && qsTo) return { preset: 'custom', from: qsFrom, to: qsTo };
+    if (qsPreset) return { preset: qsPreset, from: '', to: '' };
     try {
       var raw = localStorage.getItem(RANGE_KEY);
       if (!raw) return { preset: RANGE_DEFAULT.preset, from: '', to: '' };
@@ -81,6 +87,42 @@
   };
 
   var charts = {};
+
+  /* 地址栏参数：房屋类型 / 对比口径 / 聚焦城市，便于把「某城某口径」的视图直接发给别人 */
+  (function readViewQuery() {
+    var type = Board.qs('type');
+    var metric = Board.qs('metric');
+    var city = Board.qs('city');
+    if (type === 'new' || type === 'second') state.type = type;
+    if (metric === 'mom' || metric === 'yoy') state.metric = metric;
+    if (city) state.focus = city;
+  })();
+
+  /** 把当前视图（区间 + 类型 + 口径 + 聚焦城市）写回地址栏 */
+  function syncQuery() {
+    var r = state.range;
+    var custom = r.preset === 'custom';
+    Board.setQs({
+      range: custom ? null : r.preset,
+      from: custom ? r.from : null,
+      to: custom ? r.to : null,
+      type: state.type,
+      metric: state.metric,
+      city: state.focus,
+    });
+  }
+
+  /** 分段按钮的选中态由 state 决定：从 URL 进来时也要对齐，不能只靠 HTML 里的 is-active */
+  function syncSegs() {
+    [['segType', 'type'], ['segMetric', 'metric']].forEach(function (pair) {
+      var box = $(pair[0]);
+      if (!box) return;
+      var items = box.querySelectorAll('.seg-item');
+      for (var i = 0; i < items.length; i++) {
+        items[i].classList.toggle('is-active', items[i].getAttribute('data-value') === state[pair[1]]);
+      }
+    });
+  }
 
   // ------------------------------------------------------------ 工具函数
 
@@ -418,6 +460,8 @@
   // ------------------------------------------------------------ 渲染入口
 
   function renderAll() {
+    syncSegs();
+    syncQuery();
     renderRangeControls();
     renderStampSubs();
     renderKpis();
@@ -1291,9 +1335,8 @@
 
   var COLUMNS = ['newMom', 'newYoy', 'secondMom', 'secondYoy'];
 
-  function renderTable() {
+  function tableRows() {
     var p = latest();
-    var tbody = $('dataTable').querySelector('tbody');
     var rows = state.cities.map(function (c) {
       return {
         city: c,
@@ -1315,6 +1358,14 @@
       if (bv === null) return -1;
       return (av - bv) * dir;
     });
+    return rows;
+  }
+
+  function renderTable() {
+    var rows = tableRows();
+    var key = state.sort.key;
+    var dir = state.sort.dir;
+    var tbody = $('dataTable').querySelector('tbody');
 
     var html = rows
       .map(function (r) {
@@ -1351,11 +1402,88 @@
       if (!city || city === state.focus) return;
       state.focus = city;
       $('citySelect').value = city;
+      syncQuery();
       renderStampSubs();
       renderCityDetail();
       renderTable();
     };
   }
+
+  /* ------------------------------------------------------------ 导出 CSV */
+
+  /**
+   * 两张表：当前展示月的 70 城全量对照 + 当前类型/口径的 城市 × 月份矩阵。
+   * 矩阵是页面热力图的数据源，导出后可以直接在 Excel 里做透视，不用自己数格子。
+   */
+  function buildCsv() {
+    if (!state.view.length) {
+      window.alert('当前区间还没有数据可导出。');
+      return;
+    }
+    var first = state.view[0].month;
+    var last = state.view[state.view.length - 1].month;
+
+    var detail = tableRows().map(function (r) {
+      return {
+        city: r.city,
+        tier: TIER_LABEL[r.tier] || '',
+        newMom: r.newMom === null ? '' : r.newMom,
+        newYoy: r.newYoy === null ? '' : r.newYoy,
+        secondMom: r.secondMom === null ? '' : r.secondMom,
+        secondYoy: r.secondYoy === null ? '' : r.secondYoy,
+      };
+    });
+
+    var matrixCols = [
+      { key: 'city', label: '城市' },
+      { key: 'tier', label: '分类' },
+    ].concat(
+      state.view.map(function (p) {
+        return { key: p.month, label: p.month };
+      })
+    );
+    var matrix = state.cities.map(function (city) {
+      var row = { city: city, tier: TIER_LABEL[state.tierOf[city]] || '' };
+      state.view.forEach(function (p) {
+        var v = pct(p, state.type, city, state.metric);
+        row[p.month] = v === null ? '' : v;
+      });
+      return row;
+    });
+
+    Board.csv(
+      {
+        file: 'housing',
+        fileSuffix: first + '_' + last,
+        module: '70 个大中城市房价指数看板',
+        source: '国家统计局《70 个大中城市商品住宅销售价格变动情况》',
+        interface: '/api/nbs70',
+        range: monthLabel(first) + ' ~ ' + monthLabel(last),
+        note: [
+          '指数是价格「变动幅度」，不是成交均价；表中涨跌幅 = 指数 − 100（本页计算）',
+          '「明细」为当前展示月（' + monthLabel(last) + '）的 70 城全量，排序与页面表格一致',
+          '「矩阵」为页面当前选择的 ' + TYPE_LABEL[state.type] + ' · ' + METRIC_LABEL[state.metric] + '，空缺为该期未发布',
+        ],
+      },
+      [
+        {
+          title: '明细：' + monthLabel(last) + ' 70 城对照',
+          columns: [
+            { key: 'city', label: '城市' },
+            { key: 'tier', label: '分类' },
+            { key: 'newMom', label: '新房环比', unit: '%', calc: true },
+            { key: 'newYoy', label: '新房同比', unit: '%', calc: true },
+            { key: 'secondMom', label: '二手环比', unit: '%', calc: true },
+            { key: 'secondYoy', label: '二手同比', unit: '%', calc: true },
+          ],
+          rows: detail,
+        },
+        { title: '矩阵：' + TYPE_LABEL[state.type] + ' · ' + METRIC_LABEL[state.metric] + '（%）', columns: matrixCols, rows: matrix },
+      ]
+    );
+  }
+
+  Board.onExport($('exportBtn'), buildCsv);
 
   function bindTableSort() {
     var ths = $('dataTable').querySelectorAll('th.sortable');
@@ -1404,6 +1532,7 @@
 
     $('citySelect').addEventListener('change', function () {
       state.focus = this.value;
+      syncQuery();
       renderStampSubs();
       renderCityDetail();
       renderTable();

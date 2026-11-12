@@ -60,7 +60,7 @@ lib/realestate/              房地产：独立取数（国家数据月度库·�
 lib/forecast/                推演：独立取数（国家数据年度库·教育 / 人口 / 房地产）+ 纯函数队列模型（model.js），限流在本模块内
 
 config/*.json                各模块的唯一事实来源：indicators / livelihood / income / deposit / retail / employment / security / industry / region / realestate / forecast
-public/                      index.html + home.css（入口）；housing、macro、lpr、realestate、industry、region、forecast、livelihood/{income,deposit,retail,employment,security}；shared.css（十三页共用的 token / 顶栏 / 控件）；vendor/echarts.min.js
+public/                      index.html + home.css（入口）；housing、macro、lpr、realestate、industry、region、forecast、livelihood/{income,deposit,retail,employment,security}；shared.css（十三页共用的 token / 顶栏 / 控件）；shared.js（十三页共用的 URL 视图 / CSV 导出 / 口径气泡）；vendor/echarts.min.js
 data/periods.json            房价数据集（189 个月，随仓库分发）
 docs/                        页面截图
 packaging/                   便携包的 build.ps1 / start.bat / 使用说明.txt
@@ -71,6 +71,14 @@ packaging/                   便携包的 build.ps1 / start.bat / 使用说明.t
 模块之间**不互相 require**：每个模块只依赖自己的 `lib/<module>/`，共用能力下沉到模块内或新建 `lib/shared/`；同一模块的子页面可以复用父目录的公共件（如 `lib/livelihood/{income,deposit,retail,employment,security}` 复用父目录的 `queue`）。HTTP 只由 `server.js` 一个进程分发，新增的子前缀路由必须排在更宽前缀（如 `/api/livelihood/`）的分支之前。
 
 前端同理：`public/shared.css` 是十三页唯一的一份设计 token、页面基底、顶栏（返回 / 标题 / 筛选 / 状态胶囊）与表单控件样式，各页 `styles.css` 只管自己的图表和专属布局，**不要再把顶栏样式拷回页面文件**；新增模块时先在 `index.html` 里引 `../shared.css`（子目录页 `../../shared.css`）再引本页 `styles.css`。
+
+`public/shared.js` 是前端唯一的共用脚本，管三件事，各页 `app.js` 只负责「把本页的视图状态交给它」：
+
+- **URL 分享视图**：`Board.qs(name)` 读参数、`Board.setQs(patch)` 用 `replaceState` 把当前视图写回地址栏（不刷新、不新增历史）。约定是**启动时地址栏优先于 `localStorage`**（别人发来的链接要打开成他看到的那一屏），之后每次筛选变更都写回；自定义区间写 `from` / `to`，预设区间写 `range`，其余页面自定义参数（如 region 的 `province` / `year`、forecast 的 `edu` / `scenario`）同样处理。
+- **CSV 导出**：`Board.csv(meta, blocks)` 生成 UTF-8 BOM + CRLF 的文件，`# 看板 / # 数据来源 / # 取值区间 / # 导出时间 / # 接口 / # 说明` 注释头在前，每个数据块一段（`# 表,标题` + 表头 + 行）。列对象写 `{ key, label, unit, calc }`，`calc: true` 会在表头追加「·本页计算」；缺值一律空单元格（不补 0），数值保留原始精度（不加千分位）。`Board.onExport(btn, build)` 统管按钮的防连点与报错。**只导调用方传进来的当前视图数据，不导缓存、不直接请求接口。**
+- **口径气泡**：卡片说明里用 `<span class="q" data-tip="…" tabindex="0" role="button" aria-label="口径说明">?</span>`，浮层是 body 上的单例 `.board-tip`（`position: fixed`，避免被表格横向滚动容器裁掉），hover / 点击钉住 / Escape / 滚动关闭，样式在 `shared.css`。凡是**计算值、口径变更、易误读的备注**都要挂一个，文案写「这个数怎么来的 + 为什么不能那样读」，不重复卡片正文。
+
+`shared.js` 必须排在页面自己的 `app.js` **之前**（目录页写 `../shared.js`，子目录页写 `../../shared.js`），且不要再往各页复制一份实现。
 
 ## 十三个看板共用的机制
 
@@ -84,7 +92,7 @@ packaging/                   便携包的 build.ps1 / start.bat / 使用说明.t
 - **限流三层**：所有对外请求串行 + 全局最小间隔（统计局 1200 ms、DBnomics 500 ms）+ 同一指标 60 秒冷却；两次回源尝试至少隔 10 分钟（`_meta.json` 的 `lastAttempt` 落盘，重启仍生效）。
 - **错误码**：客户端传了不存在的指标 / 路径 → 404；只有配置或代码错误才 500。
 - **口径必须标注**：同比 / 环比 / 定基不混画同一条线；指数存原值、展示成涨跌幅并注明「100 = 持平」；计算值一律在图注里声明。
-- **前端约定**：原生 HTML/CSS/JS + 本地 ECharts，禁用 CDN 与构建工具；图表单行通栏，不两列并排；红涨绿跌；筛选条件存 `localStorage`，改默认值必须同时升级键名。
+- **前端约定**：原生 HTML/CSS/JS + 本地 ECharts，禁用 CDN 与构建工具；图表单行通栏，不两列并排；红涨绿跌；筛选条件存 `localStorage`，改默认值必须同时升级键名；当前的筛选条件要能被 URL 复现（地址栏优先，见上文 `shared.js`）；导出的 CSV 只含当前区间，计算列带「本页计算」标记。
 
 ### 接口一览
 
@@ -367,7 +375,7 @@ POST https://www.chinamoney.com.cn/ags/ms/cm-u-bk-currency/LprHis?lang=CN&strSta
 
 ```
 release/中国经济统计数据看板/                                    解压后双击 start.bat
-release/china-economic-stats-dashboard-v4.2.0-win10-win11.zip   对外发送
+release/china-economic-stats-dashboard-v4.3.0-win10-win11.zip   对外发送
 ```
 
 - 包内是内置的官方签名 `node.exe`（v20.12.2，故**只支持 Windows 10 / 11**）、`server.js`、`lib/`、`config/`、`public/`、`data/periods.json`、`probe.js`、`docs/`、`README.md`、`start.bat`、`使用说明.txt`，以及各模块的缓存；不含 `node_modules/`、`AGENTS.md`。功能与源码版完全一致。

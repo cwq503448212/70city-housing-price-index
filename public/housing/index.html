@@ -44,6 +44,7 @@
               <select id="rangeTo"></select>
             </label>
           </div>
+          <button class="btn btn-export" id="exportBtn" type="button" title="导出当前区间的明细与城市×月份矩阵（CSV）">导出 CSV</button>
           <button class="btn" id="refreshBtn" type="button">刷新数据</button>
           <span class="status" id="stamp">正在加载…</span>
         </div>
@@ -89,7 +90,7 @@
       <section class="card">
         <div class="card-head">
           <div>
-            <h2 class="card-title">指数走势</h2>
+            <h2 class="card-title">指数走势<span class="q" data-tip="70 城指数反映的是价格「变动幅度」，不是成交均价；页面统一用「指数 − 100」换算成涨跌幅。" tabindex="0" role="button" aria-label="口径说明">?</span></h2>
             <p class="card-sub" id="trendSub">选择城市查看逐月变化</p>
           </div>
         </div>
@@ -101,7 +102,7 @@
       <section class="card">
         <div class="card-head">
           <div>
-            <h2 class="card-title">涨跌城市数</h2>
+            <h2 class="card-title">涨跌城市数<span class="q" data-tip="每月逐城统计上涨 / 持平 / 下跌的城市个数；指数恰为 100 记为持平，缺失城市不计数。" tabindex="0" role="button" aria-label="口径说明">?</span></h2>
             <p class="card-sub" id="countSub">每月 70 城中上涨 / 持平 / 下跌的数量</p>
           </div>
         </div>
@@ -128,7 +129,7 @@
       <section class="card">
         <div class="card-head">
           <div>
-            <h2 class="card-title">城市 × 月份 热力图</h2>
+            <h2 class="card-title">城市 × 月份 热力图<span class="q" data-tip="颜色是涨跌幅（相对变动），不是房价水平；空白格表示该月该城官方未发布，不插值。" tabindex="0" role="button" aria-label="口径说明">?</span></h2>
             <p class="card-sub" id="heatSub">颜色越红涨幅越大，越绿跌幅越大</p>
           </div>
         </div>
@@ -151,7 +152,7 @@
       <section class="card">
         <div class="card-head">
           <div>
-            <h2 class="card-title">定基指数走势</h2>
+            <h2 class="card-title">定基指数走势<span class="q" data-tip="以起点月为 100，按环比指数逐月累乘得出（本页计算）；统计局不发布这个定基序列，不要当官方值引用。" tabindex="0" role="button" aria-label="口径说明">?</span></h2>
             <p class="card-sub" id="baseSub">以起点月份为 100，按环比逐月累乘</p>
           </div>
           <div class="head-controls">
@@ -167,7 +168,7 @@
       <section class="card">
         <div class="card-head">
           <div>
-            <h2 class="card-title">明细数据</h2>
+            <h2 class="card-title">明细数据<span class="q" data-tip="表格是最新展示月的 70 城全量对照；一二三线分类按统计局划分，不是按城市规模重新分级。" tabindex="0" role="button" aria-label="口径说明">?</span></h2>
             <p class="card-sub" id="tableSub">点击表头可排序</p>
           </div>
         </div>
@@ -200,6 +201,7 @@
     </main>
 
     <script src="../vendor/echarts.min.js"></script>
+    <script src="../shared.js"></script>
     <script src="app.js"></script>
   </body>
 </html>

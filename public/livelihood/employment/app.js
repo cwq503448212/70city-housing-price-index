@@ -87,6 +87,7 @@
     from: $('from'),
     to: $('to'),
     customBox: $('custom-box'),
+    exportBtn: $('export-csv'),
     refresh: $('refresh'),
     status: $('status'),
     rangeHint: $('range-hint'),
@@ -103,6 +104,20 @@
   }
 
   function loadPref() {
+    // 地址栏优先：别人发来的链接要打开成他看到的那一屏
+    const qsFrom = Board.qs('from');
+    const qsTo = Board.qs('to');
+    if (isMonth(qsFrom) && isMonth(qsTo)) {
+      state.range = 'custom';
+      state.from = qsFrom;
+      state.to = qsTo;
+      return;
+    }
+    const qsRange = Board.qs('range');
+    if (qsRange === 'all' || /^\d+$/.test(qsRange || '')) {
+      state.range = qsRange;
+      return;
+    }
     try {
       const raw = localStorage.getItem(RANGE_KEY);
       if (!raw) return;
@@ -128,6 +143,16 @@
     } catch (e) {
       // 隐私模式下写不了，不影响使用
     }
+  }
+
+  /** 视图写回地址栏（不刷新、不新增历史）；自定义区间才会带 from/to */
+  function syncQuery() {
+    const custom = state.range === 'custom';
+    Board.setQs({
+      range: custom ? null : state.range,
+      from: custom ? state.from : null,
+      to: custom ? state.to : null,
+    });
   }
 
   /* ---------------- 数值格式 ---------------- */
@@ -749,6 +774,97 @@
     }
   }
 
+  /* ---------------- 导出 ---------------- */
+
+  /**
+   * 导出：月度表按当前区间，年度表固定全历史（与页面一致）。
+   * 差距、外出占比、收入同比三列是本页计算值。
+   */
+  function buildCsv() {
+    if (!state.data) {
+      window.alert('数据还没加载完成，稍后再导出。');
+      return;
+    }
+    const months = monthsOf();
+    const monthCols = [
+      { key: 'period', label: '月份' },
+      { key: 'unemployment', label: '全国城镇调查失业率', unit: '%' },
+      { key: 'unemployment_city31', label: '31 个大城市调查失业率', unit: '%' },
+      { key: 'gap_city', label: '31 城 − 全国', unit: '个百分点', calc: true },
+      { key: 'unemployment_local', label: '本地户籍', unit: '%' },
+      { key: 'unemployment_migrant', label: '外来户籍', unit: '%' },
+      { key: 'youth_unemployment', label: '16—24 岁', unit: '%' },
+      { key: 'age_25_29', label: '25—29 岁', unit: '%' },
+      { key: 'age_30_59', label: '30—59 岁', unit: '%' },
+      { key: 'gap_youth', label: '青年 − 全国', unit: '个百分点', calc: true },
+      { key: 'weekly_hours', label: '周平均工时', unit: '小时' },
+    ];
+    const monthRows = months.map((m) => {
+      const row = { period: m };
+      monthCols.forEach((c) => {
+        if (c.key === 'period') return;
+        const v = pointAt(c.key, m);
+        row[c.key] = v === null ? '' : v;
+      });
+      return row;
+    });
+
+    const years = yearsOf(['migrant_total', 'migrant_income', 'registered_unemployed', 'registered_rate']);
+    const yearCols = [
+      { key: 'period', label: '年份' },
+      { key: 'migrant_total', label: '农民工总量', unit: '万人' },
+      { key: 'migrant_local', label: '本地农民工', unit: '万人' },
+      { key: 'migrant_out', label: '外出农民工', unit: '万人' },
+      { key: 'migrant_cross_province', label: '跨省流动', unit: '万人' },
+      { key: 'migrant_out_share', label: '外出占比', unit: '%', calc: true },
+      { key: 'migrant_income', label: '农民工月均收入', unit: '元 · 名义' },
+      { key: 'income_yoy', label: '收入同比', unit: '%', calc: true },
+      { key: 'registered_unemployed', label: '城镇登记失业人数', unit: '万人' },
+      { key: 'registered_rate', label: '城镇登记失业率', unit: '%' },
+    ];
+    const yearRows = years.map((y) => {
+      const income = pointAt('migrant_income', y);
+      const prevIncome = pointAt('migrant_income', String(Number(y) - 1));
+      const growth =
+        income === null || prevIncome === null || prevIncome === 0
+          ? ''
+          : Number((((income - prevIncome) / prevIncome) * 100).toFixed(1));
+      const row = { period: y, income_yoy: growth };
+      yearCols.forEach((c) => {
+        if (c.key === 'period' || c.key === 'income_yoy') return;
+        const v = pointAt(c.key, y);
+        row[c.key] = v === null ? '' : v;
+      });
+      return row;
+    });
+
+    Board.csv(
+      {
+        file: 'livelihood-employment',
+        fileSuffix: months.length ? months[0] + '_' + months[months.length - 1] : 'all',
+        module: '中国就业形势看板',
+        source: '国家统计局 · 国家数据（月度库 · 城镇调查失业率；年度库 · 农民工与登记失业）',
+        interface: '/api/livelihood/employment',
+        range: months.length
+          ? '月度 ' + months[0] + ' ~ ' + months[months.length - 1] + '（共 ' + months.length + ' 个月）；年度 ' + years[0] + ' ~ ' + years[years.length - 1] + '（全历史）'
+          : '无月度数据',
+        note: [
+          '调查失业率与登记失业率口径不同，不可直接比较；登记失业率官方止于 2021 年',
+          '16—24 岁口径 2023-07~11 暂停发布，2023-12 起改为不含在校生，新旧不拼接',
+          '31 城为省会与计划单列市合计口径；差距、外出占比、收入同比为本页计算值',
+          '农民工月均收入为名义值，未扣价格因素；年度表固定全历史，不随顶部时间范围变化',
+          '空单元格表示官方未发布或该期无此口径，不插值、不补 0',
+        ],
+      },
+      [
+        { title: '月度明细', columns: monthCols, rows: monthRows },
+        { title: '年度明细', columns: yearCols, rows: yearRows },
+      ]
+    );
+  }
+
+  Board.onExport(el.exportBtn, buildCsv);
+
   /* ---------------- 状态栏 ---------------- */
 
   function setStatus(text, kind) {
@@ -964,24 +1080,28 @@
       state.from = el.from.value;
       state.to = el.to.value;
       savePref();
+      syncQuery();
       if (isMonth(state.from) && isMonth(state.to)) load(false);
       return;
     }
     state.from = '';
     state.to = '';
     savePref();
+    syncQuery();
     load(false);
   });
 
   el.from.addEventListener('change', () => {
     state.from = el.from.value;
     savePref();
+    syncQuery();
     if (state.range === 'custom' && isMonth(state.from) && isMonth(state.to)) load(false);
   });
 
   el.to.addEventListener('change', () => {
     state.to = el.to.value;
     savePref();
+    syncQuery();
     if (state.range === 'custom' && isMonth(state.from) && isMonth(state.to)) load(false);
   });
 
@@ -1037,6 +1157,7 @@
     try {
       const json = await fetchData(false);
       buildRangeSelect(json.presets);
+      syncQuery();
       state.data = json;
       renderAll();
       applyStatus(json);

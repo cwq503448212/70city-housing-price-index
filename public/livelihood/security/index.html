@@ -39,6 +39,7 @@
         </label>
       </div>
 
+      <button id="export-csv" class="btn btn-export" type="button" title="导出当前年份区间的五张明细表（CSV）">导出 CSV</button>
       <button id="refresh" class="btn" type="button" title="跳过缓存，重新向统计局请求一次">刷新数据</button>
       <span id="status" class="status">正在加载…</span>
     </div>
@@ -56,6 +57,7 @@
         <p class="card-sub">
           柱为<strong>当年</strong>收入与支出（亿元，左轴），虚线为<strong>累计</strong>结余（亿元，右轴）。
           当年收支是「这一年的进账与出账」，累计结余是「历年攒下来的余额」，两者<strong>不是同一个量</strong>，不可相互替代
+          <span class="q" data-tip="当年收入 / 支出是流量，累计结余是存量余额，量纲都是亿元但含义不同；本页不把两者混画成同一类指标，也不相加。" tabindex="0" role="button" aria-label="口径说明">?</span>
         </p>
       </header>
       <div class="chart chart-lg" id="chart-fund"></div>
@@ -67,6 +69,7 @@
         <p class="card-sub">
           当年收入 / 支出（亿元，左轴，柱），累计结余（亿元，右轴，虚线）。职工养老是五险里盘子最大的一支，
           收入端含单位与个人缴费及财政补贴，支出端主要是离退休人员的基本养老金
+          <span class="q" data-tip="职工养老基金收入 = 单位缴费 + 个人缴费 + 财政补贴 + 利息等，不是只有个人缴的钱；支出主要是离退休人员基本养老金，两者都含管理费等。" tabindex="0" role="button" aria-label="口径说明">?</span>
         </p>
       </header>
       <div class="chart" id="chart-pension"></div>
@@ -78,6 +81,7 @@
         <p class="card-sub">
           同结构：当年收入 / 支出（亿元，左轴），累计结余（亿元，右轴）。城乡居民养老由基础养老金与个人账户构成，
           人均支出远低于职工养老，两条线<strong>不能放在一起比高低</strong>，制度与筹资方式都不同
+          <span class="q" data-tip="城乡居民养老由基础养老金与个人账户构成，筹资以个人缴费 + 财政补贴为主，与职工养老制度不同；金额可以并列展示，但不能直接比高低。" tabindex="0" role="button" aria-label="口径说明">?</span>
         </p>
       </header>
       <div class="chart" id="chart-resident"></div>
@@ -89,6 +93,7 @@
         <p class="card-sub">
           当年收入与支出（亿元，左轴），职工医保两条柱、居民医保两条柱。职工医保单位缴费比例高、结余厚；
           居民医保靠个人缴费 + 财政补助，收支更紧。<strong>2019 年起生育保险基金并入职工医保</strong>，因此职工医保口径在 2019 年有一次扩大
+          <span class="q" data-tip="2019 年起生育保险与职工医保合并实施，职工医保基金收支口径就此扩大，2018 年前后的数字不能直接比；居民医保靠个人缴费 + 财政补助。" tabindex="0" role="button" aria-label="口径说明">?</span>
         </p>
       </header>
       <div class="chart" id="chart-medical"></div>
@@ -100,6 +105,7 @@
         <p class="card-sub">
           当年结余 = 当年收入 − 当年支出（亿元，左轴，本页计算值）。生育保险基金<strong>止于 2018 年</strong>：
           2019 年起生育保险与职工医保合并实施，基金不再单列，因此这条线画到 2018 就断，不往后延伸
+          <span class="q" data-tip="当年结余 = 当年收入 − 当年支出，是本页计算值，可以为负；生育保险基金官方止于 2018 年（并入职工医保），断点不是缺数据。" tabindex="0" role="button" aria-label="口径说明">?</span>
         </p>
       </header>
       <div class="chart" id="chart-others"></div>
@@ -111,6 +117,7 @@
         <p class="card-sub">
           年末参保人数（万人，左轴）。基本医保为<strong>全口径</strong>（职工 + 居民）合计，2017 年起才按此口径发布；
           职工养老参保人数<strong>含离退休人员</strong>，所以它比「在职参保人数」大，看覆盖率请看下一张图
+          <span class="q" data-tip="职工养老参保人数含离退休；基本医保为职工 + 居民全口径，2017 年起才按此口径发布，2016 年及以前不可直接衔接。" tabindex="0" role="button" aria-label="口径说明">?</span>
         </p>
       </header>
       <div class="chart" id="chart-insured"></div>
@@ -124,6 +131,7 @@
           失业 / 工伤 / 生育用「参保人数 ÷ 城镇就业人员」；<strong>医保例外</strong>：全口径参保人数覆盖全体国民，
           分母取年末总人口（若也除城镇就业会算出 280% 这种无意义的数）。超过 100% 说明参保面已超出分母口径
           （灵活就业、农民工等也参保），属正常现象
+          <span class="q" data-tip="五个参保率都是本页相除得到：职工养老用在职参保人数 ÷ 城镇就业人员，失业 / 工伤 / 生育同分母，医保用全口径参保 ÷ 年末总人口；超 100% 属正常。" tabindex="0" role="button" aria-label="口径说明">?</span>
         </p>
       </header>
       <div class="chart" id="chart-coverage"></div>
@@ -136,6 +144,7 @@
           人均养老金支出（元 / 人 / 年，左轴，<strong>本页计算值</strong>）= 当年基金支出 ÷ 当年领取待遇人数。
           它把「总支出」摊到每个领钱的人头上，能看出两类制度的待遇水平差异；
           基金支出里含丧葬补助、转移支出等，不等于个人到手养老金，口径见页脚
+          <span class="q" data-tip="人均支出 = 当年基金支出 ÷ 当年领取待遇人数，是本页计算值；基金支出含管理费、丧葬抚恤、转移支出，不等于个人实际到手金额。" tabindex="0" role="button" aria-label="口径说明">?</span>
         </p>
       </header>
       <div class="chart" id="chart-benefit"></div>
@@ -147,6 +156,7 @@
         <p class="card-sub">
           可支付月数（月，左轴，<strong>本页计算值</strong>）= 累计结余 ÷（当年支出 ÷ 12），即「不再有新增收入时，账上的钱还够发几个月」。
           虚线 12 个月是常用的「一年安全垫」参考线；职工养老结余厚、城乡养老支出小，两者水平差异很大
+          <span class="q" data-tip="可支付月数 = 累计结余 ÷（当年支出 ÷ 12），是静态压力测试，假设支出不变；不考虑老龄化带来的支出增长，不能当预测值。" tabindex="0" role="button" aria-label="口径说明">?</span>
         </p>
       </header>
       <div class="chart" id="chart-months"></div>
@@ -159,6 +169,7 @@
       <p class="card-sub">
         单位：亿元。合计行与各险种并列；「当期结余」为<strong>本页计算值</strong>（收入 − 支出），
         累计结余为官方发布的历年滚存余额。生育保险三项官方止于 2018 年
+        <span class="q" data-tip="「当期结余」是本页用当年收入减当年支出得到，可以为负；累计结余是官方滚存值。生育保险基金与部分待遇人数已按归档处理，不再回源。" tabindex="0" role="button" aria-label="口径说明">?</span>
       </p>
     </header>
     <div class="table-wrap">
@@ -185,6 +196,7 @@
       <p class="card-sub">
         2010 年起建立、2012 年起覆盖全部县区，领取人数 2012 年起才有完整序列；
         「领取人数占比」= 领取待遇人数 ÷ 参保人数（本页计算值）
+        <span class="q" data-tip="领取人数 2012 年起才有完整序列；领取人数占比是本页相除得到，不是官方发布指标，两个人群口径不同，只用于看结构。" tabindex="0" role="button" aria-label="口径说明">?</span>
       </p>
     </header>
     <div class="table-wrap">
@@ -211,6 +223,7 @@
       <p class="card-sub">
         参保与待遇人数（万人），加上前面已列的基金当年结余与可支付月数（本页计算值）。
         生育保险享受待遇人数官方止于 2021 年，基金收支结余止于 2018 年
+        <span class="q" data-tip="表内各列的「止于」年份是官方停更，不是缺数据；带「计算」的结余、可支付月数、参保率与占比列均由本页算出。" tabindex="0" role="button" aria-label="口径说明">?</span>
       </p>
     </header>
     <div class="table-wrap">
@@ -275,6 +288,7 @@
 </main>
 
 <script src="../../vendor/echarts.min.js"></script>
+<script src="../../shared.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

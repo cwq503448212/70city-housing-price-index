@@ -39,6 +39,7 @@
         </label>
       </div>
 
+      <button id="export-csv" class="btn btn-export" type="button" title="导出当前月份区间 + 全历史年度序列（CSV）">导出 CSV</button>
       <button id="refresh" class="btn" type="button" title="跳过缓存，重新向统计局请求一次">刷新数据</button>
       <span id="status" class="status">正在加载…</span>
     </div>
@@ -56,6 +57,7 @@
         <p class="card-sub">
           实线为城镇调查失业率（%，左轴）；虚线为 <strong>31 城 − 全国</strong>的差值（个百分点，右轴，本页计算值）。
           差值大于 0 说明大城市失业率高于全国平均水平
+          <span class="q" data-tip="31 城是省会与计划单列市的合计口径（不是 31 个城市分别发布），样本范围与全国不同；差值为本页相减得到，只用于看相对强弱。" tabindex="0" role="button" aria-label="口径说明">?</span>
         </p>
       </header>
       <div class="chart chart-lg" id="chart-line"></div>
@@ -67,6 +69,7 @@
         <p class="card-sub">
           同一条调查失业率按户籍拆分（%，左轴）。外来户籍劳动力指在城镇常住就业但户籍不在本地的人，
           他们的就业更依赖经济景气，波动通常比本地户籍大；两条序列 2021-01 起发布
+          <span class="q" data-tip="本地 / 外来按户籍划分，都属于城镇调查失业率同一套抽样；两条序列 2021-01 才开始发布，之前的空格是官方没发，不是漏拉。" tabindex="0" role="button" aria-label="口径说明">?</span>
         </p>
       </header>
       <div class="chart" id="chart-hukou"></div>
@@ -79,6 +82,7 @@
           %，左轴。2023-06 及以前 16—24 岁是「含在校生」口径，2023-07 ~ 2023-11 这段<strong>暂停发布</strong>（图上灰色区间），
           2023-12 起改为「16—24 岁劳动力（不含在校生）」；25—59 岁旧口径在 2023-06 后停更，拆成 25—29 岁与 30—59 岁。
           <strong>新旧口径不拼接</strong>，断点就是断点
+          <span class="q" data-tip="2023-06 及以前，16—24 岁含在校生；2023-07~11 暂停发布；2023-12 起改为不含在校生的劳动力口径。新口径数值明显偏低，两段不拼接、不同比挂钩。" tabindex="0" role="button" aria-label="口径说明">?</span>
         </p>
       </header>
       <div class="chart" id="chart-age"></div>
@@ -90,6 +94,7 @@
         <p class="card-sub">
           小时 / 周，左轴。48 小时 ≈ 每周 6 天 × 8 小时，是很多人判断「有没有被加班」的心理线；
           该序列 2022-01 起发布，反映的是<strong>就业质量</strong>而非就业数量——有活干但工时短，同样是压力
+          <span class="q" data-tip="48 小时≈每周 6×8 小时，只是参考线，不是官方阈值；分母是在岗就业人员，失业者与退出劳动力市场的人不计入，工时下降也可能是活少。" tabindex="0" role="button" aria-label="口径说明">?</span>
         </p>
       </header>
       <div class="chart" id="chart-hours"></div>
@@ -101,6 +106,7 @@
         <p class="card-sub">
           堆叠柱为年末农民工规模（万人，左轴），虚线为外出农民工占比（%，右轴，本页计算值）。
           占比下降说明更多人在本乡镇就近就业、不再跨地区流动；年度序列不受上方时间范围影响，固定画全历史
+          <span class="q" data-tip="本地 + 外出 = 农民工总量，属年度监测调查口径；外出占比是本页相除得到。年度序列固定画全历史，不随顶部时间范围变化。" tabindex="0" role="button" aria-label="口径说明">?</span>
         </p>
       </header>
       <div class="chart" id="chart-migrant"></div>
@@ -112,6 +118,7 @@
         <p class="card-sub">
           柱为月均收入（元，左轴，<strong>名义值</strong>，未扣价格因素）；虚线为同比增速（%，右轴，<strong>本页计算值</strong>：
           今年 ÷ 上年 − 1）。名义增速不等于购买力提升，扣掉 CPI 后的实际增速统计局并不单独发布
+          <span class="q" data-tip="月均收入是名义值，未扣价格因素；同比是本页用今年 ÷ 上年 − 1 得到，不是官方发布；本页不用 CPI 自行折算「实际增速」。" tabindex="0" role="button" aria-label="口径说明">?</span>
         </p>
       </header>
       <div class="chart" id="chart-pay"></div>
@@ -124,6 +131,7 @@
           柱为年末城镇登记失业人数（万人，左轴），线为登记失业率（%，右轴，<strong>官方序列止于 2021 年</strong>）。
           登记失业靠本人到公共就业服务机构登记统计，<strong>与调查失业率口径不同、数值不可直接比较</strong>，
           这里只用它补齐 2018 年以前的长历史
+          <span class="q" data-tip="登记失业率分母是城镇单位就业人员 + 登记失业人数，只算主动去登记的人，长期明显低于调查失业率；官方序列止于 2021 年，本页不向外推。" tabindex="0" role="button" aria-label="口径说明">?</span>
         </p>
       </header>
       <div class="chart" id="chart-registered"></div>
@@ -136,6 +144,7 @@
       <p class="card-sub">
         按年分组，年份倒序、同一年内月份升序；— 表示该月这一口径没有数据（序列起点不同、口径已停更、尚未发布），
         不插值、不补 0
+        <span class="q" data-tip="「—」不是 0：分户籍序列 2021-01 才发、青年口径 2023-07~11 暂停、青年与全国差距列是本页相减得到；导出 CSV 同样保留空格。" tabindex="0" role="button" aria-label="口径说明">?</span>
       </p>
     </header>
     <div class="table-wrap">
@@ -166,6 +175,7 @@
       <p class="card-sub">
         年份倒序。农民工为年末监测调查口径；登记失业人数截至最新年度，登记失业率官方止于 2021 年；
         「收入同比」是本页计算值，其余为统计局发布值
+        <span class="q" data-tip="年度序列固定画全历史、不随顶部时间范围变化，导出 CSV 也是全历史；外出占比与收入同比为计算列，登记失业率官方止于 2021 年。" tabindex="0" role="button" aria-label="口径说明">?</span>
       </p>
     </header>
     <div class="table-wrap">
@@ -251,6 +261,7 @@
 </main>
 
 <script src="../../vendor/echarts.min.js"></script>
+<script src="../../shared.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

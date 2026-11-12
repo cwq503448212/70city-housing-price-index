@@ -61,11 +61,26 @@
     table: $('detail-table').querySelector('tbody'),
     footMeta: $('foot-meta'),
     changeSub: $('change-sub'),
+    exportBtn: $('export-csv'),
   };
 
   /* ---------------- 本地偏好 ---------------- */
 
   function loadPref() {
+    // 地址栏优先：?range=20 或 ?from=2000&to=2024
+    const qsFrom = Board.qs('from');
+    const qsTo = Board.qs('to');
+    const qsRange = Board.qs('range');
+    if (/^\d{4}$/.test(qsFrom || '') && /^\d{4}$/.test(qsTo || '')) {
+      state.range = 'custom';
+      state.from = qsFrom;
+      state.to = qsTo;
+      return;
+    }
+    if (qsRange === 'all' || /^\d+$/.test(qsRange || '')) {
+      state.range = qsRange;
+      return;
+    }
     try {
       const raw = localStorage.getItem(RANGE_KEY);
       if (!raw) return;
@@ -931,6 +946,16 @@
     return q.join('&');
   }
 
+  /** 把当前年份区间写回地址栏：预设只留 range，自定义区间留 from/to */
+  function syncQuery() {
+    const custom = state.range === 'custom';
+    Board.setQs({
+      range: custom ? null : state.range,
+      from: custom ? state.from : null,
+      to: custom ? state.to : null,
+    });
+  }
+
   const CHART_IDS = [
     'chart-population',
     'chart-birthdeath',
@@ -964,6 +989,7 @@
       applyStatus(json);
       schedulePoll(json);
       syncInputs(json);
+      syncQuery();
     } catch (e) {
       setStatus('加载失败：' + (e.message || e), 'error');
       if (!state.data) CHART_IDS.forEach((id) => emptyChart(id, '加载失败'));
@@ -973,6 +999,56 @@
       el.refresh.disabled = false;
     }
   }
+
+  /* ---------------- 导出 CSV ---------------- */
+
+  /**
+   * 宽表：一行一年，一列一个指标，列名带单位。
+   * 标了 computed 的指标写「本页计算」，避免导出后被当成官方发布值引用。
+   */
+  function buildCsv() {
+    const d = state.data;
+    if (!d) {
+      window.alert('还没有数据可导出。');
+      return;
+    }
+    const years = yearsOf();
+    const columns = [{ key: 'year', label: '年份' }].concat(
+      d.indicators.map((ind) => ({
+        key: ind.id,
+        label: ind.shortLabel || ind.label,
+        unit: unitOf(ind),
+        calc: !!ind.computed,
+      }))
+    );
+    const rows = years.map((year) => {
+      const row = { year: year };
+      d.indicators.forEach((ind) => {
+        const pt = ind.points.filter((p) => p.year === year)[0];
+        row[ind.id] = pt && pt.value !== null ? pt.value : '';
+      });
+      return row;
+    });
+
+    Board.csv(
+      {
+        file: 'livelihood',
+        fileSuffix: d.range.from + '_' + d.range.to,
+        module: '中国人口与婚育看板',
+        source: '国家统计局 · 国家数据（年度）',
+        interface: '/api/livelihood/overview',
+        range: yearCn(d.range.from) + ' ~ ' + yearCn(d.range.to) + '（' + d.range.label + '）',
+        note: [
+          '人口数为年末口径；抚养比、预期寿命、结婚登记等不同序列量纲不同，未做任何换算与合成',
+          '出生人口 / 死亡人口 / 自然增长量 / 生死比 / 65 岁以上占比 为本页计算值：千分率 × 年平均人口 ÷ 1000',
+          '自然增长率取官方发布值，不由本页用出生率减死亡率代替',
+        ],
+      },
+      [{ title: '指标年度序列', columns: columns, rows: rows }]
+    );
+  }
+
+  Board.onExport(el.exportBtn, buildCsv);
 
   function renderAll() {
     renderKpi();
@@ -1034,24 +1110,28 @@
       state.from = el.from.value;
       state.to = el.to.value;
       savePref();
+      syncQuery();
       if (yearOk(state.from) && yearOk(state.to)) load(false);
       return;
     }
     state.from = '';
     state.to = '';
     savePref();
+    syncQuery();
     load(false);
   });
 
   el.from.addEventListener('change', () => {
     state.from = el.from.value;
     savePref();
+    syncQuery();
     if (state.range === 'custom' && yearOk(state.from) && yearOk(state.to)) load(false);
   });
 
   el.to.addEventListener('change', () => {
     state.to = el.to.value;
     savePref();
+    syncQuery();
     if (state.range === 'custom' && yearOk(state.from) && yearOk(state.to)) load(false);
   });
 

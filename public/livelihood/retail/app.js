@@ -91,6 +91,7 @@
     from: $('from'),
     to: $('to'),
     customBox: $('custom-box'),
+    exportBtn: $('export-csv'),
     refresh: $('refresh'),
     status: $('status'),
     rangeHint: $('range-hint'),
@@ -107,6 +108,20 @@
   }
 
   function loadPref() {
+    // 地址栏优先：别人发来的链接要打开成他看到的那一屏
+    const qsFrom = Board.qs('from');
+    const qsTo = Board.qs('to');
+    if (isMonth(qsFrom) && isMonth(qsTo)) {
+      state.range = 'custom';
+      state.from = qsFrom;
+      state.to = qsTo;
+      return;
+    }
+    const qsRange = Board.qs('range');
+    if (qsRange === 'all' || /^\d+$/.test(qsRange || '')) {
+      state.range = qsRange;
+      return;
+    }
     try {
       const raw = localStorage.getItem(RANGE_KEY);
       if (!raw) return;
@@ -132,6 +147,16 @@
     } catch (e) {
       // 隐私模式下写不了，不影响使用
     }
+  }
+
+  /** 视图写回地址栏（不刷新、不新增历史）；自定义区间才会带 from/to */
+  function syncQuery() {
+    const custom = state.range === 'custom';
+    Board.setQs({
+      range: custom ? null : state.range,
+      from: custom ? state.from : null,
+      to: custom ? state.to : null,
+    });
   }
 
   /* ---------------- 数值格式 ---------------- */
@@ -651,6 +676,84 @@
     }
   }
 
+  /* ---------------- 导出 ---------------- */
+
+  /**
+   * 导出：当前区间一行一个月，图与表用到的序列全带上。
+   * 乡村占比、网上占比、剔除汽车两列是本页计算值，列名会带上「本页计算」。
+   */
+  function buildCsv() {
+    if (!state.data) {
+      window.alert('数据还没加载完成，稍后再导出。');
+      return;
+    }
+    const months = monthsOf();
+    if (!months.length) {
+      window.alert('当前区间还没有数据可导出。');
+      return;
+    }
+    const columns = [
+      { key: 'month', label: '月份' },
+      { key: 'total_amount', label: '社零总额（当月）', unit: '亿元' },
+      { key: 'total_yoy', label: '社零总额当月同比', unit: '%' },
+      { key: 'total_cum', label: '社零总额（累计）', unit: '亿元' },
+      { key: 'total_cum_yoy', label: '社零总额累计同比', unit: '%' },
+      { key: 'catering_amount', label: '餐饮收入（当月）', unit: '亿元' },
+      { key: 'catering_yoy', label: '餐饮收入当月同比', unit: '%' },
+      { key: 'goods_amount', label: '商品零售（当月）', unit: '亿元' },
+      { key: 'goods_yoy', label: '商品零售当月同比', unit: '%' },
+      { key: 'urban_amount', label: '城镇社零（当月）', unit: '亿元' },
+      { key: 'urban_yoy', label: '城镇社零当月同比', unit: '%' },
+      { key: 'rural_amount', label: '乡村社零（当月）', unit: '亿元' },
+      { key: 'rural_yoy', label: '乡村社零当月同比', unit: '%' },
+      { key: 'rural_share', label: '乡村消费占比', unit: '%', calc: true },
+      { key: 'online_goods_cum', label: '实物商品网上零售额（累计·旧口径）', unit: '亿元' },
+      { key: 'online_goods_cum_yoy', label: '实物商品网上零售额累计同比（旧口径）', unit: '%' },
+      { key: 'online_goods_cum_new', label: '网上商品零售额（累计·新口径）', unit: '亿元' },
+      { key: 'online_goods_cum_new_yoy', label: '网上商品零售额累计同比（新口径）', unit: '%' },
+      { key: 'online_share', label: '网上零售占社零比重', unit: '%', calc: true },
+      { key: 'grain_amount', label: '粮油食品类（当月·限上）', unit: '亿元' },
+      { key: 'grain_yoy', label: '粮油食品类同比（限上）', unit: '%' },
+      { key: 'appliance_amount', label: '家用电器和音像器材类（当月·限上）', unit: '亿元' },
+      { key: 'appliance_yoy', label: '家电类同比（限上）', unit: '%' },
+      { key: 'car_amount', label: '汽车类零售额（当月·限上）', unit: '亿元' },
+      { key: 'car_yoy', label: '汽车类同比（限上）', unit: '%' },
+      { key: 'ex_car_amount', label: '剔除汽车后社零（当月）', unit: '亿元', calc: true },
+      { key: 'ex_car_yoy', label: '剔除汽车后社零同比', unit: '%', calc: true },
+    ];
+    const rows = months.map((m) => {
+      const row = { month: m };
+      columns.forEach((c) => {
+        if (c.key === 'month') return;
+        const v = pointAt(c.key, m);
+        row[c.key] = v === null ? '' : v;
+      });
+      return row;
+    });
+
+    Board.csv(
+      {
+        file: 'livelihood-retail',
+        fileSuffix: months[0] + '_' + months[months.length - 1],
+        module: '中国社会消费品零售看板',
+        source: '国家统计局 · 国家数据（月度库 · 国内贸易）',
+        interface: '/api/livelihood/retail',
+        range: months[0] + ' ~ ' + months[months.length - 1] + '，共 ' + months.length + ' 个月',
+        note: [
+          '当月值与当月同比为统计局发布值；累计为年初至今合计，不是滚动 12 个月',
+          '1、2 月合并公布，当月值没有 1 月与 2 月，2 月累计值为 1—2 月合计',
+          '乡村占比 = 乡村当月 ÷ 社零总额当月；网上占比 = 当期网上累计 ÷ 当期社零累计，均为本页计算值',
+          '网上零售 2018-02~2025-12 为旧口径、2026-02 起为新口径，两段不拼接、不做倍数修正',
+          '剔除汽车 = 社零总额 − 限额以上汽车类，汽车类不含限额以下，不等于官方口径的「社零扣除汽车」',
+          '空单元格表示官方未发布或该月无此口径，不插值、不补 0',
+        ],
+      },
+      [{ title: '月度明细', columns: columns, rows: rows }]
+    );
+  }
+
+  Board.onExport(el.exportBtn, buildCsv);
+
   /* ---------------- 状态栏 ---------------- */
 
   function setStatus(text, kind) {
@@ -855,24 +958,28 @@
       state.from = el.from.value;
       state.to = el.to.value;
       savePref();
+      syncQuery();
       if (isMonth(state.from) && isMonth(state.to)) load(false);
       return;
     }
     state.from = '';
     state.to = '';
     savePref();
+    syncQuery();
     load(false);
   });
 
   el.from.addEventListener('change', () => {
     state.from = el.from.value;
     savePref();
+    syncQuery();
     if (state.range === 'custom' && isMonth(state.from) && isMonth(state.to)) load(false);
   });
 
   el.to.addEventListener('change', () => {
     state.to = el.to.value;
     savePref();
+    syncQuery();
     if (state.range === 'custom' && isMonth(state.from) && isMonth(state.to)) load(false);
   });
 
@@ -928,6 +1035,7 @@
     try {
       const json = await fetchData(false);
       buildRangeSelect(json.presets);
+      syncQuery();
       state.data = json;
       renderAll();
       applyStatus(json);

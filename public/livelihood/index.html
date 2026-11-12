@@ -40,6 +40,7 @@
         </label>
       </div>
 
+      <button id="export-csv" class="btn btn-export" type="button" title="导出当前年份区间的全部指标（CSV）">导出 CSV</button>
       <button id="refresh" class="btn" type="button" title="跳过缓存，重新向统计局请求一次">刷新数据</button>
       <span id="status" class="status">正在加载…</span>
     </div>
@@ -54,7 +55,7 @@
     <article class="card card-wide">
       <header class="card-head">
         <h2>人口结构：年龄构成（万人）</h2>
-        <p class="card-sub">年末人口，三段之和等于年末总人口；分段缺失的年份不出柱。右轴为 65 岁以上占比（计算值 = 65 岁以上人口 ÷ 年末总人口）。总人口 2021 年见顶 141260 万，2022 年起下降（与出生册里的生死交叉同年）</p>
+        <p class="card-sub">年末人口，三段之和等于年末总人口；分段缺失的年份不出柱。右轴为 65 岁以上占比（计算值 = 65 岁以上人口 ÷ 年末总人口）。总人口 2021 年见顶 141260 万，2022 年起下降（与出生册里的生死交叉同年）<span class="q" data-tip="人口数都是「年末」口径，不是年平均；65 岁以上占比才是本页相除得到，分段人口与总人口都是官方发布值。" tabindex="0" role="button" aria-label="口径说明">?</span></p>
       </header>
       <div class="chart" id="chart-population"></div>
     </article>
@@ -70,7 +71,7 @@
     <article class="card card-wide">
       <header class="card-head">
         <h2>抚养比：每 100 名劳动年龄人口要养多少人</h2>
-        <p class="card-sub">分母是 15—64 岁人口；总 / 少儿 / 老年三条线均取官方发布值，本页不自行相加</p>
+        <p class="card-sub">分母是 15—64 岁人口；总 / 少儿 / 老年三条线均取官方发布值，本页不自行相加<span class="q" data-tip="抚养比是官方直接发布的，不是本页相除；总抚养比 ≠ 少儿 + 老年相加，所以三条线各自独立、不相加。" tabindex="0" role="button" aria-label="口径说明">?</span></p>
       </header>
       <div class="chart" id="chart-dependency"></div>
     </article>
@@ -78,7 +79,7 @@
     <article class="card card-wide">
       <header class="card-head">
         <h2>平均预期寿命（岁）</h2>
-        <p class="card-sub">非逐年发布：只在人口普查与大样本抽样年份有值，官方最新为 2020 年，断点是官方没发布而不是缺数据</p>
+        <p class="card-sub">非逐年发布：只在人口普查与大样本抽样年份有值，官方最新为 2020 年，断点是官方没发布而不是缺数据<span class="q" data-tip="预期寿命不是逐年序列：只在普查与大样本抽样年份发布，断点不是缺数据，也不是本页漏拉。该序列已归档、不再回源核对。" tabindex="0" role="button" aria-label="口径说明">?</span></p>
       </header>
       <div class="chart" id="chart-life"></div>
     </article>
@@ -110,7 +111,7 @@
     <article class="card card-wide">
       <header class="card-head">
         <h2>出生死亡比（倍，计算值）</h2>
-        <p class="card-sub">出生人口 ÷ 死亡人口，1.0 为生死平衡；1979 年约 2.9 倍，2022 年起跌破 1</p>
+        <p class="card-sub">出生人口 ÷ 死亡人口，1.0 为生死平衡；1979 年约 2.9 倍，2022 年起跌破 1<span class="q" data-tip="出生人口与死亡人口都是本页用千分率×年平均人口还原的（本页计算），所以生死比也是计算值，不是官方发布指标。" tabindex="0" role="button" aria-label="口径说明">?</span></p>
       </header>
       <div class="chart" id="chart-ratio"></div>
     </article>
@@ -127,7 +128,7 @@
   <section class="card">
     <header class="card-head">
       <h2>指标明细</h2>
-      <p class="card-sub">最新一年与此前最近一个有值年份对比；预期寿命这类稀疏序列的「上一期」可能不是紧邻年份；来源标「本页计算」的行不是官方发布值</p>
+      <p class="card-sub">最新一年与此前最近一个有值年份对比；预期寿命这类稀疏序列的「上一期」可能不是紧邻年份；来源标「本页计算」的行不是官方发布值<span class="q" data-tip="「上一期」是往前找最近一个有值的年份，不一定是去年；带「本页计算」的行由页面按官方率值还原，引用时请注明。" tabindex="0" role="button" aria-label="口径说明">?</span></p>
     </header>
     <div class="table-wrap">
       <table id="detail-table">
@@ -190,6 +191,7 @@
 </main>
 
 <script src="../vendor/echarts.min.js"></script>
+<script src="../shared.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

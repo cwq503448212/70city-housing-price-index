@@ -90,6 +90,16 @@ function nowMonth() {
 }
 
 function loadRange() {
+  // 地址栏优先：别人发来的链接要打开成他看到的那一屏
+  const qsFrom = Board.qs('from');
+  const qsTo = Board.qs('to');
+  if (/^\d{4}-(0[1-9]|1[0-2])$/.test(qsFrom || '') && /^\d{4}-(0[1-9]|1[0-2])$/.test(qsTo || '')) {
+    return { mode: 'custom', from: qsFrom, to: qsTo };
+  }
+  const qsMode = Board.qs('range');
+  if (qsMode === 'all' || /^\d+$/.test(qsMode || '')) {
+    return { mode: qsMode, from: '', to: '' };
+  }
   try {
     const raw = localStorage.getItem(RANGE_KEY);
     if (!raw) return { mode: '5', from: '', to: '' };
@@ -721,7 +731,6 @@ function renderPmi(d) {
 }
 
 /* ---------------- 明细表 ---------------- */
-
 function renderTable(d) {
   const rows = orderedIndustries(d);
   const month = latestOutputMonth(d);
@@ -777,6 +786,147 @@ function renderTable(d) {
     cnMonth(month) +
     '，营收与利润取各行业最新一期（表头悬停可看具体月份）；' +
     '「—」表示该期上游没有值，不插值、不补 0';
+}
+
+/* ---------------- 导出 ---------------- */
+
+/**
+ * 导出：最新一期快照 + 分行业月度序列 + PMI 分项，三块各自成段。
+ * 增加值是当月同比（0 = 持平），营收与利润是累计同比，PMI 是扩散指数（50 = 荣枯线），三者不混算。
+ */
+function buildCsv() {
+  const d = state.data;
+  if (!d) {
+    window.alert('数据还没加载完成，稍后再导出。');
+    return;
+  }
+  const rows = orderedIndustries(d);
+  const groupLabel = {};
+  (d.groups || []).forEach((g) => {
+    groupLabel[g.key] = g.label;
+  });
+
+  const month = latestOutputMonth(d);
+  const ranked = rows
+    .filter((x) => month && x.output[month] !== undefined)
+    .map((x) => ({ key: x.key, value: x.output[month] }))
+    .sort((a, b) => b.value - a.value);
+  const rankOf = {};
+  ranked.forEach((x, i) => {
+    rankOf[x.key] = i + 1;
+  });
+
+  const snapCols = [
+    { key: 'name', label: '行业' },
+    { key: 'group', label: '分组' },
+    { key: 'output', label: '工业增加值当月同比', unit: '%' },
+    { key: 'outputMonth', label: '增加值月份' },
+    { key: 'revenue', label: '营业收入累计同比', unit: '%' },
+    { key: 'revenueMonth', label: '营收月份' },
+    { key: 'profit', label: '利润总额累计同比', unit: '%' },
+    { key: 'profitMonth', label: '利润月份' },
+    { key: 'rank', label: '增加值排名', unit: '本期' },
+  ];
+  const snapRows = rows.map((x) => {
+    const o = x.latest.output;
+    const r = x.latest.revenue;
+    const p = x.latest.profit;
+    return {
+      name: x.label,
+      group: groupLabel[x.group] || x.group || '',
+      output: o ? o.value : '',
+      outputMonth: o ? o.month : '',
+      revenue: r ? r.value : '',
+      revenueMonth: r ? r.month : '',
+      profit: p ? p.value : '',
+      profitMonth: p ? p.month : '',
+      rank: rankOf[x.key] || '',
+    };
+  });
+
+  const monthSet = {};
+  rows.forEach((x) => {
+    ['output', 'revenue', 'profit'].forEach((k) => {
+      Object.keys(x[k] || {}).forEach((m) => {
+        monthSet[m] = true;
+      });
+    });
+  });
+  const months = Object.keys(monthSet).sort();
+  const seriesCols = [
+    { key: 'name', label: '行业' },
+    { key: 'month', label: '月份' },
+    { key: 'output', label: '工业增加值当月同比', unit: '%' },
+    { key: 'revenue', label: '营业收入累计同比', unit: '%' },
+    { key: 'profit', label: '利润总额累计同比', unit: '%' },
+  ];
+  const seriesRows = [];
+  rows.forEach((x) => {
+    months.forEach((m) => {
+      const o = x.output[m];
+      const r = x.revenue[m];
+      const p = x.profit[m];
+      if (o === undefined && r === undefined && p === undefined) return;
+      seriesRows.push({
+        name: x.label,
+        month: m,
+        output: o === undefined ? '' : o,
+        revenue: r === undefined ? '' : r,
+        profit: p === undefined ? '' : p,
+      });
+    });
+  });
+
+  const pmi = d.pmi || [];
+  const pmSet = {};
+  pmi.forEach((p) => {
+    (p.points || []).forEach((pt) => {
+      pmSet[pt.month] = true;
+    });
+  });
+  const pmMonths = Object.keys(pmSet).sort();
+  const pmiCols = [{ key: 'month', label: '月份' }].concat(
+    pmi.map((p) => ({ key: p.id, label: p.shortLabel || p.label, unit: '扩散指数' }))
+  );
+  const pmiRows = pmMonths.map((m) => {
+    const row = { month: m };
+    pmi.forEach((p) => {
+      const hit = (p.points || []).filter((pt) => pt.month === m)[0];
+      row[p.id] = hit && hit.value !== null ? hit.value : '';
+    });
+    return row;
+  });
+
+  const blocks = [
+    { title: '分行业最新一期（增加值取 ' + cnMonth(month) + '）', columns: snapCols, rows: snapRows },
+    { title: '分行业月度序列', columns: seriesCols, rows: seriesRows },
+    { title: 'PMI 分项', columns: pmiCols, rows: pmiRows },
+  ].filter((b) => b.rows.length);
+
+  if (!blocks.length) {
+    window.alert('当前区间还没有数据可导出。');
+    return;
+  }
+
+  Board.csv(
+    {
+      file: 'industry',
+      fileSuffix: d.range ? d.range.from + '_' + d.range.to : months[0] + '_' + months[months.length - 1],
+      module: '中国工业行业运行看板',
+      source: '国家统计局 · 国家数据（月度库 · 工业 / 采购经理指数）',
+      interface: '/api/industry',
+      range: d.range ? d.range.from + ' ~ ' + d.range.to : months[0] + ' ~ ' + months[months.length - 1],
+      note: [
+        '工业增加值为当月同比（0 = 持平）；营业收入与利润总额为 1—N 月累计同比，本页不做单月差分',
+        '1、2 月合并公布：增加值没有 1、2 月当月值，营收与利润 2 月值为 1—2 月累计',
+        'PMI 是扩散指数，50 为荣枯线，与增速的 0 不是一个基准，不可同轴比较',
+        '快照表里三个口径的月份可能不同（发布节奏不同），月份列已逐列标出',
+        '规模以上工业指年主营业务收入 2000 万元及以上的工业企业，不是全部工业',
+        '空单元格表示该期上游没有值，不插值、不补 0',
+      ],
+    },
+    blocks
+  );
 }
 
 /* ---------------- 状态与提示 ---------------- */
@@ -921,6 +1071,18 @@ function syncControls() {
   // 端点提示：不超过服务端算出的应发布月份
   const horizon = (state.data && state.data.expectedLatest) || nowMonth();
   to.max = horizon;
+
+  syncQuery();
+}
+
+/** 视图写回地址栏（不刷新、不新增历史）；自定义区间才会带 from/to */
+function syncQuery() {
+  const custom = state.range.mode === 'custom';
+  Board.setQs({
+    range: custom ? null : state.range.mode,
+    from: custom ? state.range.from : null,
+    to: custom ? state.range.to : null,
+  });
 }
 
 function onRangeChange() {
@@ -960,6 +1122,7 @@ function init() {
   el('range').addEventListener('change', onRangeChange);
   el('from').addEventListener('change', onCustomChange);
   el('to').addEventListener('change', onCustomChange);
+  Board.onExport(el('export-csv'), buildCsv);
   el('refresh').addEventListener('click', function () {
     state.polls = 0;
     load(true);

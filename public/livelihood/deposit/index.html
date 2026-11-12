@@ -39,6 +39,7 @@
         </label>
       </div>
 
+      <button id="export-csv" class="btn btn-export" type="button" title="导出当前月份区间的月度明细（CSV）">导出 CSV</button>
       <button id="refresh" class="btn" type="button" title="跳过缓存，重新向央行请求一次">刷新数据</button>
       <span id="status" class="status">正在加载…</span>
     </div>
@@ -55,6 +56,7 @@
         <h2>住户存款余额（万亿元）</h2>
         <p class="card-sub">
           月末时点值，人民币口径（金融机构人民币信贷收支表「住户存款」行）；原始值单位亿元，除以 10000 折算为万亿元
+          <span class="q" data-tip="月末余额是时点值，不是日均、也不是年累计；万亿只是把官方发布的亿元除以 10000 换个量级显示，不改变数值本身。" tabindex="0" role="button" aria-label="口径说明">?</span>
         </p>
       </header>
       <div class="chart chart-lg" id="chart-balance"></div>
@@ -65,6 +67,7 @@
         <h2>当月新增存款（亿元）</h2>
         <p class="card-sub">
           本月余额 − 上月余额，<strong>本页计算值</strong>；央行只发布「年初至今累计增量」，不单独发布当月新增
+          <span class="q" data-tip="央行新闻稿只写「前 N 个月人民币存款增加…」，那是年初至今累计增量；当月新增由本页用余额差分得出，跨年首月减的是上年 12 月，不是官方发布值。" tabindex="0" role="button" aria-label="口径说明">?</span>
         </p>
       </header>
       <div class="chart" id="chart-add"></div>
@@ -73,7 +76,9 @@
     <article class="card card-wide">
       <header class="card-head">
         <h2>活期 / 定期及其他（万亿元）</h2>
-        <p class="card-sub">官方分项原值，两项之和等于住户存款；颜色由浅到深表示期限拉长</p>
+        <p class="card-sub">官方分项原值，两项之和等于住户存款；颜色由浅到深表示期限拉长
+          <span class="q" data-tip="活期与「定期及其他」都是官方分项，相加等于住户存款总额；本页只做亿元→万亿元换算，不重新分组、不估算占比。" tabindex="0" role="button" aria-label="口径说明">?</span>
+        </p>
       </header>
       <div class="chart" id="chart-structure"></div>
     </article>
@@ -81,7 +86,9 @@
     <article class="card card-wide">
       <header class="card-head">
         <h2>余额同比（%）</h2>
-        <p class="card-sub">本月余额 ÷ 上年同月余额 − 1，<strong>本页计算值</strong>；央行报告里的「同比增长」是存款总口径，不是住户口径</p>
+        <p class="card-sub">本月余额 ÷ 上年同月余额 − 1，<strong>本页计算值</strong>；央行报告里的「同比增长」是存款总口径，不是住户口径
+          <span class="q" data-tip="同比是本页拿本月余额除以上年同月余额得到，不是央行发布值；央行稿里的「人民币存款同比增长」含企业、财政等全部存款，不能拿来当住户存款增速。" tabindex="0" role="button" aria-label="口径说明">?</span>
+        </p>
       </header>
       <div class="chart" id="chart-yoy"></div>
     </article>
@@ -91,6 +98,7 @@
         <h2>人均存款（万元 / 人，年末口径）</h2>
         <p class="card-sub">
           每年 12 月余额 ÷ 当年年末总人口（国家统计局），<strong>本页计算值</strong>；只有 12 月有值，所以横轴是年份
+          <span class="q" data-tip="分母是国家统计局「年末总人口」，不是年平均人口，也不做月度插值；因此这条线一年只一个点，年份之间不能当连续月度趋势读。" tabindex="0" role="button" aria-label="口径说明">?</span>
         </p>
       </header>
       <div class="chart" id="chart-percapita"></div>
@@ -102,6 +110,7 @@
       <h2>月度明细</h2>
       <p class="card-sub">
         按年分组，月份升序；「当月新增」「累计新增」「同比」「人均」都是本页用余额差分得出，不是央行直接发布值
+        <span class="q" data-tip="四列都标了「本页计算」：当月新增 = 本月 − 上月（跨年首月取上年 12 月），累计新增 = 本月 − 上年 12 月，同比 = 本月 ÷ 上年同月 − 1，人均 = 12 月余额 ÷ 年末总人口。缺月显示「—」，不补 0。" tabindex="0" role="button" aria-label="口径说明">?</span>
       </p>
     </header>
     <div class="table-wrap">
@@ -158,6 +167,7 @@
 </main>
 
 <script src="../../vendor/echarts.min.js"></script>
+<script src="../../shared.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

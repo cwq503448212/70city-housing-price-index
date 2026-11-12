@@ -245,6 +245,62 @@ input[type="number"]:focus {
   color: var(--muted);
 }
 
+/* ---------------------------------------------------------- 口径提示 */
+
+/* 挂在文字后面的小圆圈：hover / focus / 点击都能弹出一句话口径说明 */
+.q {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 15px;
+  height: 15px;
+  margin-left: 4px;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  background: var(--card);
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: help;
+  vertical-align: 1px;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.q:hover,
+.q:focus-visible,
+.q[data-open] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+  outline: none;
+}
+
+/* 浮层本体：由 shared.js 定位成 fixed，避免被表格横向滚动容器裁掉 */
+.board-tip {
+  position: fixed;
+  z-index: 60;
+  max-width: 300px;
+  padding: 8px 10px;
+  border-radius: 9px;
+  background: rgba(22, 24, 29, 0.95);
+  color: #fff;
+  font-size: 12px;
+  line-height: 1.65;
+  box-shadow: 0 10px 24px -12px rgba(16, 24, 40, 0.5);
+  pointer-events: none;
+}
+
+.board-tip[hidden] {
+  display: none;
+}
+
+/* 导出按钮：与刷新按钮并排，弱化成描边次级样式 */
+.btn-export {
+  border-style: dashed;
+}
+
 /* ---------------------------------------------------------- 窄屏 */
 
 @media (max-width: 720px) {

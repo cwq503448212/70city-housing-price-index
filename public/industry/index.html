@@ -39,6 +39,7 @@
         </label>
       </div>
 
+      <button id="export-csv" class="btn btn-export" type="button" title="导出当前区间：分行业序列 + PMI 分项（CSV）">导出 CSV</button>
       <button id="refresh" class="btn" type="button" title="跳过缓存，重新向统计局请求一次">刷新数据</button>
       <span id="status" class="status">正在加载…</span>
     </div>
@@ -56,6 +57,7 @@
         <p class="card-sub">
           41 个大类行业 × 所选区间的每个月，颜色越红表示同比越高、越绿表示降幅越大，灰白为持平；
           <strong>0 = 持平</strong>，不是 100。1、2 月合并公布，所以每年这两列是空白，不是缺数
+          <span class="q" data-tip="色阶以 0 为分界（不是 100）：红为同比增长、绿为下降；1、2 月合并发布，所以空白是官方没发，不是本页漏拉。" tabindex="0" role="button" aria-label="口径说明">?</span>
         </p>
       </header>
       <div class="chart chart-heat" id="chart-heat"></div>
@@ -63,7 +65,7 @@
 
     <article class="card">
       <header class="card-head">
-        <h2>最新一期：分行业增加值同比排行</h2>
+        <h2>最新一期：分行业增加值同比排行<span class="q" data-tip="排序用当月同比（不是累计），只给该期有值的行业排名；不同图的最新月份可能不同，以图下标注为准。" tabindex="0" role="button" aria-label="口径说明">?</span></h2>
         <p class="card-sub" id="rank-sub">
           按最新一期工业增加值当月同比排序，红为增长、绿为下降；只列该期有值的行业
         </p>
@@ -73,7 +75,7 @@
 
     <article class="card">
       <header class="card-head">
-        <h2>营收与利润：累计同比四象限</h2>
+        <h2>营收与利润：累计同比四象限<span class="q" data-tip="两个轴都是 1—N 月累计同比（不是单月），且每个行业取两条序列共同的最新月份，所以不同行业的点可能不在同一个月。" tabindex="0" role="button" aria-label="口径说明">?</span></h2>
         <p class="card-sub" id="quad-sub">
           横轴为营业收入累计同比、纵轴为利润总额累计同比（%），每点一个行业，取该行业两条序列共同的最新月份；
           右上「增收又增利」，右下「增收不增利」，左上是靠非经营因素扭亏，左下「双降」
@@ -88,6 +90,7 @@
         <p class="card-sub">
           PMI 是<strong>扩散指数</strong>，<strong>50 = 荣枯线</strong>（与上面三张图的 0 不是一回事，两者不可同轴比较）；
           默认只画四条主线，点击图例可打开其余分项
+          <span class="q" data-tip="PMI 是扩散指数，50 为荣枯线（50 以上扩张、以下收缩），与上面图里 0 为持平的增速不是一回事，不可同轴比较。" tabindex="0" role="button" aria-label="口径说明">?</span>
         </p>
       </header>
       <div class="chart chart-pmi" id="chart-pmi"></div>
@@ -96,7 +99,7 @@
 
   <section class="card">
     <header class="card-head">
-      <h2>分行业明细</h2>
+      <h2>分行业明细<span class="q" data-tip="增加值取最新一期；营收与利润取各行业自己最新的累计期别（表头悬停可看月份），所以三列不一定同月；排名只看本期增加值。" tabindex="0" role="button" aria-label="口径说明">?</span></h2>
       <p class="card-sub" id="table-sub">
         按行业分组排列；各口径的月份可能不同（增加值 15 日左右发布，营收与利润 27 日左右发布），
         「—」表示该期上游没有值，不插值、不补 0
@@ -159,6 +162,7 @@
 </main>
 
 <script src="../vendor/echarts.min.js"></script>
+<script src="../shared.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

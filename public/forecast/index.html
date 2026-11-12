@@ -46,6 +46,7 @@
         </select>
       </label>
 
+      <button id="export-csv" class="btn btn-export" type="button" title="导出当前教育口径 / 情景下的逐年明细、情景对比、回测与校准系数（CSV）">导出 CSV</button>
       <button id="refresh" class="btn" type="button" title="跳过缓存，重新向统计局请求一次">刷新数据</button>
       <span id="status" class="status">正在加载…</span>
     </div>
@@ -65,6 +66,7 @@
           出生率 ÷ 1000 × 年平均人口（上年末与本年末的均值），是<strong>本页还原值</strong>。
           历史段实线为还原值，2026 年起三条虚线是低 / 基准 / 高三情景：出生人口按
           <strong>年增速 −3% / −1% / 0%</strong> 外推，起点一律是最新一年的官方还原值
+          <span class="q" data-tip="统计局年度库只发布人口出生率（‰），不发布出生人口绝对数：本页按出生率 ÷ 1000 × 年平均人口（上年末与本年末的均值）还原，四舍五入差异可能与公报有微小出入。2026 年起三条虚线是按年增速 −3% / −1% / 0% 外推的推演值，不是官方预测。" tabindex="0" role="button" aria-label="口径说明">?</span>
         </p>
       </header>
       <div class="chart chart-lg" id="chart-birth"></div>
@@ -78,6 +80,7 @@
           用「队列滚动」推的：某年招生 = 上游队列 × 近 5 年传导系数，出生 → 小学滞后 6 年 →
           初中 6 年 → 普高 3 年 → 本专科 3 年；在校生 = 最近「学制」年招生按权重加总。
           四段量级差 2—3 倍，同一根轴上只比走势、不比面积
+          <span class="q" data-tip="队列滚动：某年招生 = 上游队列 × 近 5 年传导系数，出生 → 小学滞后 6 年 → 初中 6 年 → 普高 3 年 → 本专科 3 年；在校生 = 最近「学制」年招生按权重加总。隐含升学率不再变化、无跨省流动、无留学分流；本专科还受高校扩招政策支配，回测里误差最大。" tabindex="0" role="button" aria-label="口径说明">?</span>
         </p>
       </header>
       <div class="chart chart-lg" id="chart-edu"></div>
@@ -90,6 +93,7 @@
           万人。按<strong>出生年份</strong>逐年移位：第 y 年的 25—44 岁人口 = 第 y−44 到 y−25 年的出生人口之和
           × 0.98 存活率。这是队列近似，没有分年龄死亡率与迁移口径，2010 年之前的数字受出生漏报影响更大；
           买房的人不止这一段，这里只用它做需求侧的相对趋势
+          <span class="q" data-tip="按出生年份逐年移位：第 y 年的 25—44 岁人口 = 第 y−44 到 y−25 年出生人口之和 × 0.98 存活率。这是队列近似，没有分年龄死亡率与迁移口径，2010 年之前的数字受出生漏报影响更大；它只代表需求侧的相对趋势，不等于购房人数。" tabindex="0" role="button" aria-label="口径说明">?</span>
         </p>
       </header>
       <div class="chart" id="chart-buyer"></div>
@@ -102,6 +106,7 @@
           万平方米。历史为统计局年度发布值，2026 年起为推演：<strong>销售面积 = 购房主力人口 × 人均购房强度</strong>，
           强度从最新一年的实际值出发，按情景向目标值指数收敛（基准 1.0、低 0.85、高 1.15）。
           这条线只反映「人少了、面积跟着少」这一层逻辑，不含政策、利率、库存与收入预期
+          <span class="q" data-tip="销售面积 = 购房主力人口 × 人均购房强度；强度从最新一年的实际值出发，按情景向目标值指数收敛（基准 1.0、低 0.85、高 1.15）。模型不含库存、利率、收入预期、棚改与限购等任何政策变量。" tabindex="0" role="button" aria-label="口径说明">?</span>
         </p>
       </header>
       <div class="chart" id="chart-area"></div>
@@ -114,6 +119,7 @@
           元/平方米。历史为统计局年度发布值（<strong>滞后一年</strong>，最新到 2024 年），之后按
           <strong>名义年增速 −2% / 0% / +2%</strong> 外推，不扣通胀。这是成交结构均价，不是同质可比的价格指数；
           低情景画出来是「名义价格每年跌 2%」，实际购买力还要再扣 CPI
+          <span class="q" data-tip="历史段为统计局年度发布的商品房平均销售价格（滞后一年）；之后按名义年增速 −2% / 0% / +2% 外推，不扣通胀。这是成交结构均价，不是同质可比的价格指数，不能与 70 城新房价格指数互换。" tabindex="0" role="button" aria-label="口径说明">?</span>
         </p>
       </header>
       <div class="chart" id="chart-price"></div>
@@ -126,6 +132,7 @@
       <p class="card-sub">
         三个节点年份、三套情景的同一组结论。教育四段是在校生（万人），购房主力人口为 25—44 岁队列（万人），
         销售面积为全国新建商品房（万平方米），均价为元/平方米。全部是本页推演值，不是官方预测
+        <span class="q" data-tip="三个节点年份 × 三套情景的同一组结论；2030 / 2040 为固定对照点，最后一列是推演终点（默认 2055）。教育四段始终为在校生，不随右上角「教育口径」切换，方便跨情景比较规模。" tabindex="0" role="button" aria-label="口径说明">?</span>
       </p>
     </header>
     <div class="table-wrap table-short">
@@ -150,6 +157,7 @@
         年份倒序，只列最近 10 年与全部推演年份（2000 年以来的历史见上方图表）。2025 年及以前是官方发布值
         （出生人口为还原值），2026 年起是基准情景推演，行首标签区分；— 表示该年没有数据，不插值、不补 0。
         教育四列随右上角「教育口径」在在校生 / 招生之间切换
+        <span class="q" data-tip="2025 年及以前是官方发布值（出生人口为按出生率还原的本页计算值），2026 年起是基准情景推演，行首标签区分。教育四列随右上角口径切换；— 表示该年没有数据，不插值、不补 0。" tabindex="0" role="button" aria-label="口径说明">?</span>
       </p>
     </header>
     <div class="table-wrap">
@@ -179,6 +187,7 @@
         先只拿 2015—2019 年的招生数据校准传导系数，再去预测 2020—2025 年的招生数，与实际发布值比。
         表格给出平均绝对百分比误差（MAPE）：<strong>小学 6% 左右尚可，本专科 18% 左右偏差最大</strong>——
         因为高校招生规模受政策扩招影响，不是单纯跟着学龄人口走
+        <span class="q" data-tip="只拿 2015—2019 年的招生数据校准传导系数，再去预测 2020—2025 年的招生数，与实际发布值比。MAPE 是平均绝对百分比误差：越小越准，小学约 6% 尚可，本专科约 18% 偏差最大。上游队列取实际值，所以误差只来自系数漂移。" tabindex="0" role="button" aria-label="口径说明">?</span>
       </p>
     </header>
     <div class="table-wrap table-short">
@@ -210,6 +219,7 @@
       <h2>方法与参数</h2>
       <p class="card-sub">
         全部写死在 <code>config/forecast.json</code> 里，改参数即改结论；下面这张表是接口返回的当前校准结果
+        <span class="q" data-tip="滞后年数为学段之间的传导间隔，传导系数 = 下游 ÷ 上游，用近 5 年样本取均值；逐年系数列出每个样本年的实际比值，用来判断系数是否漂移。改参数会同时改变历史之后的全部推演，但不会覆盖官方历史值。" tabindex="0" role="button" aria-label="口径说明">?</span>
       </p>
     </header>
     <div class="table-wrap table-short">
@@ -264,6 +274,7 @@
 </main>
 
 <script src="../vendor/echarts.min.js"></script>
+<script src="../shared.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

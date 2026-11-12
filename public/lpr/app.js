@@ -46,6 +46,7 @@
     kpiRow: $('kpi-row'),
     table: $('detail-table').querySelector('tbody'),
     footMeta: $('foot-meta'),
+    exportBtn: $('export-csv'),
   };
 
   /* ---------------- 基础格式 ---------------- */
@@ -486,6 +487,60 @@
 
   /* ---------------- 总渲染 ---------------- */
 
+  /** 当前视图的行：变化在全历史上算好（首行要和区间外的前一期比），再按区间过滤 */
+  function viewRows() {
+    const allRows = withDelta((state.data && state.data.records) || []);
+    const from = rangeFrom();
+    return from ? allRows.filter((r) => r.date >= from) : allRows;
+  }
+
+  /**
+   * 导出：一行一期，变化与利差都标「本页计算」。
+   * 不导全历史以外的任何东西，也不把缓存结构直接甩给用户。
+   */
+  function buildCsv() {
+    const rows = viewRows();
+    if (!rows.length) {
+      window.alert('当前区间还没有数据可导出。');
+      return;
+    }
+    const columns = [
+      { key: 'date', label: '发布日期' },
+      { key: 'y1', label: '1 年期 LPR', unit: '%' },
+      { key: 'd1', label: '1 年期变化', unit: 'bp', calc: true },
+      { key: 'y5', label: '5 年期以上 LPR', unit: '%' },
+      { key: 'd5', label: '5 年期以上变化', unit: 'bp', calc: true },
+      { key: 'spread', label: '期限利差 5Y − 1Y', unit: '个百分点', calc: true },
+    ];
+    const out = rows.map((r) => ({
+      date: r.date,
+      y1: r.y1,
+      y5: r.y5,
+      d1: r.d1 === null ? '' : Math.round(r.d1 * 100),
+      d5: r.d5 === null ? '' : Math.round(r.d5 * 100),
+      spread: r.y1 !== null && r.y5 !== null ? +(r.y5 - r.y1).toFixed(4) : '',
+    }));
+
+    Board.csv(
+      {
+        file: 'lpr',
+        fileSuffix: rows[0].date + '_' + rows[rows.length - 1].date,
+        module: '房贷利率 LPR 看板',
+        source: '全国银行间同业拆借中心 · 中国货币网',
+        interface: '/api/lpr/overview',
+        range: rows[0].date + ' ~ ' + rows[rows.length - 1].date + '，共 ' + rows.length + ' 期',
+        note: [
+          'LPR 为报价行加点报价后的算术平均值，不是任何银行的实际执行利率',
+          '变化与上一期报价比（间隔不一定是一个月）；首期若无区间外更早一期则为空',
+          '1 年期与 5 年期以上是两个独立品种，不混口径',
+        ],
+      },
+      [{ title: 'LPR 报价明细', columns: columns, rows: out }]
+    );
+  }
+
+  Board.onExport(el.exportBtn, buildCsv);
+
   function render() {
     const d = state.data;
     // 先在全历史上算变化（首行要与区间外的前一期比），再按区间过滤
@@ -518,15 +573,25 @@
 
   /* ---------------- 事件 ---------------- */
 
-  try {
-    const saved = localStorage.getItem(LS_KEY);
-    if (saved && Array.prototype.indexOf.call(el.range.options, new Option('', saved)) >= 0) {
-      state.range = saved;
-      el.range.value = saved;
+  const qsRange = Board.qs('range');
+  if (qsRange && ['12', '36', '60', 'all'].indexOf(qsRange) >= 0) {
+    // 地址栏优先于本地记住的选项，这样别人打开的链接就是你看到的区间
+    state.range = qsRange;
+    el.range.value = qsRange;
+  } else {
+    try {
+      const saved = localStorage.getItem(LS_KEY);
+      if (saved && Array.prototype.indexOf.call(el.range.options, new Option('', saved)) >= 0) {
+        state.range = saved;
+        el.range.value = saved;
+      }
+    } catch (e) {
+      /* localStorage 不可用就用默认值 */
     }
-  } catch (e) {
-    /* localStorage 不可用就用默认值 */
   }
+
+  // 把当前区间写回地址栏，方便直接复制链接分享
+  Board.setQs({ range: state.range });
 
   el.range.addEventListener('change', () => {
     state.range = el.range.value;
@@ -535,6 +600,7 @@
     } catch (e) {
       /* ignore */
     }
+    Board.setQs({ range: state.range });
     render();
   });
 

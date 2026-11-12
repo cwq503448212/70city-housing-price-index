@@ -39,6 +39,7 @@
         </label>
       </div>
 
+      <button id="export-csv" class="btn btn-export" type="button" title="导出当前年份区间的全部指标（CSV）">导出 CSV</button>
       <button id="refresh" class="btn" type="button" title="跳过缓存，重新向统计局请求一次">刷新数据</button>
       <span id="status" class="status">正在加载…</span>
     </div>
@@ -61,7 +62,7 @@
     <article class="card card-wide">
       <header class="card-head">
         <h2>名义增速（%）</h2>
-        <p class="card-sub">官方发布的「比上年增长」，未扣除价格因素；年度库没有实际增速指标</p>
+        <p class="card-sub">官方发布的「比上年增长」，未扣除价格因素；年度库没有实际增速指标<span class="q" data-tip="这是官方发布的「比上年增长」，按现价算、未扣价格因素，属名义增速；年度库不发布实际增速，本页也不拿 CPI 自行折算。" tabindex="0" role="button" aria-label="口径说明">?</span></p>
       </header>
       <div class="chart" id="chart-yoy"></div>
     </article>
@@ -69,7 +70,7 @@
     <article class="card card-wide">
       <header class="card-head">
         <h2>消费结构（最新已入库年度）</h2>
-        <p class="card-sub" id="pie-sub">八项消费分项占比，由官方分项值直接相除得出</p>
+        <p class="card-sub"><span id="pie-sub">八项消费分项占比，由官方分项值直接相除得出</span><span class="q" data-tip="占比由官方分项值相除得出（本页计算）；「服务性消费支出」是跨八项的交叉口径，不计入八项之和，也不进饼图。" tabindex="0" role="button" aria-label="口径说明">?</span></p>
       </header>
       <div class="chart" id="chart-pie"></div>
     </article>
@@ -77,7 +78,7 @@
     <article class="card card-wide">
       <header class="card-head">
         <h2>四项收入分项（元）</h2>
-        <p class="card-sub">工资性 + 经营净 + 财产净 + 转移净 = 人均可支配收入，四项为官方直接发布值</p>
+        <p class="card-sub">工资性 + 经营净 + 财产净 + 转移净 = 人均可支配收入，四项为官方直接发布值<span class="q" data-tip="四项都是官方发布值，四者之和等于人均可支配收入；本页不自行相加，也不要拿四项去推全国总量。" tabindex="0" role="button" aria-label="口径说明">?</span></p>
       </header>
       <div class="chart" id="chart-income-parts"></div>
     </article>
@@ -93,7 +94,7 @@
     <article class="card card-wide">
       <header class="card-head">
         <h2>城乡收支对比（元）</h2>
-        <p class="card-sub">城镇 / 农村是分户口径；全体居民由城乡加权汇总，不是两者算术平均</p>
+        <p class="card-sub">城镇 / 农村是分户口径；全体居民由城乡加权汇总，不是两者算术平均<span class="q" data-tip="城镇与农村是两套调查样本，全体居民由城乡按常住人口加权得出；把两者取平均得不到全体居民数，所以本页不做这个平均。" tabindex="0" role="button" aria-label="口径说明">?</span></p>
       </header>
       <div class="chart" id="chart-urban-rural"></div>
     </article>
@@ -102,7 +103,7 @@
   <section class="card">
     <header class="card-head">
       <h2>指标明细</h2>
-      <p class="card-sub">最新一年与上一年对比；「变化」为本页相邻两年相减，不是官方发布的增速</p>
+      <p class="card-sub">最新一年与上一年对比；「变化」为本页相邻两年相减，不是官方发布的增速<span class="q" data-tip="「变化」是相邻两年直接相减（本页计算），不是增速；要看增速请看上方的「名义增速」图。" tabindex="0" role="button" aria-label="口径说明">?</span></p>
     </header>
     <div class="table-wrap">
       <table id="detail-table">
@@ -150,6 +151,7 @@
 </main>
 
 <script src="../../vendor/echarts.min.js"></script>
+<script src="../../shared.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

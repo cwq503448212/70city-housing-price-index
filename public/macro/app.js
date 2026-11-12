@@ -51,6 +51,23 @@
     charts: {},
   };
 
+  /*
+   * 地址栏参数优先于默认值：把链接发给别人，对方打开就是同一个区间。
+   * 只在启动时读一次，之后以页面上的筛选项为准（改筛选会写回地址栏）。
+   */
+  (function readQuery() {
+    const from = Board.qs('from');
+    const to = Board.qs('to');
+    const range = Board.qs('range');
+    if (/^\d{4}-\d{2}$/.test(from || '') && /^\d{4}-\d{2}$/.test(to || '')) {
+      state.range = 'custom';
+      state.from = from;
+      state.to = to;
+    } else if (range) {
+      state.range = range;
+    }
+  })();
+
   const $ = (id) => document.getElementById(id);
   const el = {
     range: $('range'),
@@ -58,6 +75,7 @@
     to: $('to'),
     customBox: $('custom-box'),
     refresh: $('refresh'),
+    exportBtn: $('export-csv'),
     status: $('status'),
     rangeHint: $('range-hint'),
     kpiRow: $('kpi-row'),
@@ -632,6 +650,59 @@
       ' 个月度文件）';
   }
 
+  /* ---------------- 导出 CSV ---------------- */
+
+  function unitOf(ind) {
+    // 配置里的 unit 对 PMI 写的是 %，但扩散指数不是百分比，导出时改回本来面目
+    if (ind.kind === 'index_pmi' || ind.kind === 'level_pmi') return '扩散指数';
+    if (ind.unit) return ind.unit;
+    if (isPercentKind(ind.kind)) return '%';
+    return '';
+  }
+
+  /**
+   * 宽表：一行一个月，一列一个指标，列名带单位。
+   * 不用明细表直接拼 CSV：那张表行是指标、单位混在一起，导出后没法直接算。
+   */
+  function buildCsv() {
+    const d = state.data;
+    if (!d) {
+      window.alert('还没有数据可导出。');
+      return;
+    }
+    const months = monthsOf();
+    const columns = [{ key: 'month', label: '月份' }].concat(
+      d.indicators.map((ind) => ({ key: ind.id, label: ind.shortLabel || ind.label, unit: unitOf(ind) }))
+    );
+    const rows = months.map((month) => {
+      const row = { month: month };
+      d.indicators.forEach((ind) => {
+        const pt = ind.points.filter((p) => p.month === month)[0];
+        row[ind.id] = pt && pt.value !== null ? pt.value : '';
+      });
+      return row;
+    });
+
+    Board.csv(
+      {
+        file: 'macro',
+        fileSuffix: d.range.from + '_' + d.range.to,
+        module: '中国宏观经济指标看板',
+        source: '国家统计局 · 国家数据（月度）',
+        interface: '/api/macro/overview',
+        range: monthCn(d.range.from) + ' ~ ' + monthCn(d.range.to) + '（' + d.range.label + '）',
+        note: [
+          '同比为「上年同月 = 100」指数换算的涨跌幅，环比为「上月 = 100」；两者口径不同，未混算',
+          'PMI 为扩散指数，50 为荣枯线，不是增速',
+          '金额类指标单位一律为亿元（页面上大于 1 万亿会压缩显示，本文件不压缩）',
+        ],
+      },
+      [{ title: '指标月度序列', columns: columns, rows: rows }]
+    );
+  }
+
+  Board.onExport(el.exportBtn, buildCsv);
+
   /* ---------------- 数据加载 ---------------- */
 
   function queryString(force) {
@@ -644,6 +715,16 @@
     }
     if (force) q.push('force=1');
     return q.join('&');
+  }
+
+  /** 把当前区间写回地址栏：预设区间只留 range，自定义区间留 from/to */
+  function syncQuery() {
+    const custom = state.range === 'custom';
+    Board.setQs({
+      range: custom ? null : state.range,
+      from: custom ? state.from : null,
+      to: custom ? state.to : null,
+    });
   }
 
   async function load(force) {
@@ -709,8 +790,14 @@
     custom.textContent = '自定义区间';
     el.range.appendChild(custom);
 
-    state.range = keys.indexOf(state.range) >= 0 ? state.range : '60';
+    const keepCustom = state.range === 'custom';
+    state.range = keys.indexOf(state.range) >= 0 ? state.range : keepCustom ? 'custom' : '60';
     el.range.value = state.range;
+    if (keepCustom) {
+      el.customBox.hidden = false;
+      el.from.value = state.from;
+      el.to.value = state.to;
+    }
   }
 
   el.range.addEventListener('change', () => {
@@ -722,19 +809,23 @@
       if (!el.to.value && state.data) el.to.value = state.data.range.to;
       state.from = el.from.value;
       state.to = el.to.value;
+      syncQuery();
       if (state.from && state.to) load(false);
       return;
     }
+    syncQuery();
     load(false);
   });
 
   el.from.addEventListener('change', () => {
     state.from = el.from.value;
+    syncQuery();
     if (state.range === 'custom' && state.from && state.to) load(false);
   });
 
   el.to.addEventListener('change', () => {
     state.to = el.to.value;
+    syncQuery();
     if (state.range === 'custom' && state.from && state.to) load(false);
   });
 
@@ -789,7 +880,7 @@
     setStatus('正在连接本地服务…');
     hintSlow();
     try {
-      const res = await fetch('/api/macro/overview?range=60', { headers: { Accept: 'application/json' } });
+      const res = await fetch('/api/macro/overview?' + queryString(false), { headers: { Accept: 'application/json' } });
       const json = await res.json();
       if (!res.ok) throw new Error(json && json.error ? json.error : 'HTTP ' + res.status);
       buildRangeSelect(json.presets);
@@ -797,6 +888,7 @@
       renderAll();
       applyStatus(json);
       schedulePoll(json);
+      syncQuery();
       if (json.history) {
         el.from.min = json.history.from;
         el.to.max = json.range.to;

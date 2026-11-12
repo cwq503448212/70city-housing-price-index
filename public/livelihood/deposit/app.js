@@ -54,6 +54,7 @@
     from: $('from'),
     to: $('to'),
     customBox: $('custom-box'),
+    exportBtn: $('export-csv'),
     refresh: $('refresh'),
     status: $('status'),
     rangeHint: $('range-hint'),
@@ -69,6 +70,20 @@
   }
 
   function loadPref() {
+    // 地址栏优先：别人发来的链接要打开成他看到的那一屏
+    const qsFrom = Board.qs('from');
+    const qsTo = Board.qs('to');
+    if (isMonth(qsFrom) && isMonth(qsTo)) {
+      state.range = 'custom';
+      state.from = qsFrom;
+      state.to = qsTo;
+      return;
+    }
+    const qsRange = Board.qs('range');
+    if (qsRange === 'all' || /^\d+$/.test(qsRange || '')) {
+      state.range = qsRange;
+      return;
+    }
     try {
       const raw = localStorage.getItem(RANGE_KEY);
       if (!raw) return;
@@ -97,6 +112,16 @@
     } catch (e) {
       // 隐私模式下写不了，不影响使用
     }
+  }
+
+  /** 视图写回地址栏（不刷新、不新增历史）；自定义区间才会带 from/to */
+  function syncQuery() {
+    const custom = state.range === 'custom';
+    Board.setQs({
+      range: custom ? null : state.range,
+      from: custom ? state.from : null,
+      to: custom ? state.to : null,
+    });
   }
 
   /* ---------------- 数值格式 ---------------- */
@@ -591,6 +616,68 @@
     }
   }
 
+  /* ---------------- 导出 ---------------- */
+
+  /**
+   * 导出：当前月份区间内的月度长表，一行一个月。
+   * 余额/活期/定期是官方原值，当月新增/累计新增/同比/人均是本页计算，导出时一并标清。
+   */
+  function buildCsv() {
+    if (!state.data) {
+      window.alert('数据还没加载完成，稍后再导出。');
+      return;
+    }
+    const months = monthsOf();
+    if (!months.length) {
+      window.alert('当前区间还没有数据可导出。');
+      return;
+    }
+    const columns = [
+      { key: 'month', label: '月份' },
+      { key: 'balance', label: '住户存款余额', unit: '万亿元' },
+      { key: 'monthly_add', label: '当月新增', unit: '亿元', calc: true },
+      { key: 'ytd_add', label: '累计新增', unit: '亿元', calc: true },
+      { key: 'yoy', label: '余额同比', unit: '%', calc: true },
+      { key: 'demand', label: '活期存款', unit: '万亿元' },
+      { key: 'time_deposit', label: '定期及其他存款', unit: '万亿元' },
+      { key: 'per_capita', label: '人均存款', unit: '万元/人', calc: true },
+    ];
+    const cell = (id, m) => {
+      const v = pointAt(id, m);
+      return v === null ? '' : v;
+    };
+    const rows = months.map((m) => ({
+      month: m,
+      balance: cell('balance', m),
+      monthly_add: cell('monthly_add', m),
+      ytd_add: cell('ytd_add', m),
+      yoy: cell('yoy', m),
+      demand: cell('demand', m),
+      time_deposit: cell('time_deposit', m),
+      per_capita: cell('per_capita', m),
+    }));
+
+    Board.csv(
+      {
+        file: 'livelihood-deposit',
+        fileSuffix: months[0] + '_' + months[months.length - 1],
+        module: '中国居民存款与人均存款看板',
+        source: '中国人民银行 · 调查统计司（金融机构人民币信贷收支表）；人均分母为国家统计局年末总人口',
+        interface: '/api/livelihood/reserve-deposit',
+        range: months[0] + ' ~ ' + months[months.length - 1] + '，共 ' + months.length + ' 个月',
+        note: [
+          '余额 / 活期 / 定期及其他为央行「住户存款」行原值，原始单位亿元，本页除以 10000 折算为万亿元',
+          '央行只发布「年初至今累计增量」，当月新增与累计新增由余额差分得出，属本页计算值',
+          '同比 = 本月余额 ÷ 上年同月余额 − 1；人均 = 当年 12 月余额 ÷ 年末总人口，只在 12 月有值',
+          '活期 + 定期及其他 = 住户存款；空单元格表示官方未发布或该月无值，不插值、不补 0',
+        ],
+      },
+      [{ title: '月度明细', columns: columns, rows: rows }]
+    );
+  }
+
+  Board.onExport(el.exportBtn, buildCsv);
+
   /* ---------------- 状态栏 ---------------- */
 
   function setStatus(text, kind) {
@@ -792,24 +879,28 @@
       state.from = el.from.value;
       state.to = el.to.value;
       savePref();
+      syncQuery();
       if (isMonth(state.from) && isMonth(state.to)) load(false);
       return;
     }
     state.from = '';
     state.to = '';
     savePref();
+    syncQuery();
     load(false);
   });
 
   el.from.addEventListener('change', () => {
     state.from = el.from.value;
     savePref();
+    syncQuery();
     if (state.range === 'custom' && isMonth(state.from) && isMonth(state.to)) load(false);
   });
 
   el.to.addEventListener('change', () => {
     state.to = el.to.value;
     savePref();
+    syncQuery();
     if (state.range === 'custom' && isMonth(state.from) && isMonth(state.to)) load(false);
   });
 
@@ -867,6 +958,7 @@
       const json = await res.json();
       if (!res.ok) throw new Error(json && json.error ? json.error : 'HTTP ' + res.status);
       buildRangeSelect(json.presets);
+      syncQuery();
       state.data = json;
       renderAll();
       applyStatus(json);
