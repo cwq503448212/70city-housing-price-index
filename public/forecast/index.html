@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>人口与住房推演 · 未来 30 年</title>
+    <link rel="stylesheet" href="../shared.css" />
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-main">
+    <a class="back-link" href="../">← 返回模块选择</a>
+    <div class="brand">
+      <h1>人口与住房推演 · 未来 30 年</h1>
+      <p class="brand-sub">
+        历史为官方发布值（国家统计局 · 国家数据年度库：教育、人口、房地产 7 个栏目）；2026 年及以后为<strong>本页按队列法推演</strong>，不是官方预测，仅供参考
+      </p>
+    </div>
+
+    <div class="controls">
+      <label class="ctrl">
+        <span class="ctrl-label">教育口径</span>
+        <select id="edu-metric">
+          <option value="enroll" selected>在校生</option>
+          <option value="admit">招生</option>
+        </select>
+      </label>
+
+      <label class="ctrl">
+        <span class="ctrl-label">教育情景</span>
+        <select id="scenario">
+          <option value="base" selected>基准</option>
+          <option value="low">低</option>
+          <option value="high">高</option>
+        </select>
+      </label>
+
+      <label class="ctrl">
+        <span class="ctrl-label">历史起点</span>
+        <select id="hist-from">
+          <option value="2000" selected>2000 年</option>
+          <option value="2010">2010 年</option>
+          <option value="2015">2015 年</option>
+        </select>
+      </label>
+
+      <button id="refresh" class="btn" type="button" title="跳过缓存，重新向统计局请求一次">刷新数据</button>
+      <span id="status" class="status">正在加载…</span>
+    </div>
+  </div>
+  <p class="range-hint" id="range-hint"></p>
+</header>
+
+<main>
+  <section class="kpi-row" id="kpi-row" aria-label="关键推演结论"></section>
+
+  <section class="grid">
+    <article class="card card-wide">
+      <header class="card-head">
+        <h2>出生人口：推演的起点 <span class="tag warn">本页计算值</span></h2>
+        <p class="card-sub">
+          万人。统计局年度库只发布<strong>人口出生率（‰）</strong>，不发布出生人口绝对数，这里的出生人口 =
+          出生率 ÷ 1000 × 年平均人口（上年末与本年末的均值），是<strong>本页还原值</strong>。
+          历史段实线为还原值，2026 年起三条虚线是低 / 基准 / 高三情景：出生人口按
+          <strong>年增速 −3% / −1% / 0%</strong> 外推，起点一律是最新一年的官方还原值
+        </p>
+      </header>
+      <div class="chart chart-lg" id="chart-birth"></div>
+    </article>
+
+    <article class="card card-wide">
+      <header class="card-head">
+        <h2>四学段规模：小学 → 初中 → 普高 → 本专科 <span class="tag warn">推演</span></h2>
+        <p class="card-sub">
+          万人。<strong>实线是官方发布值，虚线是本页推演</strong>（当前选中情景，可在右上角切换）。
+          用「队列滚动」推的：某年招生 = 上游队列 × 近 5 年传导系数，出生 → 小学滞后 6 年 →
+          初中 6 年 → 普高 3 年 → 本专科 3 年；在校生 = 最近「学制」年招生按权重加总。
+          四段量级差 2—3 倍，同一根轴上只比走势、不比面积
+        </p>
+      </header>
+      <div class="chart chart-lg" id="chart-edu"></div>
+    </article>
+
+    <article class="card card-wide">
+      <header class="card-head">
+        <h2>购房主力人口：25—44 岁队列 <span class="tag warn">本页计算值</span></h2>
+        <p class="card-sub">
+          万人。按<strong>出生年份</strong>逐年移位：第 y 年的 25—44 岁人口 = 第 y−44 到 y−25 年的出生人口之和
+          × 0.98 存活率。这是队列近似，没有分年龄死亡率与迁移口径，2010 年之前的数字受出生漏报影响更大；
+          买房的人不止这一段，这里只用它做需求侧的相对趋势
+        </p>
+      </header>
+      <div class="chart" id="chart-buyer"></div>
+    </article>
+
+    <article class="card card-wide">
+      <header class="card-head">
+        <h2>新建商品房销售面积 <span class="tag warn">推演</span></h2>
+        <p class="card-sub">
+          万平方米。历史为统计局年度发布值，2026 年起为推演：<strong>销售面积 = 购房主力人口 × 人均购房强度</strong>，
+          强度从最新一年的实际值出发，按情景向目标值指数收敛（基准 1.0、低 0.85、高 1.15）。
+          这条线只反映「人少了、面积跟着少」这一层逻辑，不含政策、利率、库存与收入预期
+        </p>
+      </header>
+      <div class="chart" id="chart-area"></div>
+    </article>
+
+    <article class="card card-wide">
+      <header class="card-head">
+        <h2>新建商品房平均销售价格 <span class="tag warn">推演</span></h2>
+        <p class="card-sub">
+          元/平方米。历史为统计局年度发布值（<strong>滞后一年</strong>，最新到 2024 年），之后按
+          <strong>名义年增速 −2% / 0% / +2%</strong> 外推，不扣通胀。这是成交结构均价，不是同质可比的价格指数；
+          低情景画出来是「名义价格每年跌 2%」，实际购买力还要再扣 CPI
+        </p>
+      </header>
+      <div class="chart" id="chart-price"></div>
+    </article>
+  </section>
+
+  <section class="card">
+    <header class="card-head">
+      <h2>情景对比：2030 / 2040 / 2055</h2>
+      <p class="card-sub">
+        三个节点年份、三套情景的同一组结论。教育四段是在校生（万人），购房主力人口为 25—44 岁队列（万人），
+        销售面积为全国新建商品房（万平方米），均价为元/平方米。全部是本页推演值，不是官方预测
+      </p>
+    </header>
+    <div class="table-wrap table-short">
+      <table id="table-scenario">
+        <thead>
+          <tr>
+            <th>情景 / 指标</th>
+            <th class="num">2030</th>
+            <th class="num">2040</th>
+            <th class="num">2055</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card">
+    <header class="card-head">
+      <h2>逐年明细：官方值 + 基准情景推演</h2>
+      <p class="card-sub">
+        年份倒序，只列最近 10 年与全部推演年份（2000 年以来的历史见上方图表）。2025 年及以前是官方发布值
+        （出生人口为还原值），2026 年起是基准情景推演，行首标签区分；— 表示该年没有数据，不插值、不补 0。
+        教育四列随右上角「教育口径」在在校生 / 招生之间切换
+      </p>
+    </header>
+    <div class="table-wrap">
+      <table id="table-detail">
+        <thead>
+          <tr>
+            <th>年份</th>
+            <th class="num">出生人口<br /><small>万人 · 计算</small></th>
+            <th class="num" id="th-edu">小学在校生<br /><small>万人</small></th>
+            <th class="num" id="th-junior">初中在校生<br /><small>万人</small></th>
+            <th class="num" id="th-senior">普高在校生<br /><small>万人</small></th>
+            <th class="num" id="th-college">本专科在校生<br /><small>万人</small></th>
+            <th class="num">购房主力<br /><small>万人 · 计算</small></th>
+            <th class="num">销售面积<br /><small>万㎡</small></th>
+            <th class="num">成交均价<br /><small>元/㎡</small></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card">
+    <header class="card-head">
+      <h2>回测：用 2015—2019 年的系数预测 2020—2025 年 <span class="tag">检验方法本身</span></h2>
+      <p class="card-sub">
+        先只拿 2015—2019 年的招生数据校准传导系数，再去预测 2020—2025 年的招生数，与实际发布值比。
+        表格给出平均绝对百分比误差（MAPE）：<strong>小学 6% 左右尚可，本专科 18% 左右偏差最大</strong>——
+        因为高校招生规模受政策扩招影响，不是单纯跟着学龄人口走
+      </p>
+    </header>
+    <div class="table-wrap table-short">
+      <table id="table-backtest">
+        <thead>
+          <tr>
+            <th>学段</th>
+            <th class="num">校准系数</th>
+            <th class="num">MAPE</th>
+            <th class="num">2020</th>
+            <th class="num">2021</th>
+            <th class="num">2022</th>
+            <th class="num">2023</th>
+            <th class="num">2024</th>
+            <th class="num">2025</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <p class="table-note">
+      单元格上行是当年实际值（万人），下行是模型预测值；括号里是预测相对实际的偏差。
+      招生数在年初发布，回测用的是「上游队列 × 系数」，上游取实际值，所以误差只来自系数漂移
+    </p>
+  </section>
+
+  <section class="card">
+    <header class="card-head">
+      <h2>方法与参数</h2>
+      <p class="card-sub">
+        全部写死在 <code>config/forecast.json</code> 里，改参数即改结论；下面这张表是接口返回的当前校准结果
+      </p>
+    </header>
+    <div class="table-wrap table-short">
+      <table id="table-calib">
+        <thead>
+          <tr>
+            <th>学段</th>
+            <th class="num">滞后<br /><small>年</small></th>
+            <th class="num">传导系数<br /><small>下游 ÷ 上游</small></th>
+            <th class="num">样本年</th>
+            <th>逐年系数</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <ul class="notes" id="notes"></ul>
+  </section>
+
+  <footer class="foot">
+    <p>
+      <strong>这不是官方预测。</strong>统计局不发布任何人口 / 教育 / 房价的长期预测值，本页 2026 年以后的每一条线
+      都是本地按固定规则算出来的<strong>情景推演</strong>，用来回答「如果出生人口延续现在的方向，学校规模与房子需求会往哪走」，
+      不构成任何投资或决策依据。历史段一律取官方发布值，模型值<strong>不覆盖</strong>历史。
+    </p>
+    <p>
+      <strong>为什么不给单点数字：</strong>人口推演的不确定性随年份迅速放大，30 年后的出生人口在不同假设下能差一倍。
+      所以本页只给区间（低 / 基准 / 高三情景），并给出回测误差，让你知道这套方法过去几年偏了多少。
+    </p>
+    <p>
+      <strong>队列法只算「人」这一条线：</strong>小学到本专科的招生按固定传导系数推，隐含「升学率不再变化、没有跨省流动、
+      没有留学分流、没有复读潮」；本专科还受高校扩招政策支配，回测里它的误差最大。真实的教育规模还取决于学校布局、
+      普职分流比例与民办教育政策，这些都不在模型里。
+    </p>
+    <p>
+      <strong>房子那两条线更粗：</strong>销售面积只跟着 25—44 岁人口与人均购房强度走，没有库存、利率、收入预期、
+      棚改与限购等任何政策变量；均价是名义外推，不扣通胀，也不是同质可比的价格指数（那是「70 城房价指数」的口径）。
+      想看成交流量与成交结构均价的历史实况，请去「房地产开发与销售」和「70 城房价指数」两个模块。
+    </p>
+    <p>
+      <strong>出生人口为什么是算出来的：</strong>国家数据年度库里「人口出生率、死亡率和自然增长率」栏目只有千分率，
+      没有出生人口绝对数；「人口抽样调查样本数据」里的分年龄出生人数是样本数，不能当全国总量。本页按
+      出生率 × 年平均人口还原，属于<strong>本页计算值</strong>，与统计公报直接发布的出生人口可能因四舍五入有小幅差异。
+    </p>
+    <p>
+      <strong>数据来源与稳定性：</strong>国家统计局「国家数据」(data.stats.gov.cn) 年度库的教育、人口、房地产共 7 个栏目，
+      接口是站点前端自用的<strong>内部接口，不是官方开放 API</strong>，没有稳定性承诺；所有请求由本地服务端代取并写入
+      JSON 缓存，上游失败时回退缓存并标 stale，不会空图、不会补 0。
+    </p>
+    <p id="foot-meta" class="foot-meta"></p>
+  </footer>
+</main>
+
+<script src="../vendor/echarts.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

@@ -54,6 +54,8 @@ const industryService = require('./lib/industry/service');
 const regionApi = require('./lib/region/api');
 const realestateApi = require('./lib/realestate/api');
 const realestateService = require('./lib/realestate/service');
+const forecastApi = require('./lib/forecast/api');
+const forecastService = require('./lib/forecast/service');
 
 const PORT = Number(process.env.PORT) || 5173;
 const HOST = process.env.HOST || '127.0.0.1';
@@ -194,6 +196,7 @@ function health() {
     industry: industryApi.health(),
     region: regionApi.health(),
     realestate: realestateApi.health(),
+    forecast: forecastApi.health(),
   };
   const fresh = {};
   Object.keys(modules).forEach((k) => {
@@ -217,6 +220,7 @@ function health() {
         'industry',
         'region',
         'realestate',
+        'forecast',
       ],
       fresh: fresh,
     },
@@ -615,6 +619,40 @@ const server = http.createServer((req, res) => {
     return undefined;
   }
 
+  // ---------------- 人口与住房推演（独立模块：教育 / 人口 / 房地产年度库，独立缓存） ----------------
+  if (pathname === '/api/forecast' || pathname.indexOf('/api/forecast/') === 0) {
+    const run = async () => {
+      if (pathname === '/api/forecast/health') {
+        return sendJson(res, 200, health());
+      }
+      if (pathname === '/api/forecast/indicators') {
+        return sendJson(res, 200, await forecastApi.indicators());
+      }
+      if (pathname === '/api/forecast') {
+        return sendJson(res, 200, await forecastApi.overview(query));
+      }
+      const m = /^\/api\/forecast\/series\/([\w-]+)$/.exec(pathname);
+      if (m) {
+        return sendJson(res, 200, await forecastApi.one(decodeURIComponent(m[1]), query));
+      }
+      const r = /^\/api\/forecast\/refresh\/([\w-]+)$/.exec(pathname);
+      if (r) {
+        return sendJson(
+          res,
+          200,
+          await forecastApi.one(decodeURIComponent(r[1]), Object.assign({}, query, { force: '1' }))
+        );
+      }
+      return sendJson(res, 404, { status: 'error', error: '未知接口 ' + pathname });
+    };
+    run().catch((e) => {
+      // 上游失败不会走到这里（服务层已回退缓存）；
+      // 只有「未知指标」这类请求错误（带 status）和配置/代码错误才会落到这里
+      sendJson(res, e.status || 500, { status: 'error', error: e.message || String(e) });
+    });
+    return undefined;
+  }
+
   if (pathname.indexOf('/api/') === 0) {
     return sendJson(res, 404, { status: 'error', error: '未知接口 ' + pathname });
   }
@@ -638,7 +676,8 @@ server.listen(PORT, HOST, () => {
   console.log('    ├─ 民生 · 养老医保   http://' + HOST + ':' + PORT + '/livelihood/security/');
   console.log('    ├─ 行业运行          http://' + HOST + ':' + PORT + '/industry/');
   console.log('    ├─ 区域经济          http://' + HOST + ':' + PORT + '/region/');
-  console.log('    └─ 房地产开发与销售  http://' + HOST + ':' + PORT + '/realestate/');
+  console.log('    ├─ 房地产开发与销售  http://' + HOST + ':' + PORT + '/realestate/');
+  console.log('    └─ 人口与住房推演    http://' + HOST + ':' + PORT + '/forecast/');
   const macroSet = macroSeries.datasetStatus();
   console.log('  [宏观] 缓存目录：' + macroSet.dir);
   if (!macroSet.files) {
@@ -804,6 +843,22 @@ server.listen(PORT, HOST, () => {
         estateSet.years + ' 年），最新月度 ' + (estateSet.latestMonth || '—') + '，已对应当前应发布月份'
     );
   }
+  const forecastSet = forecastService.datasetStatus();
+  if (!forecastSet.files) {
+    console.log(
+      '  [推演] 尚无缓存：首次打开会把 ' + forecastSet.historyFrom +
+        ' 起的人口、教育与房地产年度数据一次拉全（七个栏目，约十秒）'
+    );
+  } else if (forecastSet.behind) {
+    console.log(
+      '  [推演] 已缓存 ' + forecastSet.files + ' 个年度文件，最新 ' + forecastSet.latest + '；' +
+        forecastSet.behind + ' 个指标缺应发布年度，打开页面时核对'
+    );
+  } else {
+    console.log(
+      '  [推演] 已缓存 ' + forecastSet.files + ' 个年度文件，最新 ' + forecastSet.latest + '，已对应当年应发布年度'
+    );
+  }
   console.log('');
 
   // 房价模块：直接读 data/periods.json；月份戳不是本月时在后台自动核对一次
@@ -897,5 +952,12 @@ server.listen(PORT, HOST, () => {
     require('./lib/realestate/config').load();
   } catch (e) {
     console.error('  [房地产] 配置有误：' + e.message);
+  }
+
+  // 人口与住房推演模块：配置独立（config/forecast.json），人口 / 教育 / 房地产三个年度栏目
+  try {
+    require('./lib/forecast/config').load();
+  } catch (e) {
+    console.error('  [推演] 配置有误：' + e.message);
   }
 });

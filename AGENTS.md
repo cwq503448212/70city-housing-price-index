@@ -22,8 +22,9 @@
 | 工业行业运行 | `lib/industry/` | `/api/industry/` | `/industry/` |
 | 区域经济（分省 GDP） | `lib/region/` | `/api/region/` | `/region/` |
 | 房地产开发与销售 | `lib/realestate/` | `/api/realestate/` | `/realestate/` |
+| 人口与住房推演 | `lib/forecast/` | `/api/forecast` | `/forecast/` |
 
-上表与 README 的「模块一 ~ 模块十二」同序。每个模块的**唯一事实来源**是 `config/<module>.json`：指标编码、分组、发布规则、`until` / `from` 归档、`derive` 计算口径都在那里。新增或改动指标**先改配置**，不要在代码里写死编码、指标数量或起止年份。
+上表与 README 的「模块一 ~ 模块十三」同序。每个模块的**唯一事实来源**是 `config/<module>.json`：指标编码、分组、发布规则、`until` / `from` 归档、`derive` 计算口径都在那里。新增或改动指标**先改配置**，不要在代码里写死编码、指标数量或起止年份。
 
 ## 2. 目录与边界
 

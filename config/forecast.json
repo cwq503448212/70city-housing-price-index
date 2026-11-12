@@ -1,0 +1,388 @@
+{
+  "source": {
+    "label": "国家统计局 · 国家数据（年度库 · 人口 / 教育 / 房地产开发与销售）",
+    "url": "https://data.stats.gov.cn",
+    "note": "人口与出生率来自「人口」栏目，小学 / 初中 / 普通高中 / 普通本专科的在校生、招生、毕业生来自「教育」栏目，销售面积与官方均价来自「固定资产投资和房地产」栏目。指标编码全部由 probe.js 实测确认，接口是站点前端自用的内部接口，非官方开放 API。本模块只在这批官方原值之上做队列推演，不引入任何外部预测数据。"
+  },
+  "site": {
+    "baseUrl": "https://data.stats.gov.cn",
+    "ext": "/dg/website/publicrelease/web/external",
+    "page": "/dg/website/page.html",
+    "rootId": "884c062607104a91967b22742537f44f",
+    "rootLabel": "国家数据 · 年度数据"
+  },
+  "history": {
+    "from": "1978",
+    "note": "人口与出生率自 1978 年起（推算购房主力人群需要 1982 年起的出生队列）；教育栏目与房地产年度栏目自 2000 年起。早期年份为空就是官方没有发布，不补数"
+  },
+  "catalogs": {
+    "pop_structure": {
+      "label": "人口 · 人口年龄结构和抚养比（年度）",
+      "id": "c7743eefda9d44b5ad2ab0b4f29ba969"
+    },
+    "population_rate": {
+      "label": "人口 · 人口出生率、死亡率和自然增长率（年度）",
+      "id": "ffed4267bba24830beea5991d4c9bcfc"
+    },
+    "edu_enroll": {
+      "label": "教育 · 各级各类学校在校学生数（年度）",
+      "id": "66fa7dc25039460d94af99d177bbc512"
+    },
+    "edu_admit": {
+      "label": "教育 · 各级各类学校招生数（年度）",
+      "id": "4931f8790be3435097b7d0b86e0b3817"
+    },
+    "edu_graduate": {
+      "label": "教育 · 各级各类学校毕业生数（年度）",
+      "id": "567f640e65f14d3a9751908d95b784b0"
+    },
+    "re_sales_area": {
+      "label": "固定资产投资和房地产 · 按用途分新建商品房销售面积（年度）",
+      "id": "5e8a1ec6366a4fb4a3a1614aac306c0a"
+    },
+    "re_price": {
+      "label": "固定资产投资和房地产 · 按用途分新建商品房平均销售价格（年度）",
+      "id": "302cec9f9b354cb3a82670d8747bea2f"
+    }
+  },
+  "groups": [
+    {
+      "key": "population",
+      "label": "人口与出生",
+      "note": "年末总人口是官方发布值；出生人口按出生率 × 年平均人口还原，是本页计算值"
+    },
+    {
+      "key": "education",
+      "label": "在校生与招生",
+      "note": "小学 / 初中 / 普通高中 / 普通本专科，均为官方发布值（万人）"
+    },
+    {
+      "key": "housing",
+      "label": "商品房销售",
+      "note": "新建商品房销售面积与平均销售价格，官方原值"
+    }
+  ],
+  "indicators": [
+    {
+      "id": "total_population",
+      "label": "年末总人口",
+      "shortLabel": "总人口",
+      "unit": "万人",
+      "kind": "population",
+      "group": "population",
+      "decimals": 0,
+      "note": "年末时点数，不是年平均人口；出生人口还原时用（上年末 + 本年末）÷ 2",
+      "catalog": "pop_structure",
+      "indicatorId": "9f39d77c761d4824940fc3c23d8281b0"
+    },
+    {
+      "id": "birth_rate",
+      "label": "人口出生率（年度）",
+      "shortLabel": "出生率",
+      "unit": "‰",
+      "kind": "rate",
+      "group": "population",
+      "decimals": 2,
+      "note": "年内出生人数 / 年平均人口，千分率；不是出生人口绝对数",
+      "catalog": "population_rate",
+      "indicatorId": "3d4006d356d94bdd9d75700b9788e230"
+    },
+    {
+      "id": "birth_count",
+      "label": "出生人口（计算值）",
+      "shortLabel": "出生人口",
+      "unit": "万人",
+      "kind": "population",
+      "group": "population",
+      "decimals": 1,
+      "note": "年度库只发布千分率，按官方定义还原：出生率 × 年平均人口 ÷ 1000；本页计算值，不落缓存、不回源",
+      "derive": "rate_count",
+      "inputs": ["birth_rate", "total_population"]
+    },
+    {
+      "id": "enroll_primary",
+      "label": "小学阶段在校学生数",
+      "shortLabel": "小学在校生",
+      "unit": "万人",
+      "kind": "population",
+      "group": "education",
+      "decimals": 1,
+      "note": "普通小学在校学生，不含特殊教育与学前",
+      "catalog": "edu_enroll",
+      "indicatorId": "6efce354b6124370b15470a9c1fdb6f5"
+    },
+    {
+      "id": "enroll_junior",
+      "label": "初中阶段在校学生数",
+      "shortLabel": "初中在校生",
+      "unit": "万人",
+      "kind": "population",
+      "group": "education",
+      "decimals": 1,
+      "note": "初中阶段（含职业初中）在校学生",
+      "catalog": "edu_enroll",
+      "indicatorId": "866a14e6f0ac4a9fb2dabeb1deed4aac"
+    },
+    {
+      "id": "enroll_senior",
+      "label": "普通高中在校学生数",
+      "shortLabel": "普高在校生",
+      "unit": "万人",
+      "kind": "population",
+      "group": "education",
+      "decimals": 1,
+      "note": "只含普通高中，不含中等职业学校；初中毕业后的分流不归并",
+      "catalog": "edu_enroll",
+      "indicatorId": "435724d8a2ec4d3981579cb4394fca71"
+    },
+    {
+      "id": "enroll_college",
+      "label": "普通、职业本专科在校学生数",
+      "shortLabel": "本专科在校生",
+      "unit": "万人",
+      "kind": "population",
+      "group": "education",
+      "decimals": 1,
+      "note": "普通与职业本专科合计，不含研究生；本科 4 年、专科 3 年混在一起，不能按单一学制精确滚动",
+      "catalog": "edu_enroll",
+      "indicatorId": "4dc890c99a2b4e0f849dd73733295901"
+    },
+    {
+      "id": "admit_primary",
+      "label": "小学阶段招生数",
+      "shortLabel": "小学招生",
+      "unit": "万人",
+      "kind": "population",
+      "group": "education",
+      "decimals": 1,
+      "note": "当年小学一年级入学人数，含超龄与流动儿童，与 6 年前出生人口不是严格一一对应",
+      "catalog": "edu_admit",
+      "indicatorId": "1f1d5d1c0073493687f080fdf266e57d"
+    },
+    {
+      "id": "admit_junior",
+      "label": "初中阶段招生数",
+      "shortLabel": "初中招生",
+      "unit": "万人",
+      "kind": "population",
+      "group": "education",
+      "decimals": 1,
+      "note": "当年初中一年级入学人数",
+      "catalog": "edu_admit",
+      "indicatorId": "20c241bee5fd4ae3b9df8a61dce5dce2"
+    },
+    {
+      "id": "admit_senior",
+      "label": "普通高中招生数",
+      "shortLabel": "普高招生",
+      "unit": "万人",
+      "kind": "population",
+      "group": "education",
+      "decimals": 1,
+      "note": "只含普通高中；初中毕业生还有相当比例进入中职，本页不做中职预测",
+      "catalog": "edu_admit",
+      "indicatorId": "d5dbf0afa6c84e52be915437329ba3c1"
+    },
+    {
+      "id": "admit_college",
+      "label": "普通、职业本专科招生数",
+      "shortLabel": "本专科招生",
+      "unit": "万人",
+      "kind": "population",
+      "group": "education",
+      "decimals": 1,
+      "note": "含普通本科、职业本科与专科招生，规模大于同年普高毕业生（还有中职升学与往届生）",
+      "catalog": "edu_admit",
+      "indicatorId": "a3d2fbc648a34a0e835bcc30f866a6e3"
+    },
+    {
+      "id": "grad_primary",
+      "label": "小学阶段毕业生数",
+      "shortLabel": "小学毕业生",
+      "unit": "万人",
+      "kind": "population",
+      "group": "education",
+      "decimals": 1,
+      "note": "当年小学毕业人数，是初中招生的上游队列",
+      "catalog": "edu_graduate",
+      "indicatorId": "fe83e71fea78494c9fe8440c38b8e6e1"
+    },
+    {
+      "id": "grad_junior",
+      "label": "初中阶段毕业生数",
+      "shortLabel": "初中毕业生",
+      "unit": "万人",
+      "kind": "population",
+      "group": "education",
+      "decimals": 1,
+      "note": "当年初中毕业人数，是普高与中职招生的共同上游",
+      "catalog": "edu_graduate",
+      "indicatorId": "f8b249d7adbc4b20952b0bd67e6d55c5"
+    },
+    {
+      "id": "grad_senior",
+      "label": "普通高中毕业生数",
+      "shortLabel": "普高毕业生",
+      "unit": "万人",
+      "kind": "population",
+      "group": "education",
+      "decimals": 1,
+      "note": "当年普高毕业人数，是本专科招生的上游",
+      "catalog": "edu_graduate",
+      "indicatorId": "1bb26c65c9d943b5909ae91d768fdb47"
+    },
+    {
+      "id": "grad_college",
+      "label": "普通、职业本专科毕业生数",
+      "shortLabel": "本专科毕业生",
+      "unit": "万人",
+      "kind": "population",
+      "group": "education",
+      "decimals": 1,
+      "note": "当年本专科毕业人数，用于核对在校生队列的留存假设",
+      "catalog": "edu_graduate",
+      "indicatorId": "c581efbb731f48bcaf69881a887eac06"
+    },
+    {
+      "id": "sales_area",
+      "label": "新建商品房销售面积（年度）",
+      "shortLabel": "商品房销售面积",
+      "unit": "万平方米",
+      "kind": "area",
+      "group": "housing",
+      "decimals": 1,
+      "note": "含住宅、办公楼、商业营业用房全部用途；2025 年为官方年度值",
+      "catalog": "re_sales_area",
+      "indicatorId": "6bb57c9d2b564dc2ac0313e2aaf7cd0c"
+    },
+    {
+      "id": "sales_area_res",
+      "label": "住宅商品房销售面积（年度）",
+      "shortLabel": "住宅销售面积",
+      "unit": "万平方米",
+      "kind": "area",
+      "group": "housing",
+      "decimals": 1,
+      "note": "按用途拆分中的住宅口径，约占全部商品房销售面积的八成",
+      "catalog": "re_sales_area",
+      "indicatorId": "014cbae07ab1440ba5f2b976e2d75b68"
+    },
+    {
+      "id": "price",
+      "label": "新建商品房平均销售价格（年度）",
+      "shortLabel": "商品房均价",
+      "unit": "元/平方米",
+      "kind": "price",
+      "group": "housing",
+      "decimals": 0,
+      "lagYears": 1,
+      "note": "官方发布值，按销售额 ÷ 销售面积计算的口径；滞后一年，最新为 2024 年",
+      "catalog": "re_price",
+      "indicatorId": "67851f1515504d5992b1a9d0c023f0bb"
+    },
+    {
+      "id": "price_res",
+      "label": "住宅商品房平均销售价格（年度）",
+      "shortLabel": "住宅均价",
+      "unit": "元/平方米",
+      "kind": "price",
+      "group": "housing",
+      "decimals": 0,
+      "lagYears": 1,
+      "note": "官方发布值；与「70 城房价指数」的价格指数不是一回事（指数只反映变动幅度）",
+      "catalog": "re_price",
+      "indicatorId": "222b8f1e22804abaaa3b58b227f8103d"
+    }
+  ],
+  "model": {
+    "horizon": "2055",
+    "calibrationYears": 5,
+    "stages": {
+      "primary": {
+        "label": "小学",
+        "years": 6,
+        "entryAge": 6,
+        "admit": "admit_primary",
+        "enroll": "enroll_primary",
+        "graduate": "grad_primary",
+        "weights": [1, 1, 1, 1, 1, 1],
+        "upstream": "birth",
+        "lag": 6
+      },
+      "junior": {
+        "label": "初中",
+        "years": 3,
+        "entryAge": 12,
+        "admit": "admit_junior",
+        "enroll": "enroll_junior",
+        "graduate": "grad_junior",
+        "weights": [1, 1, 1],
+        "upstream": "primary",
+        "lag": 6
+      },
+      "senior": {
+        "label": "普通高中",
+        "years": 3,
+        "entryAge": 15,
+        "admit": "admit_senior",
+        "enroll": "enroll_senior",
+        "graduate": "grad_senior",
+        "weights": [1, 1, 1],
+        "upstream": "junior",
+        "lag": 3
+      },
+      "college": {
+        "label": "本专科",
+        "years": 4,
+        "entryAge": 18,
+        "admit": "admit_college",
+        "enroll": "enroll_college",
+        "graduate": "grad_college",
+        "weights": [1, 1, 1, 0.75],
+        "upstream": "senior",
+        "lag": 3
+      }
+    },
+    "housing": {
+      "buyerAgeFrom": 25,
+      "buyerAgeTo": 44,
+      "survival": 0.98,
+      "baseYears": 3,
+      "intensityTau": 8,
+      "note": "25—44 岁按出生队列逐年移位；存活率 0.98 是模型参数，不是官方统计值"
+    },
+    "scenarios": {
+      "low": {
+        "label": "低情景",
+        "birthGrowth": -0.03,
+        "houseIntensity": 0.85,
+        "priceGrowth": -0.02
+      },
+      "base": {
+        "label": "基准情景",
+        "birthGrowth": -0.01,
+        "houseIntensity": 1,
+        "priceGrowth": 0
+      },
+      "high": {
+        "label": "高情景",
+        "birthGrowth": 0,
+        "houseIntensity": 1.15,
+        "priceGrowth": 0.02
+      }
+    },
+    "backtest": {
+      "calibrateFrom": "2015",
+      "calibrateTo": "2019",
+      "from": "2020",
+      "to": "2025"
+    },
+    "notes": [
+      "出生人口未来值 = 最新一年官方出生人口 × (1 + 年增速)^年数，三种情景只改年增速",
+      "各学段招生 = 上游队列 × 近 5 年招生传导系数（出生 → 小学 → 初中 → 普高 → 本专科）",
+      "在校生 = 最近 N 年招生按学制加总（本专科按 [1,1,1,0.75] 近似 3 年制与 4 年制混合）",
+      "购房主力人口 = 25—44 岁出生队列 × 0.98 存活率；销售面积 = 购房主力人口 × 人均购房强度，强度按情景向目标值指数收敛",
+      "商品房均价按名义年增速做情景外推，不扣通胀、不建模供需，只给区间参考"
+    ]
+  }
+}

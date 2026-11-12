@@ -1,0 +1,353 @@
+/* 人口与住房推演 —— 视觉变量与其它模块一致 */
+
+/* ---------- 布局 ---------- */
+
+main {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 18px 24px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* 顶栏状态文案比其它页长（要报缓存年数 + 推演区间），允许换行 */
+.topbar .status {
+  white-space: normal;
+  max-width: 100%;
+}
+
+.kpi-row {
+  display: grid;
+  /* 8 张 KPI：宽屏固定 4 列 × 2 行，第 8 张不会单独占一整行 */
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.card-wide {
+  grid-column: 1 / -1;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px 18px 12px;
+}
+
+.card-head {
+  margin-bottom: 6px;
+}
+
+.card-head h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.card-head h2 .tag {
+  margin-left: 6px;
+  vertical-align: 1px;
+}
+
+.card-sub {
+  margin: 3px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.card-sub strong {
+  color: var(--ink-2);
+  font-weight: 600;
+}
+
+.card-sub code,
+.foot code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  background: #f0f2f5;
+  padding: 0 4px;
+  border-radius: 4px;
+}
+
+/* ---------- KPI 卡片 ---------- */
+
+.kpi {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 112px;
+}
+
+.kpi-label {
+  font-size: 12px;
+  color: var(--muted);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-height: 20px;
+}
+
+.kpi-label .tag {
+  font-size: 10px;
+  padding: 0 6px;
+  line-height: 1.6;
+}
+
+.kpi-value {
+  font-size: 26px;
+  font-weight: 650;
+  letter-spacing: -0.4px;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+
+.kpi-value small {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+  margin-left: 2px;
+}
+
+.kpi-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 10px;
+  margin-top: auto;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* ---------- 图表 ---------- */
+
+.chart {
+  width: 100%;
+  height: 320px;
+}
+
+.card-wide .chart {
+  height: 340px;
+}
+
+.chart-lg {
+  height: 380px;
+}
+
+/* ---------- 表格 ---------- */
+
+.table-wrap {
+  max-height: 580px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.table-short {
+  max-height: 460px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+th {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  background: #fafbfc;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  vertical-align: bottom;
+}
+
+th small {
+  display: block;
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--flat);
+  letter-spacing: 0;
+}
+
+tbody tr:hover {
+  background: #fafbfc;
+}
+
+tr.group-row td {
+  background: #f7f8fa;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-2);
+  letter-spacing: 0.2px;
+}
+
+tr.group-row:hover {
+  background: #f7f8fa;
+}
+
+/* 推演年份整行压暗，一眼区分「官方」与「本页推演」 */
+tr.is-future td {
+  color: var(--ink-2);
+}
+
+tr.is-future td:first-child {
+  box-shadow: inset 3px 0 0 var(--accent-light, #5b8def);
+}
+
+td small {
+  display: block;
+  font-size: 11px;
+  color: var(--flat);
+}
+
+td .muted {
+  color: var(--muted);
+}
+
+.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.tag {
+  display: inline-block;
+  font-size: 11px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: #f0f2f5;
+  color: var(--ink-2);
+}
+
+.tag.ok {
+  background: #e7f6ee;
+  color: #14603a;
+}
+
+.tag.warn {
+  background: #fff3e0;
+  color: #8a4b00;
+}
+
+.tag.info {
+  background: #eef2ff;
+  color: #3730a3;
+}
+
+.up {
+  color: var(--up);
+}
+
+.down {
+  color: var(--down);
+}
+
+.flat {
+  color: var(--flat);
+}
+
+.table-note {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* ---------- 方法与参数 ---------- */
+
+.notes {
+  margin: 10px 0 4px;
+  padding-left: 20px;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.75;
+}
+
+.notes li {
+  margin-bottom: 2px;
+}
+
+.notes strong {
+  color: var(--ink-2);
+  font-weight: 600;
+}
+
+/* ---------- 页脚 ---------- */
+
+.foot {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.75;
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+
+.foot p {
+  margin: 0 0 6px;
+}
+
+.foot strong {
+  color: var(--ink-2);
+  font-weight: 600;
+}
+
+.foot-meta {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+}
+
+/* ---------- 响应式 ---------- */
+
+@media (max-width: 1080px) {
+  .kpi-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 560px) {
+  .kpi-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 720px) {
+  main {
+    padding: 14px 14px 32px;
+  }
+
+  .chart,
+  .card-wide .chart {
+    height: 280px;
+  }
+
+  .kpi-value {
+    font-size: 22px;
+  }
+}

@@ -207,6 +207,19 @@ if (Test-Path $realestateSrc) {
 } else {
   Write-Host '      ! 未找到 .cache\realestate：包里不带房地产缓存，对方首次打开会现场拉全（22 个请求，约 25 秒）'
 }
+# 推演缓存：7 个栏目 × 全部历史年度（约 860 个年度文件，约 90 KB），
+# 带上后对方首次打开不用重走教育 / 人口 / 房地产 7 次上游；_meta.json 同样剔掉
+$forecastSrc = Join-Path $root '.cache\forecast'
+if (Test-Path $forecastSrc) {
+  New-Item -ItemType Directory -Path (Join-Path $pkg '.cache') -Force | Out-Null
+  Copy-Item $forecastSrc (Join-Path $pkg '.cache') -Recurse
+  Get-ChildItem (Join-Path $pkg '.cache\forecast') -Recurse -File -Filter '_meta.json' | Remove-Item -Force
+  $fcYears = Get-ChildItem (Join-Path $pkg '.cache\forecast') -Recurse -File -Filter '????.json'
+  $fcInd = (Get-ChildItem (Join-Path $pkg '.cache\forecast') -Directory).Count
+  Write-Host ('      + 推演缓存：' + $fcInd + ' 个指标 / ' + $fcYears.Count + ' 个年度文件')
+} else {
+  Write-Host '      ! 未找到 .cache\forecast：包里不带推演缓存，对方首次打开会现场拉全（7 个请求，约 9 秒）'
+}
 Write-Host '[2/4] 已拷贝项目文件'
 
 Add-Type -AssemblyName System.IO.Compression.FileSystem

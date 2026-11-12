@@ -1,6 +1,6 @@
 # 中国经济统计数据看板
 
-一个零依赖的本地看板：**十二个模块、一个进程、一份本地缓存**。数据全部由服务端代取，首次打开一次拉全历史，之后每次打开只核对应发布期别——有新一期就补进去，没发布就直接读缓存。
+一个零依赖的本地看板：**十三个模块、一个进程、一份本地缓存**。数据全部由服务端代取，首次打开一次拉全历史，之后每次打开只核对应发布期别——有新一期就补进去，没发布就直接读缓存。
 
 | 模块 | 地址 | 内容 | 频次 · 起点 |
 | --- | --- | --- | --- |
@@ -16,8 +16,9 @@
 | **工业行业运行** | `/industry/` | 41 个大类行业增加值热力图与排行、营收 / 利润累计同比四象限、制造业与非制造业 PMI 分项 | 月度 · 2018-01 |
 | **区域经济（分省 GDP）** | `/region/` | 31 个省级行政区 GDP 排行、单省走势（名义值 + 官方实际增速）、三次产业构成、人均 GDP 对比 | 年度 · 1992 |
 | **房地产开发与销售** | `/realestate/` | 新建商品房销售面积 / 销售额（含住宅、办公楼、商业分项）、开发投资、施工与新开工、竣工、到位资金、成交均价（本页计算）；年度对照官方平均销售价格、资金六项构成、房企营收利润与资产负债率 | 月度 2000-01 + 年度 2000 |
+| **人口与住房推演** | `/forecast/` | 用出生队列推未来 30 年：小学 / 初中 / 普高 / 本专科在校生与招生、购房主力人口、新建商品房销售面积与成交均价，低 / 基准 / 高三情景 + 回测（**历史为官方值，2026 年起为本页推演**） | 年度 · 2000（队列自 1978） |
 
-打开根地址 `/` 是模块选择页，卡片上直接标出每个看板的数据新鲜度（最新期别 / 落后期数），点进去分别进入十二个子页面；每个子页面**左上角**的「← 返回模块选择」可以切回来，右侧留给时间范围、刷新与状态。
+打开根地址 `/` 是模块选择页，卡片上直接标出每个看板的数据新鲜度（最新期别 / 落后期数），点进去分别进入十三个子页面；每个子页面**左上角**的「← 返回模块选择」可以切回来，右侧留给时间范围、刷新与状态。
 
 ![模块选择入口](docs/screenshot-home.png)
 
@@ -31,7 +32,7 @@ node server.js
 
 然后打开 <http://127.0.0.1:5173>。
 
-- 需要 Node >= 20，**不需要 `npm install`**（ECharts 已内置在 `public/vendor/`，十二个看板共用一份）。
+- 需要 Node >= 20，**不需要 `npm install`**（ECharts 已内置在 `public/vendor/`，十三个看板共用一份）。
 - 必须经这个本地服务访问：直接双击 `public/**/index.html` 不行——`file://` 下 `fetch('/api/...')` 会被浏览器拦下；统计局 / 央行站点还有 WAF，浏览器直连会 403，数据只能由服务端代取。
 - 换端口：`$env:PORT=8080; node server.js`；用 `start.bat` 时可以先 `set DASH_PORT=5180`（旧的 `NBS_PORT` 仍兼容）。
 - **改完后端要重启**：`start.bat` 发现端口已在监听就只打开浏览器、不再启动 node，而 Node 没有热重载。改过 `server.js` 或 `lib/` 后不重启，新接口会一直返回 404，页面显示「接口返回失败」；判据是进程启动时间早于文件修改时间。
@@ -56,21 +57,22 @@ lib/livelihood/security/     养老医保：取数复用父目录 source，限�
 lib/industry/                行业运行：独立取数（国家数据月度库 · 工业 / PMI），限流在本模块内
 lib/region/                  区域经济：独立取数（国家数据分省年度库 · 逐省串行），限流在本模块内
 lib/realestate/              房地产：独立取数（国家数据月度库·房地产 + 年度库·房地产），限流在本模块内
+lib/forecast/                推演：独立取数（国家数据年度库·教育 / 人口 / 房地产）+ 纯函数队列模型（model.js），限流在本模块内
 
-config/*.json                各模块的唯一事实来源：indicators / livelihood / income / deposit / retail / employment / security / industry / region / realestate
-public/                      index.html + home.css（入口）；housing、macro、lpr、realestate、industry、region、livelihood/{income,deposit,retail,employment,security}；shared.css（十二页共用的 token / 顶栏 / 控件）；vendor/echarts.min.js
+config/*.json                各模块的唯一事实来源：indicators / livelihood / income / deposit / retail / employment / security / industry / region / realestate / forecast
+public/                      index.html + home.css（入口）；housing、macro、lpr、realestate、industry、region、forecast、livelihood/{income,deposit,retail,employment,security}；shared.css（十三页共用的 token / 顶栏 / 控件）；vendor/echarts.min.js
 data/periods.json            房价数据集（189 个月，随仓库分发）
 docs/                        页面截图
 packaging/                   便携包的 build.ps1 / start.bat / 使用说明.txt
-.cache/                      运行时缓存（macro / lpr / livelihood* / industry / region / realestate / raw），可随时删除
+.cache/                      运行时缓存（macro / lpr / livelihood* / industry / region / realestate / forecast / raw），可随时删除
 .temp/                       临时脚本与截图（已被 git 忽略，可随时删除）
 ```
 
 模块之间**不互相 require**：每个模块只依赖自己的 `lib/<module>/`，共用能力下沉到模块内或新建 `lib/shared/`；同一模块的子页面可以复用父目录的公共件（如 `lib/livelihood/{income,deposit,retail,employment,security}` 复用父目录的 `queue`）。HTTP 只由 `server.js` 一个进程分发，新增的子前缀路由必须排在更宽前缀（如 `/api/livelihood/`）的分支之前。
 
-前端同理：`public/shared.css` 是十二页唯一的一份设计 token、页面基底、顶栏（返回 / 标题 / 筛选 / 状态胶囊）与表单控件样式，各页 `styles.css` 只管自己的图表和专属布局，**不要再把顶栏样式拷回页面文件**；新增模块时先在 `index.html` 里引 `../shared.css`（子目录页 `../../shared.css`）再引本页 `styles.css`。
+前端同理：`public/shared.css` 是十三页唯一的一份设计 token、页面基底、顶栏（返回 / 标题 / 筛选 / 状态胶囊）与表单控件样式，各页 `styles.css` 只管自己的图表和专属布局，**不要再把顶栏样式拷回页面文件**；新增模块时先在 `index.html` 里引 `../shared.css`（子目录页 `../../shared.css`）再引本页 `styles.css`。
 
-## 十二个看板共用的机制
+## 十三个看板共用的机制
 
 - **服务端代取**：前端只请求 `/api/...`，不直连任何上游域名。
 - **缓存优先**：有本地数据就用本地数据，只在「缺数据 / 过了发布日 / 用户点刷新」时回源。缓存都是可删的 JSON，删掉只会让下次重新拉全。
@@ -90,7 +92,7 @@ packaging/                   便携包的 build.ps1 / start.bat / 使用说明.t
 
 | 前缀 | 查询参数 |
 | --- | --- |
-| `/api/health` | 健康检查，十二个看板共用（含各模块缓存概况与 `fresh` 新鲜度摘要） |
+| `/api/health` | 健康检查，十三个看板共用（含各模块缓存概况与 `fresh` 新鲜度摘要） |
 | `/api/nbs70` | `months=1..200`（200 = 全部历史）、`force=1` |
 | `/api/macro/` | `range=12\|36\|60\|120\|all`、`from=YYYY-MM&to=YYYY-MM`、`force=1` |
 | `/api/lpr/` | 只有 `overview` 与 `health`，`force=1` |
@@ -103,6 +105,7 @@ packaging/                   便携包的 build.ps1 / start.bat / 使用说明.t
 | `/api/industry/` | `range=2\|5\|all`、`from=YYYY-MM&to=YYYY-MM`、`force=1`；指标 id 带点（如 `coal.profit`） |
 | `/api/region/` | `range=10\|20\|all`、`from=YYYY&to=YYYY`、`provinces=11,44,广东`、`force=1`；`/rank` 支持 `metric=gdp&year=2025` |
 | `/api/realestate/` | `range=2\|5\|all`（只作用于月度指标）、`from=YYYY-MM&to=YYYY-MM`、`force=1` |
+| `/api/forecast/` | `chartFrom=YYYY`（图上历史起点，默认 2000）、`force=1`；整体端点为 `/api/forecast`（历史 + 三情景 + 回测一次取全） |
 
 `from` / `to` 优先于 `range`。各模块的指标 id 全部写在对应的 `config/*.json` 里，可直接核对。
 
@@ -335,6 +338,24 @@ POST https://www.chinamoney.com.cn/ags/ms/cm-u-bk-currency/LprHis?lang=CN&strSta
 
 ---
 
+# 模块十三：人口与住房推演
+
+**教育 / 人口 / 房地产三个年度栏目拼成一条队列：出生 → 小学 → 初中 → 普高 → 本专科 → 购房需求**。历史段（2000—2025）全部是官方发布值（国家数据年度库 7 个栏目、19 个指标，其中 1 个是计算值），**2026—2055 年为本页按固定规则做的情景推演，不是官方预测**。首次打开 7 次请求、实测约 9 秒拉全（热启动 300—600 ms），之后每年核对一次。
+
+- **三条硬规矩**：历史年份一律用官方值（招生 / 在校生 / 面积 / 均价），模型值不覆盖历史；任一输入缺失就返回 `null`，不插值、不补 0；推演值只在官方没有的年份出现，返回结构与 `model.actual` 分开（`model.scenarios`），前端实线 / 虚线分开画，表格逐行标「官方 / 推演」。
+- **出生人口是还原值**：年度库只发布人口出生率（‰），没有出生人口绝对数，本页按 `出生率 ÷ 1000 × (上年末 + 本年末) / 2` 还原并标「本页计算」。以 2025 年为例：5.63‰ × 平均人口 ≈ 791.9 万人。
+- **队列滚动**：`招生(y) = 上游(y − lag) × 传导系数`，出生 → 小学滞后 6 年、小学 → 初中 6 年、初中 → 普高 3 年、普高 → 本专科 3 年；系数取**最近 5 年实测比值**的算术平均（`model.calibrationYears`）。在校生 = 最近「学制」年招生按权重加总（本专科 `[1,1,1,0.75]` 近似 3 年制与 4 年制混合）。实测系数：小学 1.021（出生 → 招生）、初中 0.990、普高 0.593、本专科 1.194。
+- **三情景只改三个参数**：出生人口年增速 −3% / −1% / 0%，人均购房强度 0.85 / 1.0 / 1.15，房价名义年增速 −2% / 0% / +2%。出生起点一律取**最新一年的官方还原值**（不用近三年均值），否则 2026 年会比 2025 年凭空跳高，图上的实线与虚线就接不上。
+- **房子那两条线**：购房主力人口 = 25—44 岁出生队列 × 0.98 存活率（队列近似，不含分年龄死亡率与迁移）；销售面积 = 购房主力人口 × 人均购房强度，强度从最新一年的实际值出发向情景目标指数收敛（`housing.intensityTau` = 8 年）；均价以官方最新年均价（**滞后一年，止于 2024**）为起点做名义外推，不扣通胀。
+- **回测（只检验方法，不参与推演）**：只用 2015—2019 年的招生数据校准系数，再预测 2020—2025 年的招生数并与实际比：小学 MAPE 约 6.0%、初中 8.3%、普高 7.3%、本专科 18.5%。本专科误差最大，因为高校招生受扩招政策支配，不是单纯跟着学龄人口走——这一行必须显示在页面上，不能只给好看的 6%。
+- **口径声明**：均价是**成交结构均价**，不是同质可比的价格指数；销售面积不建模库存、利率、收入预期与政策；教育规模不考虑跨省流动、留学分流与普职比例变化。看历史实况请去「房地产开发与销售」与「70 城房价指数」。
+- **图表**：KPI 8 张 + 5 张图（出生人口三情景、四学段官方 / 推演、购房主力人口、销售面积、成交均价）+ 4 张表（情景对比 2030/2040/2055、逐年明细、回测、校准系数）+ 方法与参数说明；教育图可在「在校生 / 招生」与低 / 基准 / 高之间切换，筛选存在 `localStorage` 的 `forecast.pref.v1`。
+- **缓存**：`.cache/forecast/<指标 id>/<YYYY>.json`（862 个年度文件）+ `_meta.json`，目录可用 `FORECAST_DATA_DIR` 覆盖；限流在本模块内（1200 ms 串行间隔 + 同一指标 60 秒冷却 + 两次回源至少隔 10 分钟）。模型是纯函数（`lib/forecast/model.js`），不碰磁盘也不发请求，改参数只改 `config/forecast.json` 的 `model` 段。
+
+![人口与住房推演看板](docs/screenshot-forecast.png)
+
+---
+
 ## 打包给别人（对方不装 Node）
 
 把 `node.exe` 和项目一起打进去，对方解压双击 `start.bat` 即可，**不需要安装任何东西**。出包有两种方式，产物一致：
@@ -346,11 +367,11 @@ POST https://www.chinamoney.com.cn/ags/ms/cm-u-bk-currency/LprHis?lang=CN&strSta
 
 ```
 release/中国经济统计数据看板/                                    解压后双击 start.bat
-release/china-economic-stats-dashboard-v4.1.0-win10-win11.zip   对外发送
+release/china-economic-stats-dashboard-v4.2.0-win10-win11.zip   对外发送
 ```
 
 - 包内是内置的官方签名 `node.exe`（v20.12.2，故**只支持 Windows 10 / 11**）、`server.js`、`lib/`、`config/`、`public/`、`data/periods.json`、`probe.js`、`docs/`、`README.md`、`start.bat`、`使用说明.txt`，以及各模块的缓存；不含 `node_modules/`、`AGENTS.md`。功能与源码版完全一致。
-- **缓存随包带、但剔除 `_meta.json`**：宏观 / LPR / 民生 / 收支 / 存款 / 社零 / 就业 / 养老医保 / 行业运行 / 区域经济 / 房地产开发与销售的历史缓存都进包（合计不到 4 MB），对方首次打开只补最近几期、几秒出图；而 `_meta.json` 是本机回源时间戳（10 分钟冷却），进包会抑制对方的首次核对。
+- **缓存随包带、但剔除 `_meta.json`**：宏观 / LPR / 民生 / 收支 / 存款 / 社零 / 就业 / 养老医保 / 行业运行 / 区域经济 / 房地产开发与销售 / 人口与住房推演的历史缓存都进包（合计不到 5 MB），对方首次打开只补最近几期、几秒出图；而 `_meta.json` 是本机回源时间戳（10 分钟冷却），进包会抑制对方的首次核对。
 - 包放很久才打开也没问题：缺的期别按「应发布期别」一次性补齐，不会从头重拉；只有统计局改了栏目或接口才需要重新发版。
 - zip 名必须纯 ASCII（中文附件名会被 GitHub 静默丢弃），包内顶层目录仍是中文的 `中国经济统计数据看板`；换支持的 Windows 范围用 `build.bat win7-win11` 或 `build.ps1 -SysTag 'win7-win11'`；想换 node.exe 用 `set NODE_EXE=…` 或 `build.ps1 -NodeExe …`（脚本带版本守卫）。
 - 不用 pkg 打单文件 exe：体积差不多，但自解压 exe 常被杀软误报，且包内 `data/` 会变成只读虚拟文件系统，「刷新数据」写不进去。
@@ -359,7 +380,8 @@ release/china-economic-stats-dashboard-v4.1.0-win10-win11.zip   对外发送
 
 - **房价不是成交均价**，价格指数只反映价格变动的相对幅度，不含绝对价格水平。
 - 上游接口随时可能变化或限流，页面出现「待更新」属正常现象，请以官网公布为准。
-- 数据版权分别归国家统计局（房价 / 宏观 / 人口与婚育 / 收支 / 存款的人口分母 / 社零 / 就业 / 养老医保 / 工业行业运行 / 分省 GDP）、中国人民银行（存款 / 信贷收支表）、全国银行间同业拆借中心（LPR）所有；本项目只做本地可视化，不保存、不分发原始数据库。
+- 数据版权分别归国家统计局（房价 / 宏观 / 人口与婚育 / 收支 / 存款的人口分母 / 社零 / 就业 / 养老医保 / 工业行业运行 / 分省 GDP / 人口与住房推演的历史值）、中国人民银行（存款 / 信贷收支表）、全国银行间同业拆借中心（LPR）所有；本项目只做本地可视化，不保存、不分发原始数据库。
+- **推演模块的所有未来值都是本项目的模型输出**（出生人口 → 学龄人口 → 购房主力 → 销售面积 / 均价），不是统计局或其他机构的预测，也不代表本项目对人口与楼市的判断。
 - 仅供数据观察，**不要用于任何投资决策依据**。
 
 ## 反馈与联系

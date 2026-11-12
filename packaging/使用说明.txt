@@ -18,16 +18,17 @@
   · 工业行业运行（41 个大类行业增加值热力图与排行、营收 / 利润累计同比四象限、制造业与非制造业 PMI 分项）
   · 区域经济（分省 GDP：31 个省排行与单省走势、三次产业构成、人均 GDP，不做全国合计）
   · 房地产开发与销售（新建商品房销售面积 / 销售额、开发投资、施工与新开工、到位资金、成交均价；含年度对照）
-十二个页面右上角都有「← 返回模块选择」，随时可以切回去。
+  · 人口与住房推演（用出生队列推未来 30 年：小学 / 初中 / 普高 / 本专科在校生与招生、购房主力人口、商品房销售面积与成交均价，低/基准/高三情景 + 回测）
+十三个页面右上角都有「← 返回模块选择」，随时可以切回去。
 
 
 【几点说明】
 1. 那个黑色窗口是本地服务，别关它，关了页面就用不了了。用完直接关窗口即可。
 2. 房价数据已经打包在 data\periods.json 里（2011-01 ~ 2026-09，共 189 个月），
    打开时不会联网。
-3. 包里已经带了截至打包时的宏观、LPR、民生、收支、存款、社零、就业、养老医保、行业运行、分省 GDP 与房地产历史数据（.cache\macro、.cache\lpr、
+3. 包里已经带了截至打包时的宏观、LPR、民生、收支、存款、社零、就业、养老医保、行业运行、分省 GDP、房地产与推演历史数据（.cache\macro、.cache\lpr、
    .cache\livelihood、.cache\livelihood-income、.cache\livelihood-deposit、.cache\livelihood-retail、.cache\livelihood-employment、
-   .cache\livelihood-security、.cache\industry、.cache\region、.cache\realestate），
+   .cache\livelihood-security、.cache\industry、.cache\region、.cache\realestate、.cache\forecast），
   第一次打开只会补最近几期，通常几秒就完；以后每次打开只核对有没有发布新一期，有就补进去，没发布就直接读缓存。
 4. 想拿最新一期数据，点页面右上角「刷新数据」。
    房价需要能访问 www.stats.gov.cn（约 5-10 秒）；
@@ -41,21 +42,22 @@
    养老医保需要能访问 data.stats.gov.cn（年度库「公共管理、社会保障及其他」九个栏目，约十秒）；
    行业运行需要能访问 data.stats.gov.cn（月度库工业与 PMI 五个栏目，约六秒）；
    区域经济需要能访问 data.stats.gov.cn（分省年度库，逐省请求 31 次，首次全量约 40 秒）；
-   房地产需要能访问 data.stats.gov.cn（月度库房地产 12 个栏目 + 年度库 10 个栏目，22 个请求，首次全量约 25 秒）。
-5. 十二个页面都可以选时间范围，只影响展示，不会触发下载。
+   房地产需要能访问 data.stats.gov.cn（月度库房地产 12 个栏目 + 年度库 10 个栏目，22 个请求，首次全量约 25 秒）；
+   推演需要能访问 data.stats.gov.cn（年度库教育 / 人口 / 房地产 7 个栏目，首次全量约 9 秒）。
+5. 十三个页面都可以选时间范围或口径，只影响展示，不会触发下载。
 6. 需要 Windows 10 / 11（64 位）。Windows 7 / 8 不支持。
 7. 绿色版：不写注册表、不装服务、不需要管理员权限。
    换电脑直接整个文件夹拷过去就行，用完删文件夹即可卸载。
 8. 如果提示「端口 5173 被其它程序占用」：
    在黑窗口里执行   set DASH_PORT=5180   然后再双击一次 start.bat。
-9. 第一次运行会自动生成 .cache 文件夹（房价月报原文 + 宏观/LPR/民生/收支/存款/社零/就业/养老医保/行业运行/分省 GDP/房地产缓存），
+9. 第一次运行会自动生成 .cache 文件夹（房价月报原文 + 宏观/LPR/民生/收支/存款/社零/就业/养老医保/行业运行/分省 GDP/房地产/推演缓存），
    删掉也没关系，房价数据集仍在 data\periods.json，其它模块下次打开会重新拉全。
 
 
 【目录说明】
 start.bat            双击启动
 node.exe             内置的 Node.js 运行时，不用单独安装
-server.js            本地服务：首页 + 十二个看板页面 + 数据接口
+server.js            本地服务：首页 + 十三个看板页面 + 数据接口
 lib\housing\nbs70.js 房价数据抓取与解析
 lib\macro\           宏观数据：缓存、取数、指标配置校验
 lib\lpr\             LPR 数据：缓存、取数、回源判定
@@ -68,8 +70,9 @@ lib\livelihood\security\ 养老医保子页：走年度库（公共管理、社�
 lib\industry\        行业运行：走月度库（工业分大类行业增加值 / 营收 / 利润 + 制造业与非制造业 PMI），独立限流
 lib\region\          区域经济：走分省年度库（逐省请求 31 次），独立限流
 lib\realestate\      房地产：走月度库「房地产」+ 年度库房地产栏目，独立限流
-config\              指标配置（indicators.json 宏观、livelihood.json 民生、income.json 收支、deposit.json 存款、retail.json 社零、employment.json 就业、security.json 养老医保、industry.json 行业运行、region.json 区域经济、realestate.json 房地产）
-public\              页面本体（首页 + housing / macro / lpr / realestate / livelihood / livelihood\income / livelihood\deposit / livelihood\retail / livelihood\employment / livelihood\security / industry / region 十二个看板，含 ECharts）
+lib\forecast\        人口与住房推演：走年度库教育 / 人口 / 房地产栏目，队列模型（model.js）是纯函数，独立限流
+config\              指标配置（indicators.json 宏观、livelihood.json 民生、income.json 收支、deposit.json 存款、retail.json 社零、employment.json 就业、security.json 养老医保、industry.json 行业运行、region.json 区域经济、realestate.json 房地产、forecast.json 推演）
+public\              页面本体（首页 + housing / macro / lpr / realestate / livelihood / livelihood\income / livelihood\deposit / livelihood\retail / livelihood\employment / livelihood\security / industry / region / forecast 十三个看板，含 ECharts）
 data\                房价数据集（189 个月）
 probe.js             指标编码探测工具（宏观 / 社零 / 就业 / 行业运行月度库、民生 / 收支 / 农民工 / 养老医保年度库，一般用不到；分省 GDP 库请直接用 lib\region\source.js 探测）
 docs\                截图
@@ -98,6 +101,10 @@ LPR ：中国货币网（www.chinamoney.com.cn，全国银行间同业拆借中�
       （新建商品房销售面积 / 销售额与住宅 / 办公楼 / 商业分项、开发投资、施工与新开工、到位资金；
       均为本年累计口径，1 月并入 1—2 月；成交均价、单月值与营业利润率为计算值；
       土地购置面积与土地成交价款 2022 年后停发，本包不展示）
+推演：国家统计局「国家数据」年度库「教育」「人口」「房地产」（在校生 / 招生 / 毕业生数、出生率、年末总人口、
+      商品房销售面积与平均销售价格）
+      （历史段是官方发布值；2026 年及以后的数字都是本地按队列法做的情景推演，不是官方预测；
+       出生人口由出生率×年平均人口还原，购房主力人口、销售面积、外推均价均为计算值）
 
 注：房价里的「指数」反映的是价格变动的相对幅度，不是房屋成交均价。
-    十二个看板均仅供数据观察，不构成任何投资建议。
+    十三个看板均仅供数据观察，不构成任何投资建议；推演模块的未来值是模型输出，尤其不能当成预测结论。

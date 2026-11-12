@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>中国经济统计数据看板</title>
-    <meta name="description" content="国家统计局、中国人民银行与中国货币网数据的本地可视化看板：70 个大中城市房价指数、月度宏观经济指标、房贷利率 LPR、房地产开发与销售（新房销售 / 开发投资 / 到位资金）、人口与婚育（人口结构 / 结婚离婚 / 出生率）、居民人均收入与支出、居民存款与人均存款、社会消费品零售、就业形势、养老医保、工业行业运行、区域经济（分省 GDP）" />
+    <meta name="description" content="国家统计局、中国人民银行与中国货币网数据的本地可视化看板：70 个大中城市房价指数、月度宏观经济指标、房贷利率 LPR、房地产开发与销售（新房销售 / 开发投资 / 到位资金）、人口与婚育（人口结构 / 结婚离婚 / 出生率）、居民人均收入与支出、居民存款与人均存款、社会消费品零售、就业形势、养老医保、工业行业运行、区域经济（分省 GDP）、人口与住房推演（学龄人口与楼市未来 30 年情景）" />
     <link rel="icon" href="data:," />
     <link rel="stylesheet" href="home.css" />
   </head>
@@ -22,9 +22,9 @@
             </div>
 
             <div class="hero-tags">
-              <span class="hero-tag"><b data-stat="total">12</b> 个看板</span>
+              <span class="hero-tag"><b data-stat="total">13</b> 个看板</span>
               <span class="hero-tag"><b data-stat="monthly">8</b> 个月度</span>
-              <span class="hero-tag"><b data-stat="yearly">4</b> 个年度</span>
+              <span class="hero-tag"><b data-stat="yearly">5</b> 个年度</span>
             </div>
           </div>
 
@@ -238,6 +238,30 @@
           </div>
         </section>
 
+        <section class="home-group">
+          <div class="group-head">
+            <h2>推演</h2>
+            <span class="group-note">用官方历史值按队列法推未来 30 年</span>
+            <span class="group-count" data-count>1 个看板</span>
+          </div>
+          <div class="modules modules--duo">
+            <a class="module" href="forecast/" data-health="forecast" data-freq="年度"
+              data-keywords="预测 推演 未来 人口 学龄 小学 初中 高中 高中 大学 本专科 在校生 招生 出生人口 购房主力 销售面积 成交面积 房价 情景 回测">
+              <div class="module-top">
+                <span class="module-mark">演</span>
+                <div class="module-meta">
+                  <span class="chip chip--freq">年度</span>
+                  <span class="chip">2000 年起</span>
+                  <span class="chip">情景推演</span>
+                </div>
+              </div>
+              <h3>人口与住房推演</h3>
+              <p>用出生队列推算未来 30 年的小学 / 初中 / 普高 / 本专科在校生与招生规模、25—44 岁购房主力人口、新建商品房销售面积与成交均价；低 / 基准 / 高三情景 + 2020—2025 年回测，历史段一律官方值，推演段全部标「本页推演」。</p>
+              <span class="module-go">进入推演看板<span class="arrow">→</span></span>
+            </a>
+          </div>
+        </section>
+
         <p class="search-empty" id="search-empty" hidden>没有匹配的看板，换个关键词试试。</p>
 
         <details class="home-note">
@@ -245,7 +269,7 @@
           <div class="home-note-body">
             <p>
               页面上的按钮只在本机运行，不会把数据上传到任何地方。房价数据随项目分发；
-              宏观经济、LPR、房地产、民生、收支、存款、社零、就业、养老医保、行业运行与分省 GDP 数据首次打开时会拉全历史并存在本地（便携包已带上打包时的历史数据，只需补最新几期），
+              宏观经济、LPR、房地产、民生、收支、存款、社零、就业、养老医保、行业运行、分省 GDP 与推演数据首次打开时会拉全历史并存在本地（便携包已带上打包时的历史数据，只需补最新几期），
               之后每次打开只核对是否已发布新一期：有新的就补进去，没发布就直接读缓存。分省 GDP 首次打开需逐省拉取（约 40 秒），其余看板首次打开后即为秒开。
             </p>
             <p class="muted">
@@ -257,7 +281,7 @@
       </main>
 
       <footer class="home-foot">
-        <p>中国经济统计数据看板 · 70 城房价 / 宏观经济 / 房贷利率 LPR / 房地产开发与销售 / 人口与婚育 / 人均收入与支出 / 居民存款 / 社会消费品零售 / 就业形势 / 养老医保 / 工业行业运行 / 区域经济 · 仅供数据观察，不构成任何投资建议</p>
+        <p>中国经济统计数据看板 · 70 城房价 / 宏观经济 / 房贷利率 LPR / 房地产开发与销售 / 人口与婚育 / 人均收入与支出 / 居民存款 / 社会消费品零售 / 就业形势 / 养老医保 / 工业行业运行 / 区域经济 / 人口与住房推演 · 仅供数据观察，不构成任何投资建议（推演模块为模型推算，不是官方预测）</p>
       </footer>
     </div>
 
