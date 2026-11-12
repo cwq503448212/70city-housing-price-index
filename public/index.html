@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>中国经济统计数据看板</title>
-    <meta name="description" content="国家统计局、中国人民银行与中国货币网数据的本地可视化看板：70 个大中城市房价指数、月度宏观经济指标、房贷利率 LPR、人口与婚育（人口结构 / 结婚离婚 / 出生率）、居民人均收入与支出、居民存款与人均存款、社会消费品零售、就业形势、养老医保、工业行业运行、区域经济（分省 GDP）" />
+    <meta name="description" content="国家统计局、中国人民银行与中国货币网数据的本地可视化看板：70 个大中城市房价指数、月度宏观经济指标、房贷利率 LPR、房地产开发与销售（新房销售 / 开发投资 / 到位资金）、人口与婚育（人口结构 / 结婚离婚 / 出生率）、居民人均收入与支出、居民存款与人均存款、社会消费品零售、就业形势、养老医保、工业行业运行、区域经济（分省 GDP）" />
     <link rel="icon" href="data:," />
     <link rel="stylesheet" href="home.css" />
   </head>
@@ -22,8 +22,8 @@
             </div>
 
             <div class="hero-tags">
-              <span class="hero-tag"><b data-stat="total">11</b> 个看板</span>
-              <span class="hero-tag"><b data-stat="monthly">7</b> 个月度</span>
+              <span class="hero-tag"><b data-stat="total">12</b> 个看板</span>
+              <span class="hero-tag"><b data-stat="monthly">8</b> 个月度</span>
               <span class="hero-tag"><b data-stat="yearly">4</b> 个年度</span>
             </div>
           </div>
@@ -46,7 +46,7 @@
           <div class="group-head">
             <h2>宏观与楼市</h2>
             <span class="group-note">价格、货币与利率的月度主线</span>
-            <span class="group-count" data-count>3 个看板</span>
+            <span class="group-count" data-count>4 个看板</span>
           </div>
           <div class="modules">
             <a class="module" href="housing/" data-health="housing" data-freq="月度"
@@ -89,6 +89,21 @@
               <h3>房贷利率 LPR</h3>
               <p>贷款市场报价利率（1 年期 / 5 年期以上）：走势阶梯线、每次调整幅度、期限利差与明细。</p>
               <span class="module-go">进入 LPR 看板<span class="arrow">→</span></span>
+            </a>
+
+            <a class="module" href="realestate/" data-health="realestate" data-freq="月度"
+              data-keywords="房地产 新房 商品房 销售面积 销售额 开发投资 新开工 竣工 到位资金 成交均价 住宅 办公楼 商业 楼市">
+              <div class="module-top">
+                <span class="module-mark">房</span>
+                <div class="module-meta">
+                  <span class="chip chip--freq">月度</span>
+                  <span class="chip">2000 年起</span>
+                  <span class="chip">年度对照</span>
+                </div>
+              </div>
+              <h3>房地产开发与销售</h3>
+              <p>新建商品房销售面积 / 销售额（含住宅、办公楼、商业分项）、开发投资、施工与新开工、到位资金，以及本页计算的成交均价；年度对照官方均价、资金六项构成与开发商营收利润、资产负债率。</p>
+              <span class="module-go">进入房地产看板<span class="arrow">→</span></span>
             </a>
           </div>
         </section>
@@ -230,7 +245,7 @@
           <div class="home-note-body">
             <p>
               页面上的按钮只在本机运行，不会把数据上传到任何地方。房价数据随项目分发；
-              宏观经济、LPR、民生、收支、存款、社零、就业、养老医保、行业运行与分省 GDP 数据首次打开时会拉全历史并存在本地（便携包已带上打包时的历史数据，只需补最新几期），
+              宏观经济、LPR、房地产、民生、收支、存款、社零、就业、养老医保、行业运行与分省 GDP 数据首次打开时会拉全历史并存在本地（便携包已带上打包时的历史数据，只需补最新几期），
               之后每次打开只核对是否已发布新一期：有新的就补进去，没发布就直接读缓存。分省 GDP 首次打开需逐省拉取（约 40 秒），其余看板首次打开后即为秒开。
             </p>
             <p class="muted">
@@ -242,7 +257,7 @@
       </main>
 
       <footer class="home-foot">
-        <p>中国经济统计数据看板 · 70 城房价 / 宏观经济 / 房贷利率 LPR / 人口与婚育 / 人均收入与支出 / 居民存款 / 社会消费品零售 / 就业形势 / 养老医保 / 工业行业运行 / 区域经济 · 仅供数据观察，不构成任何投资建议</p>
+        <p>中国经济统计数据看板 · 70 城房价 / 宏观经济 / 房贷利率 LPR / 房地产开发与销售 / 人口与婚育 / 人均收入与支出 / 居民存款 / 社会消费品零售 / 就业形势 / 养老医保 / 工业行业运行 / 区域经济 · 仅供数据观察，不构成任何投资建议</p>
       </footer>
     </div>
 

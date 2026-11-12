@@ -1,6 +1,6 @@
 # 中国经济统计数据看板
 
-一个零依赖的本地看板：**十一个模块、一个进程、一份本地缓存**。数据全部由服务端代取，首次打开一次拉全历史，之后每次打开只核对应发布期别——有新一期就补进去，没发布就直接读缓存。
+一个零依赖的本地看板：**十二个模块、一个进程、一份本地缓存**。数据全部由服务端代取，首次打开一次拉全历史，之后每次打开只核对应发布期别——有新一期就补进去，没发布就直接读缓存。
 
 | 模块 | 地址 | 内容 | 频次 · 起点 |
 | --- | --- | --- | --- |
@@ -15,8 +15,9 @@
 | **养老医保** | `/livelihood/security/` | 五险基金收支结余、职工 / 城乡居民养老、基本医保、失业工伤生育、人均养老金、可支付月数、参保率 | 年度 · 1990 |
 | **工业行业运行** | `/industry/` | 41 个大类行业增加值热力图与排行、营收 / 利润累计同比四象限、制造业与非制造业 PMI 分项 | 月度 · 2018-01 |
 | **区域经济（分省 GDP）** | `/region/` | 31 个省级行政区 GDP 排行、单省走势（名义值 + 官方实际增速）、三次产业构成、人均 GDP 对比 | 年度 · 1992 |
+| **房地产开发与销售** | `/realestate/` | 新建商品房销售面积 / 销售额（含住宅、办公楼、商业分项）、开发投资、施工与新开工、竣工、到位资金、成交均价（本页计算）；年度对照官方平均销售价格、资金六项构成、房企营收利润与资产负债率 | 月度 2000-01 + 年度 2000 |
 
-打开根地址 `/` 是模块选择页，卡片上直接标出每个看板的数据新鲜度（最新期别 / 落后期数），点进去分别进入十一个子页面；每个子页面**左上角**的「← 返回模块选择」可以切回来，右侧留给时间范围、刷新与状态。
+打开根地址 `/` 是模块选择页，卡片上直接标出每个看板的数据新鲜度（最新期别 / 落后期数），点进去分别进入十二个子页面；每个子页面**左上角**的「← 返回模块选择」可以切回来，右侧留给时间范围、刷新与状态。
 
 ![模块选择入口](docs/screenshot-home.png)
 
@@ -30,7 +31,7 @@ node server.js
 
 然后打开 <http://127.0.0.1:5173>。
 
-- 需要 Node >= 20，**不需要 `npm install`**（ECharts 已内置在 `public/vendor/`，十一个看板共用一份）。
+- 需要 Node >= 20，**不需要 `npm install`**（ECharts 已内置在 `public/vendor/`，十二个看板共用一份）。
 - 必须经这个本地服务访问：直接双击 `public/**/index.html` 不行——`file://` 下 `fetch('/api/...')` 会被浏览器拦下；统计局 / 央行站点还有 WAF，浏览器直连会 403，数据只能由服务端代取。
 - 换端口：`$env:PORT=8080; node server.js`；用 `start.bat` 时可以先 `set DASH_PORT=5180`（旧的 `NBS_PORT` 仍兼容）。
 - **改完后端要重启**：`start.bat` 发现端口已在监听就只打开浏览器、不再启动 node，而 Node 没有热重载。改过 `server.js` 或 `lib/` 后不重启，新接口会一直返回 404，页面显示「接口返回失败」；判据是进程启动时间早于文件修改时间。
@@ -54,21 +55,22 @@ lib/livelihood/employment/   就业：独立取数（月度库 + 年度库双频
 lib/livelihood/security/     养老医保：取数复用父目录 source，限流复用父目录 queue
 lib/industry/                行业运行：独立取数（国家数据月度库 · 工业 / PMI），限流在本模块内
 lib/region/                  区域经济：独立取数（国家数据分省年度库 · 逐省串行），限流在本模块内
+lib/realestate/              房地产：独立取数（国家数据月度库·房地产 + 年度库·房地产），限流在本模块内
 
-config/*.json                各模块的唯一事实来源：indicators / livelihood / income / deposit / retail / employment / security / industry / region
-public/                      index.html + home.css（入口）；housing、macro、lpr、industry、region、livelihood/{income,deposit,retail,employment,security}；shared.css（十一页共用的 token / 顶栏 / 控件）；vendor/echarts.min.js
+config/*.json                各模块的唯一事实来源：indicators / livelihood / income / deposit / retail / employment / security / industry / region / realestate
+public/                      index.html + home.css（入口）；housing、macro、lpr、realestate、industry、region、livelihood/{income,deposit,retail,employment,security}；shared.css（十二页共用的 token / 顶栏 / 控件）；vendor/echarts.min.js
 data/periods.json            房价数据集（189 个月，随仓库分发）
 docs/                        页面截图
 packaging/                   便携包的 build.ps1 / start.bat / 使用说明.txt
-.cache/                      运行时缓存（macro / lpr / livelihood* / industry / region / raw），可随时删除
+.cache/                      运行时缓存（macro / lpr / livelihood* / industry / region / realestate / raw），可随时删除
 .temp/                       临时脚本与截图（已被 git 忽略，可随时删除）
 ```
 
 模块之间**不互相 require**：每个模块只依赖自己的 `lib/<module>/`，共用能力下沉到模块内或新建 `lib/shared/`；同一模块的子页面可以复用父目录的公共件（如 `lib/livelihood/{income,deposit,retail,employment,security}` 复用父目录的 `queue`）。HTTP 只由 `server.js` 一个进程分发，新增的子前缀路由必须排在更宽前缀（如 `/api/livelihood/`）的分支之前。
 
-前端同理：`public/shared.css` 是十一页唯一的一份设计 token、页面基底、顶栏（返回 / 标题 / 筛选 / 状态胶囊）与表单控件样式，各页 `styles.css` 只管自己的图表和专属布局，**不要再把顶栏样式拷回页面文件**；新增模块时先在 `index.html` 里引 `../shared.css`（子目录页 `../../shared.css`）再引本页 `styles.css`。
+前端同理：`public/shared.css` 是十二页唯一的一份设计 token、页面基底、顶栏（返回 / 标题 / 筛选 / 状态胶囊）与表单控件样式，各页 `styles.css` 只管自己的图表和专属布局，**不要再把顶栏样式拷回页面文件**；新增模块时先在 `index.html` 里引 `../shared.css`（子目录页 `../../shared.css`）再引本页 `styles.css`。
 
-## 十一个看板共用的机制
+## 十二个看板共用的机制
 
 - **服务端代取**：前端只请求 `/api/...`，不直连任何上游域名。
 - **缓存优先**：有本地数据就用本地数据，只在「缺数据 / 过了发布日 / 用户点刷新」时回源。缓存都是可删的 JSON，删掉只会让下次重新拉全。
@@ -88,7 +90,7 @@ packaging/                   便携包的 build.ps1 / start.bat / 使用说明.t
 
 | 前缀 | 查询参数 |
 | --- | --- |
-| `/api/health` | 健康检查，十一个看板共用（含各模块缓存概况与 `fresh` 新鲜度摘要） |
+| `/api/health` | 健康检查，十二个看板共用（含各模块缓存概况与 `fresh` 新鲜度摘要） |
 | `/api/nbs70` | `months=1..200`（200 = 全部历史）、`force=1` |
 | `/api/macro/` | `range=12\|36\|60\|120\|all`、`from=YYYY-MM&to=YYYY-MM`、`force=1` |
 | `/api/lpr/` | 只有 `overview` 与 `health`，`force=1` |
@@ -100,6 +102,7 @@ packaging/                   便携包的 build.ps1 / start.bat / 使用说明.t
 | `/api/livelihood/security` | `range=10\|20\|all`、`from=YYYY&to=YYYY`、`force=1` |
 | `/api/industry/` | `range=2\|5\|all`、`from=YYYY-MM&to=YYYY-MM`、`force=1`；指标 id 带点（如 `coal.profit`） |
 | `/api/region/` | `range=10\|20\|all`、`from=YYYY&to=YYYY`、`provinces=11,44,广东`、`force=1`；`/rank` 支持 `metric=gdp&year=2025` |
+| `/api/realestate/` | `range=2\|5\|all`（只作用于月度指标）、`from=YYYY-MM&to=YYYY-MM`、`force=1` |
 
 `from` / `to` 优先于 `range`。各模块的指标 id 全部写在对应的 `config/*.json` 里，可直接核对。
 
@@ -312,6 +315,26 @@ POST https://www.chinamoney.com.cn/ags/ms/cm-u-bk-currency/LprHis?lang=CN&strSta
 
 ---
 
+# 模块十二：房地产开发与销售
+
+**国家统计局月度库「房地产」12 个栏目 + 年度库「固定资产投资和房地产」10 个栏目，共 72 个指标（其中 5 个是本页计算值）**。月度自 **2000-01** 起、年度自 **2000** 年至今；首次打开 22 次请求、实测约 25 秒拉全（热启动 75 ms），之后按各自应发布期别核对。
+
+- **只有新房开发与销售，不掺土地财政**：库里的「房地产」目录能拿到的是**新建商品房**销售、开发投资、施工与新开工、到位资金；土地购置面积与土地成交价款自 2022 年后停止发布、国家数据库已无序列，国有土地使用权出让收入属财政部口径，**都不在本页**。商品房待售面积、二手房网签面积只出现在统计公报正文、未进国家数据库，也不展示、不拿估算值顶替。
+- **累计口径，一年 11 个期别**：销售面积 / 销售额、开发投资、到位资金、施工与新开工面积全部是**本年累计**，1 月并入 1—2 月一起发布，所以横轴每年只有 11 个点；2 月那个点就是「1—2 月累计」，页面写作「X 年 1—2 月」。
+- **5 条计算值，一律标注「本页计算」**：`avg_price`（销售额 ÷ 销售面积 × 10000 → 元/㎡）、`sales_area_month` / `sales_amount_month`（本月累计 − 上月累计，`-02` 直接取累计）、`ann_margin`（营业利润 ÷ 营业收入 × 100）。计算量没有自己的 catalog 与 `until`，缺任一项输入即 `null`，画到哪一期由输入决定；`lib/realestate/config.js` 的 `validate()` 会拦住给计算量写 `catalog` 的写法。
+- **月度均价不是官方价格**：统计局月度库不发布月成交均价，这条线是销售额 ÷ 销售面积折算的结果；年度图里它和年度库的**官方「平均销售价格」并列画**，两条都标清楚来源，不相加减、不合成。
+- **分用途之和不等于总量**：住宅 + 办公楼 + 商业营业用房小于「新建商品房」总量（还含车位、其他用途），页面只画已有分项、**不补差额、不估算**。
+- **到位资金的月度与年度不是一套口径**：月度库只发布小计、国内贷款、利用外资、自筹资金四项；定金及预收款、个人按揭贷款、其他三项只在年度库，所以月度资金图只画四项、年度构成图才画全六项，同一张图不混两套口径。
+- **财务类滞后一年**：房企营业收入 / 营业利润 / 税金及附加 / 资产负债率随《中国统计年鉴》入库，最新只到 **2024 年**，而销售类已到 2025 年。`config/realestate.json` 年度栏目统一 `releaseMonth: 10`，栏目级 `lagYears: 1`，外加**指标级 `lagYears` 覆盖**（`ann_done_rate` / `ann_done_value` / `ann_fund_other` 比同栏目其它指标再晚一年），否则整页会永远显示「数据滞后」。
+- **发布日判定**：月度 `应发布月 = 今天 ≥ 15 日 ? 上月 : 上上月`，若落到 `-01` 再退到上年 12 月（1 月没有独立期别）；年度 `releaseMonth: 10`（月份 ≥ 10 取上一年，否则取前两年）再减 `lagYears`。
+- **回源核对逐指标比，不取栏目最大值**：同一栏目里财务类指标会晚一年（指标级 `lagYears`），只看「栏目最新期别」就会被先更新的那几条掩盖，落后的一条永远补不上；整页「落后几期」也按指标算，否则一个更新快的栏目会让其它栏目不再核对。上游返回结构不对（没有 `data` 数组）按失败处理：回退缓存、该栏目记错误并标 `stale`，不写空缓存、不清错误记录。
+- **图表**：KPI 6 张（累计销售面积 / 金额、单月销售面积、成交均价、开发投资、年度销售额）+ 月度 7 张（销售双轴、单月销售、分用途构成、开发投资与增速、施工与新开工竣工、到位资金构成、成交均价）+ 年度 4 张（销售与官方均价、开工竣工与投资、资金来源构成、房企经营），再加月度 / 年度两张明细表。年度序列**不受时间范围影响**，固定画全历史。
+- **缓存**：`.cache/realestate/catalogs/<栏目 key>.json`（22 个）+ `_meta.json`，全量 23 个文件约 0.16 MB、9400+ 个数据点，目录可用 `REALESTATE_DATA_DIR` 覆盖。限流在本模块内：1200 ms 串行间隔 + 同一栏目 60 秒冷却 + 两次回源至少隔 10 分钟 + 连续 3 个栏目失败熔断。
+
+![房地产开发与销售看板](docs/screenshot-realestate.png)
+
+---
+
 ## 打包给别人（对方不装 Node）
 
 把 `node.exe` 和项目一起打进去，对方解压双击 `start.bat` 即可，**不需要安装任何东西**。出包有两种方式，产物一致：
@@ -323,11 +346,11 @@ POST https://www.chinamoney.com.cn/ags/ms/cm-u-bk-currency/LprHis?lang=CN&strSta
 
 ```
 release/中国经济统计数据看板/                                    解压后双击 start.bat
-release/china-economic-stats-dashboard-v3.10.0-win10-win11.zip   对外发送
+release/china-economic-stats-dashboard-v4.1.0-win10-win11.zip   对外发送
 ```
 
 - 包内是内置的官方签名 `node.exe`（v20.12.2，故**只支持 Windows 10 / 11**）、`server.js`、`lib/`、`config/`、`public/`、`data/periods.json`、`probe.js`、`docs/`、`README.md`、`start.bat`、`使用说明.txt`，以及各模块的缓存；不含 `node_modules/`、`AGENTS.md`。功能与源码版完全一致。
-- **缓存随包带、但剔除 `_meta.json`**：宏观 / LPR / 民生 / 收支 / 存款 / 社零 / 就业 / 养老医保 / 行业运行 / 区域经济的历史缓存都进包（合计不到 3 MB），对方首次打开只补最近几期、几秒出图；而 `_meta.json` 是本机回源时间戳（10 分钟冷却），进包会抑制对方的首次核对。
+- **缓存随包带、但剔除 `_meta.json`**：宏观 / LPR / 民生 / 收支 / 存款 / 社零 / 就业 / 养老医保 / 行业运行 / 区域经济 / 房地产开发与销售的历史缓存都进包（合计不到 4 MB），对方首次打开只补最近几期、几秒出图；而 `_meta.json` 是本机回源时间戳（10 分钟冷却），进包会抑制对方的首次核对。
 - 包放很久才打开也没问题：缺的期别按「应发布期别」一次性补齐，不会从头重拉；只有统计局改了栏目或接口才需要重新发版。
 - zip 名必须纯 ASCII（中文附件名会被 GitHub 静默丢弃），包内顶层目录仍是中文的 `中国经济统计数据看板`；换支持的 Windows 范围用 `build.bat win7-win11` 或 `build.ps1 -SysTag 'win7-win11'`；想换 node.exe 用 `set NODE_EXE=…` 或 `build.ps1 -NodeExe …`（脚本带版本守卫）。
 - 不用 pkg 打单文件 exe：体积差不多，但自解压 exe 常被杀软误报，且包内 `data/` 会变成只读虚拟文件系统，「刷新数据」写不进去。

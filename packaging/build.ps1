@@ -47,7 +47,7 @@ Copy-Item $NodeExe (Join-Path $pkg 'node.exe')
 foreach ($f in @('server.js', 'package.json', 'probe.js', 'README.md')) {
   Copy-Item (Join-Path $root $f) $pkg
 }
-# 十一个看板的代码、配置、页面、固化数据集与截图（docs 只被 README 引用）
+# 十二个看板的代码、配置、页面、固化数据集与截图（docs 只被 README 引用）
 foreach ($d in @('lib', 'config', 'public', 'data', 'docs')) {
   Copy-Item (Join-Path $root $d) (Join-Path $pkg $d) -Recurse
 }
@@ -193,6 +193,19 @@ if (Test-Path $regionSrc) {
   Write-Host ('      + 区域经济缓存：' + $regionFiles.Count + ' 个省文件，' + $regionKB + ' KB')
 } else {
   Write-Host '      ! 未找到 .cache\region：包里不带分省 GDP 缓存，对方首次打开会逐省拉 31 次（约 40 秒）'
+}
+# 房地产栏目缓存：22 个栏目文件（月 12 + 年 10，约 9400 个数据点，约 0.16 MB），
+# 带上后对方首次打开不用重走 22 次上游；_meta.json 同样剔掉（它带着本机的回源冷却时间戳）
+$realestateSrc = Join-Path $root '.cache\realestate'
+if (Test-Path $realestateSrc) {
+  New-Item -ItemType Directory -Path (Join-Path $pkg '.cache') -Force | Out-Null
+  Copy-Item $realestateSrc (Join-Path $pkg '.cache') -Recurse
+  Get-ChildItem (Join-Path $pkg '.cache\realestate') -Recurse -File -Filter '_meta.json' | Remove-Item -Force
+  $reCats = Get-ChildItem (Join-Path $pkg '.cache\realestate\catalogs') -File -Filter '*.json'
+  $reKB = '{0:N1}' -f (($reCats | Measure-Object Length -Sum).Sum / 1KB)
+  Write-Host ('      + 房地产缓存：' + $reCats.Count + ' 个栏目文件，' + $reKB + ' KB')
+} else {
+  Write-Host '      ! 未找到 .cache\realestate：包里不带房地产缓存，对方首次打开会现场拉全（22 个请求，约 25 秒）'
 }
 Write-Host '[2/4] 已拷贝项目文件'
 

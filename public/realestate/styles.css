@@ -1,0 +1,316 @@
+/* 中国房地产开发与销售看板 —— 视觉变量与其它模块一致 */
+
+/* ---------- 布局 ---------- */
+
+main {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 18px 24px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* 状态胶囊：本页要把「月度 + 年度」两条线都报出来，文案比其它看板长，
+   允许换行；否则共享的 white-space: nowrap 会把顶栏撑出横向滚动条 */
+.topbar .status {
+  white-space: normal;
+  max-width: 100%;
+}
+
+.kpi-row {
+  display: grid;
+  /* 6 张 KPI：1280 宽的屏也要能排成一行，再窄就自动折行 */
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.card-wide {
+  grid-column: 1 / -1;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px 18px 12px;
+}
+
+.card-head {
+  margin-bottom: 6px;
+}
+
+.card-head h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.card-head h2 .tag {
+  margin-left: 6px;
+  vertical-align: 1px;
+}
+
+.card-sub {
+  margin: 3px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.card-sub strong {
+  color: var(--ink-2);
+  font-weight: 600;
+}
+
+/* ---------- KPI 卡片 ---------- */
+
+.kpi {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 112px;
+}
+
+.kpi-label {
+  font-size: 12px;
+  color: var(--muted);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-height: 20px;
+}
+
+.kpi-label .tag {
+  font-size: 10px;
+  padding: 0 6px;
+  line-height: 1.6;
+}
+
+.kpi-value {
+  font-size: 26px;
+  font-weight: 650;
+  letter-spacing: -0.4px;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+
+.kpi-value small {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+  margin-left: 2px;
+}
+
+.kpi-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 10px;
+  margin-top: auto;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.kpi-delta {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.kpi-delta.up {
+  color: var(--up);
+}
+
+.kpi-delta.down {
+  color: var(--down);
+}
+
+.kpi-delta.flat {
+  color: var(--flat);
+}
+
+/* ---------- 图表 ---------- */
+
+.chart {
+  width: 100%;
+  height: 300px;
+}
+
+.card-wide .chart {
+  height: 340px;
+}
+
+.chart-lg {
+  height: 360px;
+}
+
+/* ---------- 明细表 ---------- */
+
+.table-wrap {
+  max-height: 580px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+th {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  background: #fafbfc;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  vertical-align: bottom;
+}
+
+th small {
+  display: block;
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--flat);
+  letter-spacing: 0;
+}
+
+tbody tr:hover {
+  background: #fafbfc;
+}
+
+tr.group-row td {
+  background: #f7f8fa;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-2);
+  letter-spacing: 0.2px;
+}
+
+tr.group-row:hover {
+  background: #f7f8fa;
+}
+
+.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.tag {
+  display: inline-block;
+  font-size: 11px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: #f0f2f5;
+  color: var(--ink-2);
+}
+
+.tag.ok {
+  background: #e7f6ee;
+  color: #14603a;
+}
+
+.tag.warn {
+  background: #fff3e0;
+  color: #8a4b00;
+}
+
+.tag.info {
+  background: #eef2ff;
+  color: #3730a3;
+}
+
+.up {
+  color: var(--up);
+}
+
+.down {
+  color: var(--down);
+}
+
+.flat {
+  color: var(--flat);
+}
+
+/* ---------- 页脚 ---------- */
+
+.foot {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.75;
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+
+.foot p {
+  margin: 0 0 6px;
+}
+
+.foot strong {
+  color: var(--ink-2);
+  font-weight: 600;
+}
+
+.foot code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  background: #f0f2f5;
+  padding: 0 4px;
+  border-radius: 4px;
+}
+
+.foot-meta {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+}
+
+/* ---------- 响应式 ---------- */
+
+@media (max-width: 1080px) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 720px) {
+  main {
+    padding: 14px 14px 32px;
+  }
+
+  .chart {
+    height: 260px;
+  }
+
+  .kpi-value {
+    font-size: 22px;
+  }
+
+  input[type="month"] {
+    width: 132px;
+  }
+}

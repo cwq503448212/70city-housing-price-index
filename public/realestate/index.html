@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>中国房地产开发与销售看板</title>
+    <link rel="stylesheet" href="../shared.css" />
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-main">
+    <a class="back-link" href="../">← 返回模块选择</a>
+    <div class="brand">
+      <h1>中国房地产开发与销售看板</h1>
+      <p class="brand-sub">数据来源：国家统计局 · 国家数据（月度库 · 房地产 12 个栏目；年度库 · 固定资产投资和房地产 10 个栏目）　历史一次拉全，按月 / 按年核对</p>
+    </div>
+
+    <div class="controls">
+      <label class="ctrl">
+        <span class="ctrl-label">时间范围</span>
+        <select id="range">
+          <option value="2">近 2 年</option>
+          <option value="5" selected>近 5 年</option>
+          <option value="all">全部（2000 起）</option>
+          <option value="custom">自定义区间</option>
+        </select>
+      </label>
+
+      <div class="ctrl ctrl-custom" id="custom-box" hidden>
+        <label class="ctrl">
+          <span class="ctrl-label">起</span>
+          <input type="month" id="from" />
+        </label>
+        <label class="ctrl">
+          <span class="ctrl-label">止</span>
+          <input type="month" id="to" />
+        </label>
+      </div>
+
+      <button id="refresh" class="btn" type="button" title="跳过缓存，重新向统计局请求一次">刷新数据</button>
+      <span id="status" class="status">正在加载…</span>
+    </div>
+  </div>
+  <p class="range-hint" id="range-hint"></p>
+</header>
+
+<main>
+  <section class="kpi-row" id="kpi-row" aria-label="关键指标"></section>
+
+  <section class="grid">
+    <article class="card card-wide">
+      <header class="card-head">
+        <h2>新建商品房销售：面积与金额 <span class="tag info">月度累计</span></h2>
+        <p class="card-sub">
+          柱为销售面积（万平方米，左轴），线为销售额（亿元，右轴）。两者都是<strong>本年累计</strong>口径，
+          每年 1 月并入 1—2 月发布，所以一年只有 11 个期别；累计值一路上行，12 月点就是全年
+        </p>
+      </header>
+      <div class="chart chart-lg" id="chart-sales"></div>
+    </article>
+
+    <article class="card card-wide">
+      <header class="card-head">
+        <h2>单月销售面积 vs 累计同比 <span class="tag">单月为本页计算</span></h2>
+        <p class="card-sub">
+          柱为<strong>单月销售面积</strong>（万平方米，左轴，本页计算：本月累计 − 上月累计），虚线为统计局发布的
+          <strong>累计同比</strong>（%，右轴）。<strong>2 月点是 1—2 月合计数</strong>，天然比其它月份高一倍左右，
+          不能当成单月反弹；累计同比 0 为持平
+        </p>
+      </header>
+      <div class="chart" id="chart-month"></div>
+    </article>
+
+    <article class="card card-wide">
+      <header class="card-head">
+        <h2>分用途销售面积：住宅 / 办公楼 / 商业 <span class="tag info">月度累计</span></h2>
+        <p class="card-sub">
+          住宅画在左轴，办公楼与商业营业用房画在右轴（都是万平方米，但<strong>两轴刻度不同</strong>，
+          只比走势、不比高低）；<strong>住宅占商品房销售面积的比重</strong>在提示框里给出（本页计算：住宅 ÷ 全部用途）。
+          三类之和<strong>不等于</strong>总销售面积——商品房还含车位、厂房等其他用途，本页不补差额
+        </p>
+      </header>
+      <div class="chart" id="chart-mix"></div>
+    </article>
+
+    <article class="card card-wide">
+      <header class="card-head">
+        <h2>房地产开发投资：总额、住宅与同比 <span class="tag info">月度累计</span></h2>
+        <p class="card-sub">
+          柱为开发投资总额（亿元，左轴），实线为其中住宅投资，虚线为统计局发布的<strong>累计同比</strong>（%，右轴）。
+          投资额含土地购置费，与后面的「房屋新开工面积」不同步是正常的——钱可以先花在买地上
+        </p>
+      </header>
+      <div class="chart" id="chart-invest"></div>
+    </article>
+
+    <article class="card card-wide">
+      <header class="card-head">
+        <h2>施工 / 新开工 / 竣工面积 <span class="tag info">月度累计</span></h2>
+        <p class="card-sub">
+          都是本年累计、单位万平方米。<strong>施工面积画在左轴</strong>（含上年结转，是存量在建规模），
+          <strong>新开工与竣工画在右轴</strong>（两轴刻度不同，只比走势不比高低）；
+          新开工领先、竣工滞后，两者的相对位置决定未来一两年的供应节奏。
+          本图不画同比，施工 / 新开工 / 竣工的累计值另见下方月度明细表
+        </p>
+      </header>
+      <div class="chart" id="chart-build"></div>
+    </article>
+
+    <article class="card card-wide">
+      <header class="card-head">
+        <h2>到位资金：小计与三项分项 <span class="tag info">月度累计</span></h2>
+        <p class="card-sub">
+          亿元，左轴。<strong>月度库只拆到国内贷款、利用外资、自筹资金三项</strong>，
+          定金及预收款与个人按揭贷款只在年度库发布（见下方年度图），所以三项之和小于小计，本页不补差额
+        </p>
+      </header>
+      <div class="chart" id="chart-fund"></div>
+    </article>
+
+    <article class="card card-wide">
+      <header class="card-head">
+        <h2>成交均价 <span class="tag">本页计算</span></h2>
+        <p class="card-sub">
+          元/平方米，左轴，两条都是本页计算值：<strong>销售额 ÷ 销售面积 × 10000</strong>。
+          全部用途均价含办公楼与商业，住宅均价单列。这是<strong>成交结构性均价</strong>，
+          与「70 个大中城市新建商品住宅销售价格指数」的口径、方法都不同，不能互相替代
+        </p>
+      </header>
+      <div class="chart" id="chart-price"></div>
+    </article>
+
+    <article class="card card-wide">
+      <header class="card-head">
+        <h2>年度销售：面积与金额 <span class="tag info">年度</span></h2>
+        <p class="card-sub">
+          柱为全年销售面积（万平方米，左轴），线为全年销售额（亿元，右轴）。年度序列固定画全历史，
+          不受上方时间范围影响；年度值应与当年 12 月的累计值一致
+        </p>
+      </header>
+      <div class="chart" id="chart-annual-sales"></div>
+    </article>
+
+    <article class="card card-wide">
+      <header class="card-head">
+        <h2>年度投资与开竣工 <span class="tag info">年度</span></h2>
+        <p class="card-sub">
+          柱为全年开发投资（亿元，右轴），两条线为新开工 / 竣工面积（万平方米，左轴），
+          都是当年全年值。注意左右轴单位不同，只用来对照节奏，不做比例解读；
+          年末施工面积量级大一个数量级，放在下方年度明细表
+        </p>
+      </header>
+      <div class="chart" id="chart-annual-build"></div>
+    </article>
+
+    <article class="card card-wide">
+      <header class="card-head">
+        <h2>年度到位资金构成 <span class="tag info">年度 · 各项之和 = 小计</span></h2>
+        <p class="card-sub">
+          亿元，左轴。堆叠柱为六项资金来源，虚线上为小计。年度口径才有
+          <strong>定金及预收款</strong>与<strong>个人按揭贷款</strong>这两项——它们是购房者直接付进来的钱，
+          比「国内贷款」更能反映销售端回款
+        </p>
+      </header>
+      <div class="chart" id="chart-annual-fund"></div>
+    </article>
+
+    <article class="card card-wide">
+      <header class="card-head">
+        <h2>开发商经营：营收、利润与负债 <span class="tag info">年度 · 滞后一年</span></h2>
+        <p class="card-sub">
+          柱为主营业务收入（亿元，左轴），实线为营业利润（亿元，左轴），两条虚线在右轴（%）：
+          营业利润率（<strong>本页计算</strong>：营业利润 ÷ 营业收入 × 100）与统计局发布的资产负债率。
+          财务数据比销售晚一年入库，最新只到上上年
+        </p>
+      </header>
+      <div class="chart" id="chart-annual-ops"></div>
+    </article>
+  </section>
+
+  <section class="card">
+    <header class="card-head">
+      <h2>月度明细</h2>
+      <p class="card-sub">
+        按年分组，年份倒序、同一年内月份升序；— 表示该期没有数据（尚未发布或上游缺项），不插值、不补 0。
+        所有数值都是<strong>本年累计</strong>，只有标注「计算」的三列是单月值 / 均价
+      </p>
+    </header>
+    <div class="table-wrap">
+      <table id="detail-month">
+        <thead>
+          <tr>
+            <th>月份</th>
+            <th class="num">销售面积<br /><small>万㎡ · 累计</small></th>
+            <th class="num">单月面积<br /><small>万㎡ · 计算</small></th>
+            <th class="num">面积同比<br /><small>% · 官方</small></th>
+            <th class="num">销售额<br /><small>亿元 · 累计</small></th>
+            <th class="num">单月金额<br /><small>亿元 · 计算</small></th>
+            <th class="num">金额同比<br /><small>% · 官方</small></th>
+            <th class="num">住宅面积<br /><small>万㎡</small></th>
+            <th class="num">住宅金额<br /><small>亿元</small></th>
+            <th class="num">住宅均价<br /><small>元/㎡ · 计算</small></th>
+            <th class="num">开发投资<br /><small>亿元</small></th>
+            <th class="num">投资同比<br /><small>%</small></th>
+            <th class="num">施工面积<br /><small>万㎡ · 累计</small></th>
+            <th class="num">新开工<br /><small>万㎡</small></th>
+            <th class="num">竣工<br /><small>万㎡</small></th>
+            <th class="num">到位资金<br /><small>亿元</small></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card">
+    <header class="card-head">
+      <h2>年度明细</h2>
+      <p class="card-sub">
+        年份倒序。销售 / 投资 / 面积 / 资金为当年全年值，最新到上一年；官方均价、竣工套数、经营与资产负债
+        <strong>滞后一年</strong>，所以同一行里这几列比销售列少一年。营业利润率为本页计算值，其余为发布值
+      </p>
+    </header>
+    <div class="table-wrap">
+      <table id="detail-year">
+        <thead>
+          <tr>
+            <th>年份</th>
+            <th class="num">销售面积<br /><small>万㎡</small></th>
+            <th class="num">销售额<br /><small>亿元</small></th>
+            <th class="num">官方均价<br /><small>元/㎡ · 发布值</small></th>
+            <th class="num">住宅面积<br /><small>万㎡</small></th>
+            <th class="num">住宅销售额<br /><small>亿元</small></th>
+            <th class="num">开发投资<br /><small>亿元</small></th>
+            <th class="num">新开工<br /><small>万㎡</small></th>
+            <th class="num">竣工<br /><small>万㎡</small></th>
+            <th class="num">年末施工<br /><small>万㎡</small></th>
+            <th class="num">到位资金<br /><small>亿元</small></th>
+            <th class="num">定金及预收款<br /><small>亿元</small></th>
+            <th class="num">个人按揭<br /><small>亿元</small></th>
+            <th class="num">营业利润<br /><small>亿元</small></th>
+            <th class="num">营业利润率<br /><small>% · 计算</small></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <p>
+      <strong>全部是累计口径，不是当月值：</strong>房地产开发投资、销售面积、销售额、新开工 / 施工 / 竣工面积、
+      到位资金都是「本年 1 月至本期」的累计数。累计值年年从头爬升，所以同比才有意义，绝对值的月度下降只是跨年重置。
+      每月 15 日左右统计局随「房地产市场基本情况」发布上月累计数。
+    </p>
+    <p>
+      <strong>一年只有 11 个期别：</strong>1 月与 2 月合并成「1—2 月」一起发布，<strong>没有单独的 1 月值</strong>。
+      本页的横轴保留了 1 月刻度但永远为空，2 月那一点就是 1—2 月合计数；单月值在 2 月也等于两月合计，
+      拆成两个月需要假设，本页不做这个假设。
+    </p>
+    <p>
+      <strong>单月值怎么算：</strong>单月销售面积 = 本月累计 − 上月累计，单月销售额同理，都是本页计算值。
+      1—2 月没有上月可比，直接取累计值。<strong>统计局不发布单月房地产销售数据</strong>，
+      任何「X 月单月销售额」的说法都必须自己算，并注明这层含义。
+    </p>
+    <p>
+      <strong>成交均价为什么标「本页计算」：</strong>统计局月度只发布销售额与销售面积，不发布月度均价。
+      本页按 销售额(亿元) ÷ 销售面积(万平方米) × 10000 换算成元/平方米，得到的是<strong>成交结构均价</strong>：
+      高价城市、高端项目占比上升就会推高它，它既不剔除结构变化，也不是房价指数。
+      年度库有官方发布的「商品房平均销售价格」，可在年度明细里对照。
+    </p>
+    <p>
+      <strong>为什么和「70 城房价指数」不能互相替代：</strong>70 城是<strong>同质可比</strong>的价格指数
+      （只算新建商品住宅、剔除户型与区位结构变化，100 = 持平），本页是<strong>全部用途、全部城市</strong>的
+      销售额 ÷ 面积。前者回答「房子是不是变贵了」，后者回答「这一平米平均卖了多少钱」，两者可以背离。
+    </p>
+    <p>
+      <strong>分用途之和不等于总量：</strong>商品房销售还包含车位、厂房、仓库等其他用途，统计局只单列住宅、办公楼、
+      商业营业用房三类。<strong>三类相加小于总量是正常的</strong>，差额部分没有公开拆分，本页不估算、不补齐。
+    </p>
+    <p>
+      <strong>土地购置面积 / 土地成交价款为什么不在这一页：</strong>国家统计局自 2022 年起不再发布这两个指标
+      （2023 年起公报表格改名为「房地产市场基本情况」，土地相关行已删除），国家数据库的月度 / 年度库里都没有对应序列。
+      地方政府的<strong>国有土地使用权出让收入</strong>由财政部单独发布，属于财政收入口径、累计且节奏不同，
+      与房企购地支出不是一回事，本版不做。
+    </p>
+    <p>
+      <strong>待售面积与二手房也不在这一页：</strong>商品房待售面积、二手房网签面积只在统计公报正文或地方住建部门
+      披露，国家数据库没有结构化序列。本版只做统计局国家数据库里能稳定取到的「新房开发与销售」，
+      宁可不展示，也不给一条来路不明的曲线。
+    </p>
+    <p>
+      <strong>发布节奏与滞后：</strong>月度在每月 15 日左右发布上月值，所以「截至今天最晚应已发布」的月份是：
+      当天 ≥ 15 日取上月，否则取上上月；算出来落在 1 月时再退到上年 12 月（因为 1 月不单独发布）。
+      年度数据随《中国统计年鉴》在 10 月前后入库，其中官方均价、竣工套数、经营与资产负债<strong>再晚一年</strong>。
+      上期还没挂出来时，本页照常展示已有期别并在状态栏标「数据可能滞后」，不空图、不补 0。
+    </p>
+    <p>
+      <strong>数据来源：</strong>国家统计局「国家数据」(data.stats.gov.cn) 月度库「房地产」目录下的 12 个栏目
+      （销售面积 / 销售额及住宅、办公楼、商业分项，开发投资，施工竣工，到位资金），以及年度库
+      「固定资产投资和房地产」下的 10 个房地产开发经营栏目。接口是站点前端自用的内部接口，
+      <strong>不是官方开放 API</strong>，没有稳定性承诺；所有请求都由本地服务端代取并写入 JSON 缓存，
+      上游失败时回退缓存并标记 stale。
+    </p>
+    <p id="foot-meta" class="foot-meta"></p>
+  </footer>
+</main>
+
+<script src="../vendor/echarts.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

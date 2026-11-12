@@ -3,7 +3,7 @@
 /**
  * 中国经济统计数据看板 —— 本地服务
  *
- * 一个服务、十一个看板，共用同一个端口与静态目录：
+ * 一个服务、十二个看板，共用同一个端口与静态目录：
  *   房价模块  /housing/    ← 页面    /api/nbs70            ← 数据（国家统计局月报解析）
  *   宏观模块  /macro/      ← 页面    /api/macro/*          ← 数据（国家数据站点，拉全后缓存）
  *   LPR 模块  /lpr/        ← 页面    /api/lpr/*            ← 数据（中国货币网官方 JSON，拉全后缓存）
@@ -15,6 +15,7 @@
  *   养老医保  /livelihood/security/ ← 页面 /api/livelihood/security ← 数据（国家数据年度库，拉全后缓存）
  *   行业运行  /industry/    ← 页面    /api/industry/*        ← 数据（国家数据月度库 · 工业 / PMI，拉全后缓存）
  *   区域经济  /region/      ← 页面    /api/region/*          ← 数据（国家数据分省年度库，逐省请求后缓存）
+ *   房地产    /realestate/  ← 页面    /api/realestate/*      ← 数据（国家数据月度库·房地产 + 年度库，拉全后缓存）
  *   入口页    /            ← 选择进入哪个模块
  *
  * 职责：
@@ -51,6 +52,8 @@ const securityService = require('./lib/livelihood/security/service');
 const industryApi = require('./lib/industry/api');
 const industryService = require('./lib/industry/service');
 const regionApi = require('./lib/region/api');
+const realestateApi = require('./lib/realestate/api');
+const realestateService = require('./lib/realestate/service');
 
 const PORT = Number(process.env.PORT) || 5173;
 const HOST = process.env.HOST || '127.0.0.1';
@@ -190,6 +193,7 @@ function health() {
     livelihoodSecurity: securityApi.health(),
     industry: industryApi.health(),
     region: regionApi.health(),
+    realestate: realestateApi.health(),
   };
   const fresh = {};
   Object.keys(modules).forEach((k) => {
@@ -212,6 +216,7 @@ function health() {
         'livelihood-security',
         'industry',
         'region',
+        'realestate',
       ],
       fresh: fresh,
     },
@@ -576,6 +581,40 @@ const server = http.createServer((req, res) => {
     return undefined;
   }
 
+  // ---------------- 房地产开发与销售（独立模块：月度库 + 年度库，独立缓存） ----------------
+  if (pathname.indexOf('/api/realestate') === 0) {
+    const run = async () => {
+      if (pathname === '/api/realestate/health') {
+        return sendJson(res, 200, health());
+      }
+      if (pathname === '/api/realestate/indicators') {
+        return sendJson(res, 200, await realestateApi.indicators());
+      }
+      if (pathname === '/api/realestate') {
+        return sendJson(res, 200, await realestateApi.overview(query));
+      }
+      const m = /^\/api\/realestate\/series\/([\w-]+)$/.exec(pathname);
+      if (m) {
+        return sendJson(res, 200, await realestateApi.one(decodeURIComponent(m[1]), query));
+      }
+      const r = /^\/api\/realestate\/refresh\/([\w-]+)$/.exec(pathname);
+      if (r) {
+        return sendJson(
+          res,
+          200,
+          await realestateApi.one(decodeURIComponent(r[1]), Object.assign({}, query, { force: '1' }))
+        );
+      }
+      return sendJson(res, 404, { status: 'error', error: '未知接口 ' + pathname });
+    };
+    run().catch((e) => {
+      // 上游失败不会走到这里（服务层已回退缓存）；
+      // 只有「未知指标」这类请求错误（带 status）和配置/代码错误才会落到这里
+      sendJson(res, e.status || 500, { status: 'error', error: e.message || String(e) });
+    });
+    return undefined;
+  }
+
   if (pathname.indexOf('/api/') === 0) {
     return sendJson(res, 404, { status: 'error', error: '未知接口 ' + pathname });
   }
@@ -598,7 +637,8 @@ server.listen(PORT, HOST, () => {
   console.log('    ├─ 民生 · 就业       http://' + HOST + ':' + PORT + '/livelihood/employment/');
   console.log('    ├─ 民生 · 养老医保   http://' + HOST + ':' + PORT + '/livelihood/security/');
   console.log('    ├─ 行业运行          http://' + HOST + ':' + PORT + '/industry/');
-  console.log('    └─ 区域经济          http://' + HOST + ':' + PORT + '/region/');
+  console.log('    ├─ 区域经济          http://' + HOST + ':' + PORT + '/region/');
+  console.log('    └─ 房地产开发与销售  http://' + HOST + ':' + PORT + '/realestate/');
   const macroSet = macroSeries.datasetStatus();
   console.log('  [宏观] 缓存目录：' + macroSet.dir);
   if (!macroSet.files) {
@@ -746,6 +786,24 @@ server.listen(PORT, HOST, () => {
         ' 个数据点），最新 ' + (regionSet.latestYear || '—') + '，已对应当年应发布年度'
     );
   }
+  const estateSet = realestateService.datasetStatus();
+  if (!estateSet.catalogs) {
+    console.log(
+      '  [房地产] 尚无缓存：首次打开会把 ' + estateSet.historyMonth + ' 起的月度 12 个栏目与 ' +
+        estateSet.historyYear + ' 起的年度 10 个栏目一次拉全（22 次请求，约半分钟）'
+    );
+  } else if (estateSet.behind) {
+    console.log(
+      '  [房地产] 已缓存 ' + estateSet.catalogs + ' 个栏目（月度 ' + estateSet.months + ' 个月 / 年度 ' +
+        estateSet.years + ' 年），最新月度 ' + (estateSet.latestMonth || '—') + '、年度 ' +
+        (estateSet.latestYear || '—') + '；月度应发布 ' + estateSet.expectedMonth + '，打开页面时核对'
+    );
+  } else {
+    console.log(
+      '  [房地产] 已缓存 ' + estateSet.catalogs + ' 个栏目（月度 ' + estateSet.months + ' 个月 / 年度 ' +
+        estateSet.years + ' 年），最新月度 ' + (estateSet.latestMonth || '—') + '，已对应当前应发布月份'
+    );
+  }
   console.log('');
 
   // 房价模块：直接读 data/periods.json；月份戳不是本月时在后台自动核对一次
@@ -832,5 +890,12 @@ server.listen(PORT, HOST, () => {
     require('./lib/region/config').load();
   } catch (e) {
     console.error('  [区域经济] 配置有误：' + e.message);
+  }
+
+  // 房地产开发与销售模块：配置独立（config/realestate.json），月度库房地产 + 年度库固定资产投资和房地产
+  try {
+    require('./lib/realestate/config').load();
+  } catch (e) {
+    console.error('  [房地产] 配置有误：' + e.message);
   }
 });

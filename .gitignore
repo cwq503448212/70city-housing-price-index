@@ -16,3 +16,6 @@ desktop.ini
 release/
 
 # 打包脚本（根目录 build.bat + packaging/build.ps1）不带本机路径，随仓库一起维护
+
+# repo wiki排除
+.qoder/
