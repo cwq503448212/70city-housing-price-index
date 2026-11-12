@@ -6,44 +6,47 @@
     <title>70 城房价指数看板 · 国家统计局</title>
     <meta name="description" content="基于国家统计局 70 个大中城市商品住宅销售价格变动情况的可视化看板" />
     <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="../shared.css" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <header class="topbar">
-      <div class="brand">
-        <div class="brand-mark">70</div>
-        <div class="brand-text">
+      <div class="topbar-main">
+        <a class="back-link" href="../">← 返回模块选择</a>
+        <div class="brand">
           <h1>70 个大中城市房价指数</h1>
           <p class="brand-sub">
             国家统计局 · 商品住宅销售价格变动情况月报
             <a id="srcLink" href="https://www.stats.gov.cn/sj/zxfb/" target="_blank" rel="noreferrer">查看原文 ↗</a>
           </p>
         </div>
-      </div>
-      <div class="topbar-actions">
-        <a class="back-link" href="../">← 返回模块选择</a>
-        <label class="field field-top">
-          <span>时间范围</span>
-          <select class="select" id="rangeSelect" title="选好后下方所有与时间相关的图表都会跟着过滤">
-            <option value="12">近 1 年</option>
-            <option value="24">近 2 年</option>
-            <option value="36">近 3 年</option>
-            <option value="60">近 5 年</option>
-            <option value="120">近 10 年</option>
-            <option value="all">全部（2011 年起）</option>
-            <option value="custom">自定义区间…</option>
-          </select>
-        </label>
-        <label class="field field-top" id="rangeFromField" hidden>
-          <span>从</span>
-          <select class="select" id="rangeFrom"></select>
-        </label>
-        <label class="field field-top" id="rangeToField" hidden>
-          <span>到</span>
-          <select class="select" id="rangeTo"></select>
-        </label>
-        <span class="stamp" id="stamp">正在连接数据源…</span>
-        <button class="btn" id="refreshBtn" type="button">刷新数据</button>
+
+        <div class="controls">
+          <label class="ctrl">
+            <span class="ctrl-label">时间范围</span>
+            <select id="rangeSelect" title="选好后下方所有与时间相关的图表都会跟着过滤">
+              <option value="12">近 1 年</option>
+              <option value="24">近 2 年</option>
+              <option value="36">近 3 年</option>
+              <option value="60">近 5 年</option>
+              <option value="120">近 10 年</option>
+              <option value="all">全部（2011 年起）</option>
+              <option value="custom">自定义区间</option>
+            </select>
+          </label>
+          <div class="ctrl ctrl-custom" id="rangeCustom" hidden>
+            <label class="ctrl">
+              <span class="ctrl-label">起</span>
+              <select id="rangeFrom"></select>
+            </label>
+            <label class="ctrl">
+              <span class="ctrl-label">止</span>
+              <select id="rangeTo"></select>
+            </label>
+          </div>
+          <button class="btn" id="refreshBtn" type="button">刷新数据</button>
+          <span class="status" id="stamp">正在加载…</span>
+        </div>
       </div>
     </header>
 

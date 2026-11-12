@@ -4,19 +4,20 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>中国宏观经济指标看板</title>
-<link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="../shared.css" />
+    <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
 
 <header class="topbar">
   <div class="topbar-main">
+    <a class="back-link" href="../">← 返回模块选择</a>
     <div class="brand">
       <h1>中国宏观经济指标看板</h1>
       <p class="brand-sub">数据来源：国家统计局 · 国家数据（月度）　历史一次拉全，月度增补</p>
     </div>
 
     <div class="controls">
-      <a class="back-link" href="../">← 返回模块选择</a>
       <label class="ctrl">
         <span class="ctrl-label">时间范围</span>
         <select id="range">
@@ -24,7 +25,7 @@
           <option value="36">近 3 年</option>
           <option value="60" selected>近 5 年</option>
           <option value="120">近 10 年</option>
-          <option value="all">全部</option>
+          <option value="all">全部（2021 起）</option>
           <option value="custom">自定义区间</option>
         </select>
       </label>

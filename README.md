@@ -16,7 +16,7 @@
 | **工业行业运行** | `/industry/` | 41 个大类行业增加值热力图与排行、营收 / 利润累计同比四象限、制造业与非制造业 PMI 分项 | 月度 · 2018-01 |
 | **区域经济（分省 GDP）** | `/region/` | 31 个省级行政区 GDP 排行、单省走势（名义值 + 官方实际增速）、三次产业构成、人均 GDP 对比 | 年度 · 1992 |
 
-打开根地址 `/` 是模块选择页，点进去分别进入十一个子页面；每个子页面右上角「← 返回模块选择」可以切回来。
+打开根地址 `/` 是模块选择页，卡片上直接标出每个看板的数据新鲜度（最新期别 / 落后期数），点进去分别进入十一个子页面；每个子页面**左上角**的「← 返回模块选择」可以切回来，右侧留给时间范围、刷新与状态。
 
 ![模块选择入口](docs/screenshot-home.png)
 
@@ -56,7 +56,7 @@ lib/industry/                行业运行：独立取数（国家数据月度库
 lib/region/                  区域经济：独立取数（国家数据分省年度库 · 逐省串行），限流在本模块内
 
 config/*.json                各模块的唯一事实来源：indicators / livelihood / income / deposit / retail / employment / security / industry / region
-public/                      index.html + home.css（入口）；housing、macro、lpr、industry、region、livelihood/{income,deposit,retail,employment,security}；vendor/echarts.min.js
+public/                      index.html + home.css（入口）；housing、macro、lpr、industry、region、livelihood/{income,deposit,retail,employment,security}；shared.css（十一页共用的 token / 顶栏 / 控件）；vendor/echarts.min.js
 data/periods.json            房价数据集（189 个月，随仓库分发）
 docs/                        页面截图
 packaging/                   便携包的 build.ps1 / start.bat / 使用说明.txt
@@ -65,6 +65,8 @@ packaging/                   便携包的 build.ps1 / start.bat / 使用说明.t
 ```
 
 模块之间**不互相 require**：每个模块只依赖自己的 `lib/<module>/`，共用能力下沉到模块内或新建 `lib/shared/`；同一模块的子页面可以复用父目录的公共件（如 `lib/livelihood/{income,deposit,retail,employment,security}` 复用父目录的 `queue`）。HTTP 只由 `server.js` 一个进程分发，新增的子前缀路由必须排在更宽前缀（如 `/api/livelihood/`）的分支之前。
+
+前端同理：`public/shared.css` 是十一页唯一的一份设计 token、页面基底、顶栏（返回 / 标题 / 筛选 / 状态胶囊）与表单控件样式，各页 `styles.css` 只管自己的图表和专属布局，**不要再把顶栏样式拷回页面文件**；新增模块时先在 `index.html` 里引 `../shared.css`（子目录页 `../../shared.css`）再引本页 `styles.css`。
 
 ## 十一个看板共用的机制
 
@@ -86,7 +88,7 @@ packaging/                   便携包的 build.ps1 / start.bat / 使用说明.t
 
 | 前缀 | 查询参数 |
 | --- | --- |
-| `/api/health` | 健康检查，十一个看板共用（含各模块缓存概况） |
+| `/api/health` | 健康检查，十一个看板共用（含各模块缓存概况与 `fresh` 新鲜度摘要） |
 | `/api/nbs70` | `months=1..200`（200 = 全部历史）、`force=1` |
 | `/api/macro/` | `range=12\|36\|60\|120\|all`、`from=YYYY-MM&to=YYYY-MM`、`force=1` |
 | `/api/lpr/` | 只有 `overview` 与 `health`，`force=1` |
@@ -100,6 +102,8 @@ packaging/                   便携包的 build.ps1 / start.bat / 使用说明.t
 | `/api/region/` | `range=10\|20\|all`、`from=YYYY&to=YYYY`、`provinces=11,44,广东`、`force=1`；`/rank` 支持 `metric=gdp&year=2025` |
 
 `from` / `to` 优先于 `range`。各模块的指标 id 全部写在对应的 `config/*.json` 里，可直接核对。
+
+各模块 `health` 里的「最新期别 / 落后期数」字段名不统一（`latest` / `latestMonth` / `latestYear` / `lastDate`，`behind` 有的是期数、有的是布尔），`/api/health` 另给一份统一的 `fresh.<module> = { latest, period, behind, stale }`：`behind` 为 `null` 表示只知道落后、期数未定，`stale` 表示本次未能核对上游。首页卡片的新鲜度徽章只读这个字段，**不要在前端重新拼各模块的 health**。
 
 ---
 

@@ -305,20 +305,21 @@
       (periods.length ? periods[0].month : '') +
       '|' +
       (periods.length ? periods[periods.length - 1].month : '');
+    $('boot').classList.add('is-hidden');
+    // 先显示页面再画图：容器在 display:none 里量到的宽度是 0，图表会缩成一条
+    $('page').hidden = false;
     if (dataKey !== state.dataKey) {
       state.dataKey = dataKey;
       buildCityOrder();
       renderAll();
     }
-    $('boot').classList.add('is-hidden');
-    $('page').hidden = false;
 
     if (snap.status === 'loading') {
       showProgress(snap);
       $('stamp').textContent = snap.autoCheck
         ? '正在检查有没有新月份…'
         : '抓取中 ' + snap.loaded + '/' + snap.total + ' 个月…';
-      $('stamp').classList.remove('is-live');
+      $('stamp').classList.remove('is-ok');
       startPolling();
     } else {
       stopPolling();
@@ -332,7 +333,7 @@
       $('stamp').title = ds.checkedMonth
         ? '上次核对统计局：' + ds.checkedMonth + '（' + String(ds.checkedAt || '').slice(0, 10) + '）'
         : '尚未核对过统计局';
-      $('stamp').classList.add('is-live');
+      $('stamp').classList.add('is-ok');
       if (snap.status === 'error') {
         $('stamp').textContent += '（部分月份抓取失败）';
       }
@@ -390,8 +391,7 @@
     }
 
     var custom = state.range.preset === 'custom';
-    $('rangeFromField').hidden = !custom;
-    $('rangeToField').hidden = !custom;
+    $('rangeCustom').hidden = !custom;
     if (!custom || !ps.length) return;
 
     var opts = ps
